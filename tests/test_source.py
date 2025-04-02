@@ -136,7 +136,7 @@ def test_get_next_char_windows_newline():
 
 
 def test_get_next_char_mixed():
-    source = io.StringIO("Hi\nMe\r\nHe\n\n\r\nHi")
+    source = io.StringIO("Hi\nMe \r\nH\te\n \n\r\nHi")
     my_source = Source(source)
 
     my_source.get_next_char()
@@ -160,24 +160,36 @@ def test_get_next_char_mixed():
     assert my_source.get_pos() == (2, 2)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "\n"
+    assert my_source.get_char() == " "
     assert my_source.get_pos() == (2, 3)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (2, 4)
 
     my_source.get_next_char()
     assert my_source.get_char() == "H"
     assert my_source.get_pos() == (3, 1)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "e"
+    assert my_source.get_char() == "\t"
     assert my_source.get_pos() == (3, 2)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "\n"
+    assert my_source.get_char() == "e"
     assert my_source.get_pos() == (3, 3)
 
     my_source.get_next_char()
     assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (3, 4)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == " "
     assert my_source.get_pos() == (4, 1)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (4, 2)
 
     my_source.get_next_char()
     assert my_source.get_char() == "\n"

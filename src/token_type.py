@@ -14,13 +14,14 @@ class TokenType(Enum):
     LESS_OPERATOR = auto()
     GEQ_OPERATOR = auto()
     GREATER_OPERATOR = auto()
-    SUB_OPERATOR = auto()
     ADD_OPERATOR = auto()
     DIV_OPERATOR = auto()
     MUL_OPERATOR = auto()
-    ARITH_NEG_OPERATOR = auto()
     LOGIC_NEG_OPERATOR = auto()
     DOT_OPERATOR = auto()
+
+    # Many purpose operators
+    MINUS_OPERATOR = auto()
 
     # Literals
     INT_LITERAL = auto()
