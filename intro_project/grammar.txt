@@ -16,8 +16,8 @@ if_statement 	= "if", "(", expression, ")", block, { else_if }, [ "else", block 
 else_if 		= "else", "if", "(", expression, ")", block ;
 
 while_loop 		= "while", "(", expression, ")", block ;
-for_loop 		= "for", identifier, "in", identifier, block ;
-return_statement= "return", expression ";" ;
+for_loop 		= "for", identifier, "in", expression, block ;
+return_statement= "return", [ expression ] ";" ;
 block 			= "{", { statement }, "}" ;
 
 expression		= logic_or ;
@@ -50,8 +50,8 @@ list_literal	= "[", [ expression { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
 item_literal	= "(", string, ":", expression, ")" ;
 
-linq_query		= "from", identifier, "in", identifier,
-					"select", expression,
+linq_query		= "from", identifier, "in", expression,
+					"select", expression, { ",", expression }
 					[ "where", expression ],
 					[ "order", "by", expression, [ "descending" ] ] ;
 
