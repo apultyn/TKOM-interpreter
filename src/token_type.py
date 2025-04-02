@@ -58,4 +58,3 @@ class TokenType(Enum):
     COMMA = auto()
     COLON = auto()
     EOF = auto()
-    NEWLINE = auto()

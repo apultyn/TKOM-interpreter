@@ -1,4 +1,5 @@
 from source import Source
+from my_token import Token
 from token_type import TokenType
 
 KEYWORDS = {
@@ -26,12 +27,14 @@ QUICK_TOKENS = {
     ",": TokenType.COMMA,
     ":": TokenType.COLON,
     ";": TokenType.SEMICOLON,
+    "*": TokenType.MUL_OPERATOR,
     "(": TokenType.LEFT_BRACKET,
     ")": TokenType.RIGHT_BRACKET,
     "{": TokenType.LEFT_CURLY_BRACKET,
     "}": TokenType.RIGHT_CURLY_BRACKET,
     "[": TokenType.LEFT_SQUARE_BRACKET,
     "]": TokenType.RIGHT_SQUARE_BRACKET,
+    "EOF": TokenType.EOF,
 }
 
 
@@ -42,14 +45,75 @@ class Lexer:
     def get_next_token(self):
         self.skip_whitespaces()
 
-        token = self.build_quick_tokens or True
-
-    def skip_whitespaces(self):
-        while not self.get_char().isspace():
-            self.get_next_char()
+        token = self.build_quick_tokens() or self.build_operators()
 
     def build_quick_tokens(self):
-        return QUICK_TOKENS.get(self.get_char())
+        token_type = QUICK_TOKENS.get(self.get_char())
+        start_pos = self.get_pos()
+
+        if token_type:
+            self.get_next_char()
+            return Token(token_type, start_pos)
+        else:
+            return None
+
+    def build_operators(self):
+        char = self.get_char()
+        start_pos = self.get_pos()
+        token_type = None
+
+        if char == "!":
+            if self.get_next_char() == "=":
+                token_type = TokenType.NEQ_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.LOGIC_NEG_OPERATOR
+        elif char == "-":
+            if self.get_next_char() == "=":
+                token_type = TokenType.ASSIGN_MINUS_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.MINUS_OPERATOR
+        elif char == "/":
+            next_char = self.get_next_char()
+            if next_char == "*":
+                token_type = TokenType.BLOCK_COMMENT
+                # Dokończyć
+            elif next_char == "/":
+                token_type = TokenType.LINE_COMMENT
+                # Dokończyć
+            else:
+                token_type = TokenType.DIV_OPERATOR
+                self.get_next_char()
+        elif char == "+":
+            if self.get_next_char() == "=":
+                token_type = TokenType.ASSIGN_PLUS_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.ADD_OPERATOR
+        elif char == "=":
+            if self.get_next_char() == "=":
+                token_type = TokenType.EQ_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.ASSIGN_OPERATOR
+        elif char == ">":
+            if self.get_next_char() == "=":
+                token_type = TokenType.GEQ_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.GREATER_OPERATOR
+        elif char == "<":
+            if self.get_next_char() == "=":
+                token_type = TokenType.LEQ_OPERATOR
+                self.get_next_char()
+            else:
+                token_type = TokenType.LESS_OPERATOR
+        return Token(token_type, start_pos) if token_type else None
+
+    def skip_whitespaces(self):
+        while self.get_char() is not None and self.get_char().isspace():
+            self.get_next_char()
 
     def get_char(self):
         return self._source.get_char()
