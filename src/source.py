@@ -16,17 +16,17 @@ class Source:
             self._row += 1
             self._new_line_found = False
 
-        if char == '\r':
+        if char == "\r":
             next_char = self._source.read(1)
-            if next_char != '\n':
+            if next_char != "\n":
                 self._source.seek(self._source.tell() - 1)
-            char = '\n'
+            char = "\n"
 
-        if char == '\n':
+        if char == "\n":
             self._new_line_found = True
 
         elif not char:
-            char = 'EOF'
+            char = "EOF"
             if not self._EOF_found:
                 self._EOF_found = True
             else:
@@ -34,3 +34,9 @@ class Source:
 
         self._char = char
         return char
+
+    def get_char(self):
+        return self._char
+
+    def get_pos(self):
+        return (self._row, self._col)

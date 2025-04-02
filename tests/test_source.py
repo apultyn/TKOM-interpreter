@@ -8,34 +8,28 @@ def test_get_next_char():
     my_source = Source(source)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 1
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (1, 2)
 
     my_source.get_next_char()
-    assert my_source._char == 'l'
-    assert my_source._row == 1
-    assert my_source._col == 3
+    assert my_source.get_char() == "l"
+    assert my_source.get_pos() == (1, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'l'
-    assert my_source._row == 1
-    assert my_source._col == 4
+    assert my_source.get_char() == "l"
+    assert my_source.get_pos() == (1, 4)
 
     my_source.get_next_char()
-    assert my_source._char == 'o'
-    assert my_source._row == 1
-    assert my_source._col == 5
+    assert my_source.get_char() == "o"
+    assert my_source.get_pos() == (1, 5)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 1
-    assert my_source._col == 6
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (1, 6)
 
 
 def test_get_next_char_empty():
@@ -43,14 +37,12 @@ def test_get_next_char_empty():
     my_source = Source(source)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (1, 1)
 
 
 def test_get_next_char_linux_newline():
@@ -58,54 +50,44 @@ def test_get_next_char_linux_newline():
     my_source = Source(source)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'i'
-    assert my_source._row == 1
-    assert my_source._col == 2
+    assert my_source.get_char() == "i"
+    assert my_source.get_pos() == (1, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 1
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (1, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'M'
-    assert my_source._row == 2
-    assert my_source._col == 1
+    assert my_source.get_char() == "M"
+    assert my_source.get_pos() == (2, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 2
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (2, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 2
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (2, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 3
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (3, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 3
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (3, 2)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 3
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (3, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 3
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (3, 3)
 
 
 def test_get_next_char_windows_newline():
@@ -113,54 +95,44 @@ def test_get_next_char_windows_newline():
     my_source = Source(source)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'i'
-    assert my_source._row == 1
-    assert my_source._col == 2
+    assert my_source.get_char() == "i"
+    assert my_source.get_pos() == (1, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 1
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (1, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'M'
-    assert my_source._row == 2
-    assert my_source._col == 1
+    assert my_source.get_char() == "M"
+    assert my_source.get_pos() == (2, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 2
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (2, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 2
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (2, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 3
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (3, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 3
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (3, 2)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 3
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (3, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 3
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (3, 3)
 
 
 def test_get_next_char_mixed():
@@ -168,76 +140,61 @@ def test_get_next_char_mixed():
     my_source = Source(source)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 1
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'i'
-    assert my_source._row == 1
-    assert my_source._col == 2
+    assert my_source.get_char() == "i"
+    assert my_source.get_pos() == (1, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 1
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (1, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'M'
-    assert my_source._row == 2
-    assert my_source._col == 1
+    assert my_source.get_char() == "M"
+    assert my_source.get_pos() == (2, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 2
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (2, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 2
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (2, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 3
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (3, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'e'
-    assert my_source._row == 3
-    assert my_source._col == 2
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (3, 2)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 3
-    assert my_source._col == 3
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (3, 3)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 4
-    assert my_source._col == 1
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (4, 1)
 
     my_source.get_next_char()
-    assert my_source._char == '\n'
-    assert my_source._row == 5
-    assert my_source._col == 1
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (5, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'H'
-    assert my_source._row == 6
-    assert my_source._col == 1
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (6, 1)
 
     my_source.get_next_char()
-    assert my_source._char == 'i'
-    assert my_source._row == 6
-    assert my_source._col == 2
+    assert my_source.get_char() == "i"
+    assert my_source.get_pos() == (6, 2)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 6
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (6, 3)
 
     my_source.get_next_char()
-    assert my_source._char == 'EOF'
-    assert my_source._row == 6
-    assert my_source._col == 3
+    assert my_source.get_char() == "EOF"
+    assert my_source.get_pos() == (6, 3)
