@@ -1,6 +1,6 @@
-from source import Source
-from my_token import Token
-from token_type import TokenType
+from .source import Source
+from .my_token import Token
+from .token_type import TokenType
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
@@ -44,8 +44,9 @@ class Lexer:
 
     def get_next_token(self):
         self.skip_whitespaces()
-
         token = self.build_quick_tokens() or self.build_operators()
+
+        return token
 
     def build_quick_tokens(self):
         token_type = QUICK_TOKENS.get(self.get_char())
@@ -112,7 +113,7 @@ class Lexer:
         return Token(token_type, start_pos) if token_type else None
 
     def skip_whitespaces(self):
-        while self.get_char() is not None and self.get_char().isspace():
+        while self.get_char() is None or self.get_char().isspace():
             self.get_next_char()
 
     def get_char(self):
