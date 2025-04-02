@@ -1,6 +1,7 @@
 from .source import Source
 from .my_token import Token
 from .token_type import TokenType
+from .pyscript_exceptions import LexerException
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
@@ -37,6 +38,7 @@ QUICK_TOKENS = {
     "EOF": TokenType.EOF,
 }
 
+MAX_COMMENT_LENGTH = 10000
 
 class Lexer:
     def __init__(self, source):
@@ -77,12 +79,30 @@ class Lexer:
                 token_type = TokenType.MINUS_OPERATOR
         elif char == "/":
             next_char = self.get_next_char()
+
+            # Block Comment
             if next_char == "*":
                 token_type = TokenType.BLOCK_COMMENT
-                # Dokończyć
+                i = 0
+                while i < MAX_COMMENT_LENGTH:
+                    if self.get_next_char() == "*":
+                        if self.get_next_char() == "/":
+                            self.get_next_char()
+                            break
+                        else:
+                            i += 1
+                    i += 1
+
+                if i == MAX_COMMENT_LENGTH:
+                    raise LexerException(f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded", self.get_pos())
             elif next_char == "/":
                 token_type = TokenType.LINE_COMMENT
-                # Dokończyć
+                i = 0
+                while self.get_next_char() != "\n" and i < MAX_COMMENT_LENGTH:
+                    i += 1
+                if i == MAX_COMMENT_LENGTH:
+                    raise LexerException(f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded", self.get_pos())
+                self.get_next_char()
             else:
                 token_type = TokenType.DIV_OPERATOR
                 self.get_next_char()
