@@ -1,7 +1,7 @@
 from .source import Source
 from .my_token import Token
 from .token_type import TokenType
-from .pyscript_exceptions import LexerException
+from .pyscript_exceptions import LengthException, CommentException
 from .lexer_config import LexerConfig
 
 KEYWORDS = {
@@ -100,11 +100,13 @@ class Lexer:
                             break
                         else:
                             i += 1
+                    elif char == "EOF":
+                        raise CommentException(f"Comment not closed", self.get_pos())
                     else:
                         i += 1
                         char = self.get_next_char()
                 else:
-                    raise LexerException(
+                    raise LengthException(
                         f"Maximum comment length ({self._config.max_comment_length}) exceeded",
                         self.get_pos(),
                     )
@@ -119,7 +121,7 @@ class Lexer:
                         break
                     i += 1
                 else:
-                    raise LexerException(
+                    raise LengthException(
                         f"Maximum comment length ({self._config.max_comment_length}) exceeded",
                         self.get_pos(),
                     )
@@ -160,7 +162,7 @@ class Lexer:
 
         while char.isalpha() or char == "_":
             if i == self._config.max_identifier_length:
-                raise LexerException(
+                raise LengthException(
                     f"Maximum identifier length ({self._config.max_identifier_length}) exceeded"
                 )
             chars.append(char)
@@ -189,7 +191,7 @@ class Lexer:
 
         while char != '"' or prev_char == "\\":
             if i == self._config.max_string_literal_length:
-                raise LexerException(
+                raise LengthException(
                     f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
                     self.get_pos(),
                 )

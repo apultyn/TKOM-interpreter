@@ -5,7 +5,7 @@ from src.lexer import Lexer
 from src.my_token import Token
 from src.token_type import TokenType
 from src.lexer_config import LexerConfig
-from src.pyscript_exceptions import LexerException
+from src.pyscript_exceptions import LengthException, CommentException
 
 
 def test_build_simple_and_operators():
@@ -48,16 +48,23 @@ def test_too_long_block_comments():
 
     assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
     assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
-    with pytest.raises(LexerException):
+    with pytest.raises(LengthException):
         lexer.get_next_token()
 
 
 def test_too_long_line_comments():
     config = LexerConfig(max_comment_length=5)
-    source = io.StringIO("//Shor\n//Exact\n//TooLon\n")
+    source = io.StringIO("//Shor\n//Exact\n//TooLon")
     lexer = Lexer(source, config)
 
     assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
     assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
-    with pytest.raises(LexerException):
+    with pytest.raises(LengthException):
+        lexer.get_next_token()
+
+def test_block_comment_not_closed():
+    source = io.StringIO("/*Comment not closed*")
+    lexer = Lexer(source)
+
+    with pytest.raises(CommentException):
         lexer.get_next_token()
