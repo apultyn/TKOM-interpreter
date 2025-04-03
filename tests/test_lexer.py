@@ -5,7 +5,11 @@ from src.lexer import Lexer
 from src.my_token import Token
 from src.token_type import TokenType
 from src.lexer_config import LexerConfig
-from src.pyscript_exceptions import LengthException, UnclosedException
+from src.pyscript_exceptions import (
+    LengthException,
+    UnclosedException,
+    InvalidValueException,
+)
 
 
 def test_build_simple_and_operators():
@@ -156,3 +160,33 @@ def test_escaping_strings():
     assert lexer.get_next_token() == Token(
         TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'
     )
+
+
+def test_int_literal():
+    source = io.StringIO("12345 0 14000 25")
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 7), 0)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 9), 14000)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 15), 25)
+
+
+def test_int_something_after_0():
+    source = io.StringIO("12345 025 123")
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
+    with pytest.raises(InvalidValueException):
+        lexer.get_next_token()
+
+
+def test_too_long_int():
+    source = io.StringIO("1234 12345 123456")
+    config = LexerConfig(max_int_literal_length=5)
+    lexer = Lexer(source, config)
+
+    assert lexer.get_next_token().get_type() == TokenType.INT_LITERAL
+    assert lexer.get_next_token().get_type() == TokenType.INT_LITERAL
+    with pytest.raises(LengthException):
+        lexer.get_next_token()

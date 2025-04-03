@@ -16,3 +16,8 @@ class LengthException(LexerException):
 class UnclosedException(LexerException):
     def __init__(self, *args):
         super().__init__("UNCLOSED", *args)
+
+
+class InvalidValueException(LexerException):
+    def __init__(self, *args):
+        super().__init__("INVALID VALUE", *args)

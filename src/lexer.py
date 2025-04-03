@@ -1,7 +1,11 @@
 from .source import Source
 from .my_token import Token
 from .token_type import TokenType
-from .pyscript_exceptions import LengthException, UnclosedException
+from .pyscript_exceptions import (
+    LengthException,
+    UnclosedException,
+    InvalidValueException,
+)
 from .lexer_config import LexerConfig
 
 KEYWORDS = {
@@ -227,7 +231,36 @@ class Lexer:
         return Token(TokenType.STRING_LITERAL, start_pos, "".join(string_value))
 
     def build_integer_literal(self):
-        pass
+        char = self.get_char()
+        if not char.isdigit():
+            return None
+
+        start_pos = self.get_pos()
+        if char == "0":
+            if self.get_next_char().isdigit():
+                raise InvalidValueException(
+                    "Integer can't have anything after starting 0", self.get_pos()
+                )
+            return Token(TokenType.INT_LITERAL, start_pos, 0)
+
+        int_value = 0
+        i = 0
+
+        while i <= self._config.max_int_literal_length:
+            if char.isdigit():
+                int_value *= 10
+                int_value += int(char)
+                i += 1
+                char = self.get_next_char()
+            else:
+                break
+        else:
+            raise LengthException(
+                f"Maximum int literal length ({self._config.max_int_literal_length}) exceeded",
+                self.get_pos(),
+            )
+
+        return Token(TokenType.INT_LITERAL, start_pos, int_value)
 
     def skip_whitespaces(self):
         while self.get_char() is None or self.get_char().isspace():
