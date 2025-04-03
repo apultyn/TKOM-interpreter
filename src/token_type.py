@@ -14,7 +14,7 @@ class TokenType(Enum):
     LESS_OPERATOR = auto()
     GEQ_OPERATOR = auto()
     GREATER_OPERATOR = auto()
-    ADD_OPERATOR = auto()
+    PLUS_OPERATOR = auto()
     DIV_OPERATOR = auto()
     MUL_OPERATOR = auto()
     LOGIC_NEG_OPERATOR = auto()

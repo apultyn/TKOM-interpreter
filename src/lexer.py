@@ -137,7 +137,7 @@ class Lexer:
                 token_type = TokenType.ASSIGN_PLUS_OPERATOR
                 self.get_next_char()
             else:
-                token_type = TokenType.ADD_OPERATOR
+                token_type = TokenType.PLUS_OPERATOR
         elif char == "=":
             if self.get_next_char() == "=":
                 token_type = TokenType.EQ_OPERATOR

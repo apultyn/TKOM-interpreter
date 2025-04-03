@@ -34,7 +34,7 @@ def test_build_simple_and_operators():
     assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 18))
     assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (1, 30))
     assert lexer.get_next_token() == Token(TokenType.ASSIGN_PLUS_OPERATOR, (2, 1))
-    assert lexer.get_next_token() == Token(TokenType.ADD_OPERATOR, (2, 3))
+    assert lexer.get_next_token() == Token(TokenType.PLUS_OPERATOR, (2, 3))
     assert lexer.get_next_token() == Token(TokenType.EQ_OPERATOR, (2, 5))
     assert lexer.get_next_token() == Token(TokenType.ASSIGN_OPERATOR, (2, 7))
     assert lexer.get_next_token() == Token(TokenType.GEQ_OPERATOR, (2, 9))
