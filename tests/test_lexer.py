@@ -5,7 +5,7 @@ from src.lexer import Lexer
 from src.my_token import Token
 from src.token_type import TokenType
 from src.lexer_config import LexerConfig
-from src.pyscript_exceptions import LengthException, CommentException
+from src.pyscript_exceptions import LengthException, UnclosedException
 
 
 def test_build_simple_and_operators():
@@ -67,12 +67,14 @@ def test_block_comment_not_closed():
     source = io.StringIO("/*Comment not closed*")
     lexer = Lexer(source)
 
-    with pytest.raises(CommentException):
+    with pytest.raises(UnclosedException):
         lexer.get_next_token()
 
 
 def test_keywords():
-    source = io.StringIO("if else function return while for from in select where order by descending True False or and")
+    source = io.StringIO(
+        "if else function return while for from in select where order by descending True False or and"
+    )
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(TokenType.IF_KEYWORD, (1, 1))
@@ -92,3 +94,65 @@ def test_keywords():
     assert lexer.get_next_token() == Token(TokenType.FALSE_LITERAL, (1, 81))
     assert lexer.get_next_token() == Token(TokenType.OR_OPERATOR, (1, 87))
     assert lexer.get_next_token() == Token(TokenType.AND_OPERATOR, (1, 90))
+
+
+def test_identifiers():
+    source = io.StringIO("Hello there")
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 1), "Hello")
+    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 7), "there")
+
+
+def test_too_long_identifiers():
+    config = LexerConfig(max_identifier_length=10)
+    source = io.StringIO("good descending toolongidentifier")
+    lexer = Lexer(source, config)
+    assert lexer.get_next_token().get_type() == TokenType.IDENTIFIER
+    assert lexer.get_next_token().get_type() == TokenType.DESCENDING_KEYWORD
+    with pytest.raises(LengthException):
+        lexer.get_next_token()
+
+
+def test_string_literal():
+    source = io.StringIO(r'"Hello there" "another string"')
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 1), "Hello there"
+    )
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 15), "another string"
+    )
+
+
+def test_string_not_closed():
+    source = io.StringIO(r'"Hello there" "unclosed string')
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
+    with pytest.raises(UnclosedException):
+        lexer.get_next_token()
+
+
+def test_too_long_strings():
+    config = LexerConfig(max_string_literal_length=10)
+    source = io.StringIO(r'"Goodstr" "Atlimitstr" "Too long string"')
+    lexer = Lexer(source, config)
+
+    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
+    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
+    with pytest.raises(LengthException):
+        lexer.get_next_token()
+
+
+def test_escaping_strings():
+    source = io.StringIO(r'"Hello with \"escaping\" chars" "Another \"escaping\""')
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 1), r'Hello with "escaping" chars'
+    )
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'
+    )

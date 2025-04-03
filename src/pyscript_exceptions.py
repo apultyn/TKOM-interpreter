@@ -13,6 +13,6 @@ class LengthException(LexerException):
         super().__init__("LENGTH", *args)
 
 
-class CommentException(LexerException):
+class UnclosedException(LexerException):
     def __init__(self, *args):
-        super().__init__("COMMENT", *args)
+        super().__init__("UNCLOSED", *args)

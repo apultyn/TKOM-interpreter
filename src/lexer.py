@@ -1,7 +1,7 @@
 from .source import Source
 from .my_token import Token
 from .token_type import TokenType
-from .pyscript_exceptions import LengthException, CommentException
+from .pyscript_exceptions import LengthException, UnclosedException
 from .lexer_config import LexerConfig
 
 KEYWORDS = {
@@ -101,7 +101,7 @@ class Lexer:
                         else:
                             i += 1
                     elif char == "EOF":
-                        raise CommentException(f"Comment not closed", self.get_pos())
+                        raise UnclosedException(f"Comment not closed", self.get_pos())
                     else:
                         i += 1
                         char = self.get_next_char()
@@ -184,27 +184,47 @@ class Lexer:
 
     def build_string_literal(self):
         char = self.get_char()
-        start_pos = self.get_pos()
         if char != '"':
             return None
 
-        prev_char = '"'
+        start_pos = self.get_pos()
         char = self.get_next_char()
+        prev_char = ""
         i = 0
-        value = []
+        string_value = []
 
-        while char != '"' or prev_char == "\\":
-            if i == self._config.max_string_literal_length:
-                raise LengthException(
-                    f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
-                    self.get_pos(),
-                )
-            value.append(char)
-            prev_char = char
-            char = self.get_next_char()
-            i += 1
+        while i <= self._config.max_string_literal_length:
+            if char == "\\":
+                next_char = self.get_next_char()
+                if next_char == '"':
+                    string_value.append('"')
+                elif next_char == "n":
+                    string_value.append("\n")
+                elif next_char == "t":
+                    string_value.append("\t")
+                elif next_char == "\\":
+                    string_value.append("\\")
+                else:
+                    string_value.append(next_char)
+                char = self.get_next_char()
+                i += 1
+            elif char == '"' and prev_char != "\\":
+                self.get_next_char()
+                break
+            elif char == "EOF":
+                raise UnclosedException("String literal unclosed", self.get_pos())
+            else:
+                string_value.append(char)
+                prev_char = char
+                char = self.get_next_char()
+                i += 1
+        else:
+            raise LengthException(
+                f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
+                self.get_pos(),
+            )
 
-        return Token(TokenType.STRING_LITERAL, start_pos, "".join(value))
+        return Token(TokenType.STRING_LITERAL, start_pos, "".join(string_value))
 
     def build_integer_literal(self):
         pass
