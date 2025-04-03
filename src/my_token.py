@@ -10,6 +10,13 @@ class Token:
     def __repr__(self):
         return f"Token({self._type}, {self._pos}, {self._val})"
 
+    def __eq__(self, other):
+        return (
+            self._type == other._type
+            and self._pos == other._pos
+            and self._val == other._val
+        )
+
     def get_type(self):
         return self._type
 

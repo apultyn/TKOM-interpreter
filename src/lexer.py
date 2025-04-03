@@ -40,6 +40,7 @@ QUICK_TOKENS = {
 
 MAX_COMMENT_LENGTH = 10000
 
+
 class Lexer:
     def __init__(self, source):
         self._source = Source(source)
@@ -94,14 +95,20 @@ class Lexer:
                     i += 1
 
                 if i == MAX_COMMENT_LENGTH:
-                    raise LexerException(f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded", self.get_pos())
+                    raise LexerException(
+                        f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded",
+                        self.get_pos(),
+                    )
             elif next_char == "/":
                 token_type = TokenType.LINE_COMMENT
                 i = 0
                 while self.get_next_char() != "\n" and i < MAX_COMMENT_LENGTH:
                     i += 1
                 if i == MAX_COMMENT_LENGTH:
-                    raise LexerException(f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded", self.get_pos())
+                    raise LexerException(
+                        f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded",
+                        self.get_pos(),
+                    )
                 self.get_next_char()
             else:
                 token_type = TokenType.DIV_OPERATOR
