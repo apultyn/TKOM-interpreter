@@ -267,11 +267,14 @@ class Lexer:
                     num_value += int(char)
                 char = self.get_next_char()
                 i += 1
-            elif char == "." and not building_float:
-                building_float = True
-                num_value = str(num_value) + "."
-                i += 1
-                char = self.get_next_char()
+            elif char == ".":
+                if not building_float:
+                    building_float = True
+                    num_value = str(num_value) + "."
+                    i += 1
+                    char = self.get_next_char()
+                else:
+                    raise InvalidValueException("Float can't have many decimal points", self.get_pos())
             else:
                 break
         else:
@@ -292,9 +295,6 @@ class Lexer:
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
         else:
             return Token(TokenType.INT_LITERAL, start_pos, num_value)
-
-    def build_float_literal(self):
-        pass
 
     def skip_whitespaces(self):
         while self.get_char() is None or self.get_char().isspace():

@@ -242,3 +242,60 @@ def test_dict_code():
         TokenType.RIGHT_CURLY_BRACKET,
         TokenType.EOF,
     ]
+
+
+def test_variable_code():
+    source = io.StringIO(
+        """
+{
+    a = "Hello there";
+    my_list = [1, "Hello", {
+        (False: True),
+        (-52.48: [1, 2, "Hello"])
+    }];
+}
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.STRING_LITERAL,
+        TokenType.SEMICOLON,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.LEFT_SQUARE_BRACKET,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_BRACKET,
+        TokenType.FALSE_LITERAL,
+        TokenType.COLON,
+        TokenType.TRUE_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.MINUS_OPERATOR,
+        TokenType.FLOAT_LITERAL,
+        TokenType.COLON,
+        TokenType.LEFT_SQUARE_BRACKET,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.STRING_LITERAL,
+        TokenType.RIGHT_SQUARE_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.RIGHT_SQUARE_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.EOF
+    ]

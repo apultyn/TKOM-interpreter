@@ -236,3 +236,11 @@ def test_too_long_floats():
     assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
     with pytest.raises(LengthException):
         lexer.get_next_token()
+
+
+def test_2_dotted_floats():
+    source = io.StringIO("127.0.0.1")
+    lexer = Lexer(source)
+
+    with pytest.raises(InvalidValueException):
+        lexer.get_next_token()
