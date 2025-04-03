@@ -113,7 +113,7 @@ class Lexer:
             elif next_char == "/":
                 token_type = TokenType.LINE_COMMENT
                 i = 0
-                while i < self._config.max_comment_length:
+                while i <= self._config.max_comment_length:
                     if self.get_next_char() == "\n":
                         self.get_next_char()
                         break
@@ -121,6 +121,7 @@ class Lexer:
                 else:
                     raise LexerException(
                         f"Maximum comment length ({self._config.max_comment_length}) exceeded",
+                        self.get_pos(),
                     )
             else:
                 token_type = TokenType.DIV_OPERATOR

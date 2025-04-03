@@ -41,12 +41,23 @@ def test_build_simple_and_operators():
     assert lexer.get_next_token() == Token(TokenType.EOF, (2, 15))
 
 
-def test_too_long_comments():
+def test_too_long_block_comments():
     config = LexerConfig(max_comment_length=5)
     source = io.StringIO("/*Shor*/ /*Exact*/ /*TooLon*/")
     lexer = Lexer(source, config)
 
     assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
     assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
+    with pytest.raises(LexerException):
+        lexer.get_next_token()
+
+
+def test_too_long_line_comments():
+    config = LexerConfig(max_comment_length=5)
+    source = io.StringIO("//Shor\n//Exact\n//TooLon\n")
+    lexer = Lexer(source, config)
+
+    assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
+    assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
     with pytest.raises(LexerException):
         lexer.get_next_token()
