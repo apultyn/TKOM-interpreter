@@ -142,7 +142,6 @@ class Lexer:
                     )
             else:
                 token_type = TokenType.DIV_OPERATOR
-                self.get_next_char()
         elif char == "+":
             if self.get_next_char() == "=":
                 token_type = TokenType.ASSIGN_PLUS_OPERATOR
@@ -274,7 +273,9 @@ class Lexer:
                     i += 1
                     char = self.get_next_char()
                 else:
-                    raise InvalidValueException("Float can't have many decimal points", self.get_pos())
+                    raise InvalidValueException(
+                        "Float can't have many decimal points", self.get_pos()
+                    )
             else:
                 break
         else:
