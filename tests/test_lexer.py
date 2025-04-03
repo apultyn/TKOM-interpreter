@@ -1,8 +1,11 @@
 import io
+import pytest
 
 from src.lexer import Lexer
 from src.my_token import Token
 from src.token_type import TokenType
+from src.lexer_config import LexerConfig
+from src.pyscript_exceptions import LexerException
 
 
 def test_build_simple_and_operators():
@@ -36,3 +39,14 @@ def test_build_simple_and_operators():
     assert lexer.get_next_token() == Token(TokenType.LESS_OPERATOR, (2, 14))
     assert lexer.get_next_token() == Token(TokenType.EOF, (2, 15))
     assert lexer.get_next_token() == Token(TokenType.EOF, (2, 15))
+
+
+def test_too_long_comments():
+    config = LexerConfig(max_comment_length=5)
+    source = io.StringIO("/*Shor*/ /*Exact*/ /*TooLon*/")
+    lexer = Lexer(source, config)
+
+    assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
+    assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
+    with pytest.raises(LexerException):
+        lexer.get_next_token()

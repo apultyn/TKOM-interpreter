@@ -2,6 +2,7 @@ from .source import Source
 from .my_token import Token
 from .token_type import TokenType
 from .pyscript_exceptions import LexerException
+from .lexer_config import LexerConfig
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
@@ -38,14 +39,11 @@ QUICK_TOKENS = {
     "EOF": TokenType.EOF,
 }
 
-MAX_COMMENT_LENGTH = 10000
-MAX_IDENTIFIER_LENGTH = 1000
-MAX_STRING_LITERAL_LENGTH = 10000
-
 
 class Lexer:
-    def __init__(self, source):
+    def __init__(self, source: Source, config: LexerConfig = LexerConfig()):
         self._source = Source(source)
+        self._config = config
 
     def get_next_token(self):
         self.skip_whitespaces()
@@ -54,6 +52,7 @@ class Lexer:
             or self.build_operators()
             or self.build_identifier()
             or self.build_string_literal()
+            or self.build_integer_literal()
         )
 
         return token
@@ -92,18 +91,21 @@ class Lexer:
             if next_char == "*":
                 token_type = TokenType.BLOCK_COMMENT
                 i = 0
-                while i < MAX_COMMENT_LENGTH:
-                    if self.get_next_char() == "*":
-                        if self.get_next_char() == "/":
+                char = self.get_next_char()
+
+                while i <= self._config.max_comment_length:
+                    if char == "*":
+                        if char := self.get_next_char() == "/":
                             self.get_next_char()
                             break
                         else:
                             i += 1
-                    i += 1
-
-                if i == MAX_COMMENT_LENGTH:
+                    else:
+                        i += 1
+                        char = self.get_next_char()
+                else:
                     raise LexerException(
-                        f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded",
+                        f"Maximum comment length ({self._config.max_comment_length}) exceeded",
                         self.get_pos(),
                     )
 
@@ -111,14 +113,15 @@ class Lexer:
             elif next_char == "/":
                 token_type = TokenType.LINE_COMMENT
                 i = 0
-                while self.get_next_char() != "\n" and i < MAX_COMMENT_LENGTH:
+                while i < self._config.max_comment_length:
+                    if self.get_next_char() == "\n":
+                        self.get_next_char()
+                        break
                     i += 1
-                if i == MAX_COMMENT_LENGTH:
+                else:
                     raise LexerException(
-                        f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded",
-                        self.get_pos(),
+                        f"Maximum comment length ({self._config.max_comment_length}) exceeded",
                     )
-                self.get_next_char()
             else:
                 token_type = TokenType.DIV_OPERATOR
                 self.get_next_char()
@@ -154,15 +157,15 @@ class Lexer:
         char = self.get_char()
         i = 0
 
-        while i < MAX_IDENTIFIER_LENGTH and (char.isalpha() or char == "_"):
+        while char.isalpha() or char == "_":
+            if i == self._config.max_identifier_length:
+                raise LexerException(
+                    f"Maximum identifier length ({self._config.max_identifier_length}) exceeded"
+                )
             chars.append(char)
             i += 1
             char = self.get_next_char()
 
-        if i == MAX_IDENTIFIER_LENGTH:
-            raise LexerException(
-                f"Maximum identifier length ({MAX_IDENTIFIER_LENGTH}) exceeded"
-            )
         if len(chars) == 0:
             return None
 
@@ -183,17 +186,21 @@ class Lexer:
         i = 0
         value = []
 
-        while (char != '"' or prev_char == '\\') and i < MAX_STRING_LITERAL_LENGTH:
+        while char != '"' or prev_char == "\\":
+            if i == self._config.max_string_literal_length:
+                raise LexerException(
+                    f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
+                    self.get_pos(),
+                )
             value.append(char)
             prev_char = char
             char = self.get_next_char()
             i += 1
 
-        if i == MAX_STRING_LITERAL_LENGTH:
-            raise LexerException(f"Maximum string literal length ({MAX_STRING_LITERAL_LENGTH}) exceeded", self.get_pos())
-
         return Token(TokenType.STRING_LITERAL, start_pos, "".join(value))
 
+    def build_integer_literal(self):
+        pass
 
     def skip_whitespaces(self):
         while self.get_char() is None or self.get_char().isspace():
