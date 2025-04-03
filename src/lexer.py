@@ -56,7 +56,7 @@ class Lexer:
             or self.build_operators()
             or self.build_identifier()
             or self.build_string_literal()
-            or self.build_integer_literal()
+            or self.build_numeric_literal()
         )
 
         return token
@@ -230,7 +230,7 @@ class Lexer:
 
         return Token(TokenType.STRING_LITERAL, start_pos, "".join(string_value))
 
-    def build_integer_literal(self):
+    def build_numeric_literal(self):
         char = self.get_char()
         if not char.isdigit():
             return None
@@ -243,15 +243,22 @@ class Lexer:
                 )
             return Token(TokenType.INT_LITERAL, start_pos, 0)
 
-        int_value = 0
+        num_value = 0
         i = 0
+        building_float = False
 
         while i <= self._config.max_int_literal_length:
             if char.isdigit():
-                int_value *= 10
-                int_value += int(char)
-                i += 1
-                char = self.get_next_char()
+                if building_float:
+                    num_value += char
+                else:
+                    num_value *= 10
+                    num_value += int(char)
+                    i += 1
+                    char = self.get_next_char()
+            elif char == "." and not building_float:
+                building_float = True
+                num_value = str(num_value) + '.'
             else:
                 break
         else:
@@ -260,7 +267,15 @@ class Lexer:
                 self.get_pos(),
             )
 
-        return Token(TokenType.INT_LITERAL, start_pos, int_value)
+        if building_float:
+            if num_value[:1] == ".":
+                raise InvalidValueException("Missing digits after decimal point", self.get_pos())
+            return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
+        else:
+            return Token(TokenType.INT_LITERAL, start_pos, num_value)
+
+    def build_float_literal(self):
+        pass
 
     def skip_whitespaces(self):
         while self.get_char() is None or self.get_char().isspace():
