@@ -23,12 +23,13 @@ class TokenType(Enum):
     # Many purpose operators
     MINUS_OPERATOR = auto()
 
-    # Literals
+    # Literals or with values
     INT_LITERAL = auto()
     FLOAT_LITERAL = auto()
     STRING_LITERAL = auto()
     TRUE_LITERAL = auto()
     FALSE_LITERAL = auto()
+    IDENTIFIER = auto()
 
     # Keywords
     IF_KEYWORD = auto()

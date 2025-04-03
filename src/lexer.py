@@ -39,6 +39,8 @@ QUICK_TOKENS = {
 }
 
 MAX_COMMENT_LENGTH = 10000
+MAX_IDENTIFIER_LENGTH = 1000
+MAX_STRING_LITERAL_LENGTH = 10000
 
 
 class Lexer:
@@ -47,7 +49,12 @@ class Lexer:
 
     def get_next_token(self):
         self.skip_whitespaces()
-        token = self.build_quick_tokens() or self.build_operators()
+        token = (
+            self.build_quick_tokens()
+            or self.build_operators()
+            or self.build_identifier()
+            or self.build_string_literal()
+        )
 
         return token
 
@@ -99,6 +106,8 @@ class Lexer:
                         f"Maximum comment length ({MAX_COMMENT_LENGTH}) exceeded",
                         self.get_pos(),
                     )
+
+            # Line comment
             elif next_char == "/":
                 token_type = TokenType.LINE_COMMENT
                 i = 0
@@ -138,6 +147,53 @@ class Lexer:
             else:
                 token_type = TokenType.LESS_OPERATOR
         return Token(token_type, start_pos) if token_type else None
+
+    def build_identifier(self):
+        start_pos = self.get_pos()
+        chars = []
+        char = self.get_char()
+        i = 0
+
+        while i < MAX_IDENTIFIER_LENGTH and (char.isalpha() or char == "_"):
+            chars.append(char)
+            i += 1
+            char = self.get_next_char()
+
+        if i == MAX_IDENTIFIER_LENGTH:
+            raise LexerException(
+                f"Maximum identifier length ({MAX_IDENTIFIER_LENGTH}) exceeded"
+            )
+        if len(chars) == 0:
+            return None
+
+        identifier = "".join(chars)
+        if identifier in KEYWORDS:
+            return Token(KEYWORDS[identifier], start_pos)
+        else:
+            return Token(TokenType.IDENTIFIER, start_pos, identifier)
+
+    def build_string_literal(self):
+        char = self.get_char()
+        start_pos = self.get_pos()
+        if char != '"':
+            return None
+
+        prev_char = '"'
+        char = self.get_next_char()
+        i = 0
+        value = []
+
+        while (char != '"' or prev_char == '\\') and i < MAX_STRING_LITERAL_LENGTH:
+            value.append(char)
+            prev_char = char
+            char = self.get_next_char()
+            i += 1
+
+        if i == MAX_STRING_LITERAL_LENGTH:
+            raise LexerException(f"Maximum string literal length ({MAX_STRING_LITERAL_LENGTH}) exceeded", self.get_pos())
+
+        return Token(TokenType.STRING_LITERAL, start_pos, "".join(value))
+
 
     def skip_whitespaces(self):
         while self.get_char() is None or self.get_char().isspace():
