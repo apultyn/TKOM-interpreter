@@ -193,17 +193,20 @@ def test_too_long_int():
 
 
 def test_float_literal():
-    source = io.StringIO("1.0 2.45 5.43215 5123154.0")
+    source = io.StringIO("1.0 2.45 5.43215 5123154.0 0.0 0.91 1.5")
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0)
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 5), 2.45)
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 10), 5.43215)
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 18), 5123154.0)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 28), 0.0)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 32), 0.91)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 37), 1.5)
 
 
 def test_float_nothing_after_dot():
-    source = io.StringIO("1.0 2. 54.1")
+    source = io.StringIO("1.0 0. 54.1")
     lexer = Lexer(source)
 
     assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
@@ -212,7 +215,7 @@ def test_float_nothing_after_dot():
 
 
 def test_float_2_zeroes():
-    source = io.StringIO("1.00")
+    source = io.StringIO("0.00")
     lexer = Lexer(source)
 
     with pytest.raises(InvalidValueException):
@@ -220,7 +223,7 @@ def test_float_2_zeroes():
 
 
 def test_float_more_zeroes():
-    source = io.StringIO("1.000000")
+    source = io.StringIO("0.000000")
     lexer = Lexer(source)
 
     with pytest.raises(InvalidValueException):

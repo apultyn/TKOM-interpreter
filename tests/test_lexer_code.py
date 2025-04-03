@@ -784,3 +784,96 @@ def test_minus_operator():
         TokenType.RIGHT_BRACKET,
         TokenType.EOF,
     ]
+
+def test_if_statement():
+    source = io.StringIO(
+        """
+if(a < 4) {
+    do_something();
+} else if (a > 4) {
+    do_something_else();
+} else {
+    do_something_differently();
+}
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IF_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LESS_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.ELSE_KEYWORD,
+        TokenType.IF_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.GREATER_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.ELSE_KEYWORD,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.EOF
+    ]
+
+
+def test_while_loop():
+    source = io.StringIO(
+        """
+a = 0;
+while(a < 10) {
+    do_something_ten_times();
+    a += 1;
+}
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.SEMICOLON,
+        TokenType.WHILE_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LESS_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_PLUS_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.EOF
+    ]

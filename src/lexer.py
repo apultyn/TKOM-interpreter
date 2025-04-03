@@ -245,17 +245,24 @@ class Lexer:
         if not char.isdigit():
             return None
 
+        building_float = False
+        num_value = 0
+        i = 0
+
         start_pos = self.get_pos()
         if char == "0":
-            if self.get_next_char().isdigit():
+            next_char = self.get_next_char()
+            if next_char.isdigit():
                 raise InvalidValueException(
                     "Integer can't have anything after starting 0", self.get_pos()
                 )
-            return Token(TokenType.INT_LITERAL, start_pos, 0)
-
-        num_value = 0
-        i = 0
-        building_float = False
+            elif next_char == ".":
+                building_float = True
+                num_value = str(num_value) + "."
+                i += 2
+                char = self.get_next_char()
+            else:
+                return Token(TokenType.INT_LITERAL, start_pos, 0)
 
         while i <= self._config.max_num_literal_length:
             if char.isdigit():
