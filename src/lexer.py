@@ -49,6 +49,17 @@ class Lexer:
         self._source = Source(source)
         self._config = config
 
+    def get_token_list(self):
+        tokens = []
+        token = self.get_next_token()
+
+        while token.get_type() != TokenType.EOF:
+            tokens.append(token)
+            token = self.get_next_token()
+
+        tokens.append(token)
+        return tokens
+
     def get_next_token(self):
         self.skip_whitespaces()
         token = (

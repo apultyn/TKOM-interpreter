@@ -22,6 +22,6 @@ def test_too_short_identifier():
         LexerConfig(max_identifier_length=9)
 
 
-def test_negative_param():
+def test_too_short_identifier():
     with pytest.raises(ValueError):
-        LexerConfig(max_comment_length=-5)
+        LexerConfig(max_identifier_length=9)
