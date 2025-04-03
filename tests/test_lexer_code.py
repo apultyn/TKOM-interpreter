@@ -2,7 +2,6 @@ import io
 import pytest
 
 from src.lexer import Lexer
-from src.my_token import Token
 from src.token_type import TokenType
 
 
@@ -59,7 +58,7 @@ def test_code_float():
         TokenType.FLOAT_LITERAL,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
     ]
 
 
@@ -84,7 +83,7 @@ def test_string_code():
         TokenType.STRING_LITERAL,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
     ]
 
 
@@ -109,7 +108,7 @@ def test_bool_code():
         TokenType.FALSE_LITERAL,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
     ]
 
 
@@ -174,5 +173,72 @@ def test_list_code():
         TokenType.RIGHT_SQUARE_BRACKET,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
+    ]
+
+
+def test_dict_code():
+    source = io.StringIO(
+        """
+{
+    {};
+    {
+        ("first_key": 5),
+        ("another_key": "value"),
+        ("one_more": [1, 5, "hello"]),
+        ("last_one": {("key": "value")})
+    };
+}
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.STRING_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.LEFT_SQUARE_BRACKET,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.STRING_LITERAL,
+        TokenType.RIGHT_SQUARE_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.STRING_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.EOF,
     ]
