@@ -160,14 +160,18 @@ class Lexer:
         char = self.get_char()
         i = 0
 
-        while char.isalpha() or char == "_":
-            if i == self._config.max_identifier_length:
-                raise LengthException(
-                    f"Maximum identifier length ({self._config.max_identifier_length}) exceeded"
-                )
-            chars.append(char)
-            i += 1
-            char = self.get_next_char()
+        while i <= self._config.max_identifier_length:
+            if (char.isalpha() or char == "_") and char != "EOF":
+                chars.append(char)
+                i += 1
+                char = self.get_next_char()
+            else:
+                break
+        else:
+            raise LengthException(
+                f"Maximum identifier length ({self._config.max_identifier_length}) exceeded",
+                self.get_pos(),
+            )
 
         if len(chars) == 0:
             return None

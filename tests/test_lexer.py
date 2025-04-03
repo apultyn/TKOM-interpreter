@@ -62,9 +62,33 @@ def test_too_long_line_comments():
     with pytest.raises(LengthException):
         lexer.get_next_token()
 
+
 def test_block_comment_not_closed():
     source = io.StringIO("/*Comment not closed*")
     lexer = Lexer(source)
 
     with pytest.raises(CommentException):
         lexer.get_next_token()
+
+
+def test_keywords():
+    source = io.StringIO("if else function return while for from in select where order by descending True False or and")
+    lexer = Lexer(source)
+
+    assert lexer.get_next_token() == Token(TokenType.IF_KEYWORD, (1, 1))
+    assert lexer.get_next_token() == Token(TokenType.ELSE_KEYWORD, (1, 4))
+    assert lexer.get_next_token() == Token(TokenType.FUNCTION_KEYWORD, (1, 9))
+    assert lexer.get_next_token() == Token(TokenType.RETURN_KEYWORD, (1, 18))
+    assert lexer.get_next_token() == Token(TokenType.WHILE_KEYWORD, (1, 25))
+    assert lexer.get_next_token() == Token(TokenType.FOR_KEYWORD, (1, 31))
+    assert lexer.get_next_token() == Token(TokenType.FROM_KEYWORD, (1, 35))
+    assert lexer.get_next_token() == Token(TokenType.IN_KEYWORD, (1, 40))
+    assert lexer.get_next_token() == Token(TokenType.SELECT_KEYWORD, (1, 43))
+    assert lexer.get_next_token() == Token(TokenType.WHERE_KEYWORD, (1, 50))
+    assert lexer.get_next_token() == Token(TokenType.ORDER_KEYWORD, (1, 56))
+    assert lexer.get_next_token() == Token(TokenType.BY_KEYWORD, (1, 62))
+    assert lexer.get_next_token() == Token(TokenType.DESCENDING_KEYWORD, (1, 65))
+    assert lexer.get_next_token() == Token(TokenType.TRUE_LITERAL, (1, 76))
+    assert lexer.get_next_token() == Token(TokenType.FALSE_LITERAL, (1, 81))
+    assert lexer.get_next_token() == Token(TokenType.OR_OPERATOR, (1, 87))
+    assert lexer.get_next_token() == Token(TokenType.AND_OPERATOR, (1, 90))

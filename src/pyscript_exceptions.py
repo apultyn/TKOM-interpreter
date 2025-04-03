@@ -7,10 +7,12 @@ class LexerException(Exception):
     def __str__(self):
         return f"{self._error_type} ERROR - line {self._position[0]}, col {self._position[1]} - {self._message}"
 
-class LengthException(Exception):
+
+class LengthException(LexerException):
     def __init__(self, *args):
         super().__init__("LENGTH", *args)
 
-class CommentException(Exception):
+
+class CommentException(LexerException):
     def __init__(self, *args):
         super().__init__("COMMENT", *args)
