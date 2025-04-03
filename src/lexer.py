@@ -247,7 +247,7 @@ class Lexer:
         i = 0
         building_float = False
 
-        while i <= self._config.max_int_literal_length:
+        while i <= self._config.max_num_literal_length:
             if char.isdigit():
                 if building_float:
                     num_value += char
@@ -258,22 +258,26 @@ class Lexer:
                 i += 1
             elif char == "." and not building_float:
                 building_float = True
-                num_value = str(num_value) + '.'
+                num_value = str(num_value) + "."
                 i += 1
                 char = self.get_next_char()
             else:
                 break
         else:
             raise LengthException(
-                f"Maximum int literal length ({self._config.max_int_literal_length}) exceeded",
+                f"Maximum int literal length ({self._config.max_num_literal_length}) exceeded",
                 self.get_pos(),
             )
 
         if building_float:
             if num_value[-1:] == ".":
-                raise InvalidValueException("Missing digits after decimal point", self.get_pos())
+                raise InvalidValueException(
+                    "Missing digits after decimal point", self.get_pos()
+                )
             if num_value[-2:] == "00":
-                raise InvalidValueException("Float can't have many zeroes at the end", self.get_pos())
+                raise InvalidValueException(
+                    "Float can't have many zeroes at the end", self.get_pos()
+                )
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
         else:
             return Token(TokenType.INT_LITERAL, start_pos, num_value)

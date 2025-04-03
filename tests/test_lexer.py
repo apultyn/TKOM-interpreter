@@ -183,7 +183,7 @@ def test_int_something_after_0():
 
 def test_too_long_int():
     source = io.StringIO("1234 12345 123456")
-    config = LexerConfig(max_int_literal_length=5)
+    config = LexerConfig(max_num_literal_length=5)
     lexer = Lexer(source, config)
 
     assert lexer.get_next_token().get_type() == TokenType.INT_LITERAL
@@ -224,4 +224,15 @@ def test_float_more_zeroes():
     lexer = Lexer(source)
 
     with pytest.raises(InvalidValueException):
+        lexer.get_next_token()
+
+
+def test_too_long_floats():
+    source = io.StringIO("12.0 123.5 1234.56")
+    config = LexerConfig(max_num_literal_length=5)
+    lexer = Lexer(source, config)
+
+    assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
+    assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
+    with pytest.raises(LengthException):
         lexer.get_next_token()
