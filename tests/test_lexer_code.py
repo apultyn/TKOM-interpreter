@@ -878,3 +878,168 @@ while(a < 10) {
         TokenType.RIGHT_CURLY_BRACKET,
         TokenType.EOF,
     ]
+
+
+def test_for_loop():
+    source = io.StringIO(
+        """
+my_dict = {("first": 1), ("second": 10)};
+for element in my_dict {
+print(element.key()); // "first" "second"
+}
+
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COLON,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.FOR_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.IN_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.DOT_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.LINE_COMMENT,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.EOF,
+    ]
+
+
+def test_function_definition():
+    source = io.StringIO(
+        """
+my_func = function(arg1, arg2) {
+    return arg1 + arg2;
+}
+print(my_func(5, 10)); // 15
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.FUNCTION_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.IDENTIFIER,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.RETURN_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.PLUS_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.INT_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.LINE_COMMENT,
+        TokenType.EOF,
+    ]
+
+
+def test_function_passing():
+    source = io.StringIO(
+        """
+passed_func = function(a, b) {
+    return a + b;
+}
+another_function = function(func, a) {
+    return func(a, 5);
+}
+print(another_function(passed_func, 10));
+// 15
+
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.FUNCTION_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.IDENTIFIER,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.RETURN_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.PLUS_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.FUNCTION_KEYWORD,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.IDENTIFIER,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.RETURN_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.LINE_COMMENT,
+        TokenType.EOF,
+    ]

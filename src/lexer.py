@@ -64,8 +64,8 @@ class Lexer:
     def get_next_token(self):
         self.skip_whitespaces()
         token = (
-            self.build_quick_tokens()
-            or self.build_operators()
+            self.build_quick_token()
+            or self.build_operator()
             or self.build_string_literal()
             or self.build_numeric_literal()
             or self.build_identifier()
@@ -76,7 +76,7 @@ class Lexer:
 
         return token
 
-    def build_quick_tokens(self):
+    def build_quick_token(self):
         token_type = QUICK_TOKENS.get(self.get_char())
         start_pos = self.get_pos()
 
@@ -86,7 +86,7 @@ class Lexer:
         else:
             return None
 
-    def build_operators(self):
+    def build_operator(self):
         char = self.get_char()
         start_pos = self.get_pos()
         token_type = None
