@@ -5,6 +5,7 @@ from .pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,
+    SyntaxException,
 )
 from .lexer_config import LexerConfig
 
@@ -65,10 +66,13 @@ class Lexer:
         token = (
             self.build_quick_tokens()
             or self.build_operators()
-            or self.build_identifier()
             or self.build_string_literal()
             or self.build_numeric_literal()
+            or self.build_identifier()
         )
+
+        if not token:
+            raise SyntaxException("Unknown token", self.get_pos())
 
         return token
 
@@ -175,7 +179,7 @@ class Lexer:
         i = 0
 
         while i <= self._config.max_identifier_length:
-            if (char.isalpha() or char == "_") and char != "EOF":
+            if (char.isalnum() or char == "_") and char != "EOF":
                 chars.append(char)
                 i += 1
                 char = self.get_next_char()

@@ -785,6 +785,7 @@ def test_minus_operator():
         TokenType.EOF,
     ]
 
+
 def test_if_statement():
     source = io.StringIO(
         """
@@ -835,7 +836,7 @@ if(a < 4) {
         TokenType.RIGHT_BRACKET,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
     ]
 
 
@@ -875,5 +876,5 @@ while(a < 10) {
         TokenType.INT_LITERAL,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF
+        TokenType.EOF,
     ]

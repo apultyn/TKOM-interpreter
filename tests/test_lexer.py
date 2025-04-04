@@ -9,7 +9,25 @@ from src.pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,
+    SyntaxException,
 )
+
+
+def test_empty_input():
+    source = io.StringIO("")
+    lexer = Lexer(source)
+
+    assert lexer.get_token_list() == [Token(TokenType.EOF, (1, 1))]
+
+
+def test_unknown_char():
+    source = io.StringIO("hello_there; &address")
+    lexer = Lexer(source)
+
+    lexer.get_next_token()
+    lexer.get_next_token()
+    with pytest.raises(SyntaxException):
+        lexer.get_next_token()
 
 
 def test_build_simple_and_operators():
@@ -101,11 +119,14 @@ def test_keywords():
 
 
 def test_identifiers():
-    source = io.StringIO("Hello there")
+    source = io.StringIO("Hello there val1d_1d3nt1f13r")
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 1), "Hello")
     assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 7), "there")
+    assert lexer.get_next_token() == Token(
+        TokenType.IDENTIFIER, (1, 13), "val1d_1d3nt1f13r"
+    )
 
 
 def test_too_long_identifiers():

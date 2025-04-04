@@ -1,4 +1,4 @@
-class LexerException(Exception):
+class PyscriptException(Exception):
     def __init__(self, error_type, message, position):
         self._error_type = error_type
         self._message = message
@@ -8,16 +8,21 @@ class LexerException(Exception):
         return f"{self._error_type} ERROR - line {self._position[0]}, col {self._position[1]} - {self._message}"
 
 
-class LengthException(LexerException):
+class LengthException(PyscriptException):
     def __init__(self, *args):
         super().__init__("LENGTH", *args)
 
 
-class UnclosedException(LexerException):
+class UnclosedException(PyscriptException):
     def __init__(self, *args):
         super().__init__("UNCLOSED", *args)
 
 
-class InvalidValueException(LexerException):
+class InvalidValueException(PyscriptException):
     def __init__(self, *args):
         super().__init__("INVALID VALUE", *args)
+
+
+class SyntaxException(PyscriptException):
+    def __init__(self, *args):
+        super().__init__("SYNTAX", *args)
