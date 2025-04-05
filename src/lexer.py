@@ -246,14 +246,15 @@ class Lexer:
 
     def build_numeric_literal(self):
         char = self.get_char()
+        
         if not char.isdigit():
             return None
 
         building_float = False
         num_value = 0
         i = 0
-
         start_pos = self.get_pos()
+
         if char == "0":
             next_char = self.get_next_char()
             if next_char.isdigit():

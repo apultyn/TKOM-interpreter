@@ -1043,3 +1043,166 @@ print(another_function(passed_func, 10));
         TokenType.LINE_COMMENT,
         TokenType.EOF,
     ]
+
+
+def test_line_comment():
+    source = io.StringIO(
+        """
+//My first comment //
+//Comment with /* block comment */
+//Comment with =<>5# operators
+//Comment with 7.5 4.2; "string"
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.LINE_COMMENT,
+        TokenType.LINE_COMMENT,
+        TokenType.LINE_COMMENT,
+        TokenType.LINE_COMMENT,
+        TokenType.EOF
+    ]
+
+
+def test_block_comment():
+    source = io.StringIO(
+        """
+/*Random Block Comment */a=5;
+/*Block comment with line //*/b="hello";
+/*Multiline
+Comment*/select;
+a = (arg1,/*Comment*/arg2);
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.BLOCK_COMMENT,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.SEMICOLON,
+        TokenType.BLOCK_COMMENT,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.STRING_LITERAL,
+        TokenType.SEMICOLON,
+        TokenType.BLOCK_COMMENT,
+        TokenType.SELECT_KEYWORD,
+        TokenType.SEMICOLON,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.LEFT_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.COMMA,
+        TokenType.BLOCK_COMMENT,
+        TokenType.IDENTIFIER,
+        TokenType.RIGHT_BRACKET,
+        TokenType.SEMICOLON,
+        TokenType.EOF
+    ]
+
+
+def test_linq_queries():
+    source = io.StringIO(
+        """
+my_dict = {
+("Warszawa", 2000000),
+("Tokio", 37000000),
+("Delhi", 30000000),
+("Szczecinek", 40000),
+("Buenos Aires", 15000000)
+}
+small_cities=from city in my_dict
+select city.key(),city.value()/1000
+where city.value()<5000000
+order by city.key()descending;
+// small_cities = [["Warszawa", 2000], ["Szczecinek", 40]]
+"""
+    )
+    lexer = Lexer(source)
+
+    tokens = lexer.get_token_list()
+    types = [t.get_type() for t in tokens]
+
+    assert types == [
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.LEFT_CURLY_BRACKET,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.LEFT_BRACKET,
+        TokenType.STRING_LITERAL,
+        TokenType.COMMA,
+        TokenType.INT_LITERAL,
+        TokenType.RIGHT_BRACKET,
+        TokenType.RIGHT_CURLY_BRACKET,
+        TokenType.IDENTIFIER,
+        TokenType.ASSIGN_OPERATOR,
+        TokenType.FROM_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.IN_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.SELECT_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.DOT_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.COMMA,
+        TokenType.IDENTIFIER,
+        TokenType.DOT_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.DIV_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.WHERE_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.DOT_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.LESS_OPERATOR,
+        TokenType.INT_LITERAL,
+        TokenType.ORDER_KEYWORD,
+        TokenType.BY_KEYWORD,
+        TokenType.IDENTIFIER,
+        TokenType.DOT_OPERATOR,
+        TokenType.IDENTIFIER,
+        TokenType.LEFT_BRACKET,
+        TokenType.RIGHT_BRACKET,
+        TokenType.DESCENDING_KEYWORD,
+        TokenType.SEMICOLON,
+        TokenType.LINE_COMMENT,
+        TokenType.EOF
+    ]
