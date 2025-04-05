@@ -1372,7 +1372,7 @@ order by item descending;"""
         Token(TokenType.IDENTIFIER, (19, 1), "message"),
         Token(TokenType.ASSIGN_OPERATOR, (19, 8)),
         Token(TokenType.STRING_LITERAL, (19, 9), 'Text with "escaping"'),
-        Token(TokenType.SEMICOLON, (19, 33)),   # Problem with escaping
+        Token(TokenType.SEMICOLON, (19, 33)),
         Token(TokenType.IDENTIFIER, (19, 34), "message2"),
         Token(TokenType.ASSIGN_OPERATOR, (19, 42)),
         Token(TokenType.STRING_LITERAL, (19, 43), "Another"),

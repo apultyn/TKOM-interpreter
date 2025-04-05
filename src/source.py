@@ -20,7 +20,8 @@ class Source:
             next_char = self._source.read(1)
             if next_char != "\n":
                 self._source.seek(self._source.tell() - 1)
-            char = "\n"
+            else:
+                char = "\n"
 
         if char == "\n":
             self._new_line_found = True

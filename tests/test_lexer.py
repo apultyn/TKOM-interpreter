@@ -172,7 +172,9 @@ def test_too_long_strings():
 
 
 def test_escaping_strings():
-    source = io.StringIO(r'"Hello with \"escaping\" chars" "Another \"escaping\"" "Escaping at the end\"";')
+    source = io.StringIO(
+        r'"Hello with \"escaping\" chars" "Another \"escaping\"" "Escaping at the end\"";'
+    )
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(
@@ -184,9 +186,7 @@ def test_escaping_strings():
     assert lexer.get_next_token() == Token(
         TokenType.STRING_LITERAL, (1, 56), r'Escaping at the end"'
     )
-    assert lexer.get_next_token() == Token(
-        TokenType.SEMICOLON, (1, 79)
-    )
+    assert lexer.get_next_token() == Token(TokenType.SEMICOLON, (1, 79))
 
 
 def test_int_literal():

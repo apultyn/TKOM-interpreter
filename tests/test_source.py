@@ -135,6 +135,43 @@ def test_windows_newline():
     assert my_source.get_pos() == (3, 3)
 
 
+def test_just_slash_r():
+    source = io.StringIO("Hi\rMe\rHe")
+    my_source = Source(source)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 1)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "i"
+    assert my_source.get_pos() == (1, 2)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\r"
+    assert my_source.get_pos() == (1, 3)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "M"
+    assert my_source.get_pos() == (1, 4)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (1, 5)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\r"
+    assert my_source.get_pos() == (1, 6)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (1, 7)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (1, 8)
+
+
 def test_mixed():
     source = io.StringIO("Hi\nMe \r\nH\te\n \n\r\nHi")
     my_source = Source(source)
