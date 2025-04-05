@@ -68,8 +68,8 @@ def test_too_long_block_comments():
     source = io.StringIO("/*Shor*/ /*Exact*/ /*TooLon*/")
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
-    assert lexer.get_next_token().get_type() == TokenType.BLOCK_COMMENT
+    assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 1))
+    assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 10))
     with pytest.raises(LengthException):
         lexer.get_next_token()
 
@@ -79,8 +79,8 @@ def test_too_long_line_comments():
     source = io.StringIO("//Shor\n//Exact\n//TooLon")
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
-    assert lexer.get_next_token().get_type() == TokenType.LINE_COMMENT
+    assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (1, 1))
+    assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (2, 1))
     with pytest.raises(LengthException):
         lexer.get_next_token()
 
@@ -172,7 +172,7 @@ def test_too_long_strings():
 
 
 def test_escaping_strings():
-    source = io.StringIO(r'"Hello with \"escaping\" chars" "Another \"escaping\""')
+    source = io.StringIO(r'"Hello with \"escaping\" chars" "Another \"escaping\"" "Escaping at the end\"";')
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(
@@ -180,6 +180,12 @@ def test_escaping_strings():
     )
     assert lexer.get_next_token() == Token(
         TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'
+    )
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 56), r'Escaping at the end"'
+    )
+    assert lexer.get_next_token() == Token(
+        TokenType.SEMICOLON, (1, 79)
     )
 
 

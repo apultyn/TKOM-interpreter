@@ -246,7 +246,7 @@ class Lexer:
 
     def build_numeric_literal(self):
         char = self.get_char()
-        
+
         if not char.isdigit():
             return None
 
