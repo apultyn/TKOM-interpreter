@@ -140,14 +140,14 @@ def test_too_long_identifiers():
 
 
 def test_string_literal():
-    source = io.StringIO(r'"Hello there" "another string"')
+    source = io.StringIO(r'"Hello there""another string"')
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(
         TokenType.STRING_LITERAL, (1, 1), "Hello there"
     )
     assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 15), "another string"
+        TokenType.STRING_LITERAL, (1, 14), "another string"
     )
 
 
