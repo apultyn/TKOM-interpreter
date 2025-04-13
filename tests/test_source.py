@@ -1,6 +1,8 @@
 import io
+import pytest
 
 from src.source import Source
+from src.pyscript_exceptions import NewLineException
 
 
 def test_get_next_char():
@@ -172,8 +174,8 @@ def test_just_slash_r():
     assert my_source.get_pos() == (1, 8)
 
 
-def test_mixed():
-    source = io.StringIO("Hi\nMe \r\nH\te\n \n\r\nHi")
+def test_unix_to_windows():
+    source = io.StringIO("Hi\nMe \nH\ne\n\r\nHi")
     my_source = Source(source)
 
     my_source.get_next_char()
@@ -209,44 +211,71 @@ def test_mixed():
     assert my_source.get_pos() == (3, 1)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "\t"
+    assert my_source.get_char() == "\n"
     assert my_source.get_pos() == (3, 2)
 
     my_source.get_next_char()
     assert my_source.get_char() == "e"
-    assert my_source.get_pos() == (3, 3)
-
-    my_source.get_next_char()
-    assert my_source.get_char() == "\n"
-    assert my_source.get_pos() == (3, 4)
-
-    my_source.get_next_char()
-    assert my_source.get_char() == " "
     assert my_source.get_pos() == (4, 1)
 
     my_source.get_next_char()
     assert my_source.get_char() == "\n"
     assert my_source.get_pos() == (4, 2)
 
-    my_source.get_next_char()
-    assert my_source.get_char() == "\n"
-    assert my_source.get_pos() == (5, 1)
+    with pytest.raises(NewLineException):
+        my_source.get_next_char()
+
+
+def test_windows_to_unix():
+    source = io.StringIO("Hi\r\nMe \r\nH\r\ne\r\n\nHi")
+    my_source = Source(source)
 
     my_source.get_next_char()
     assert my_source.get_char() == "H"
-    assert my_source.get_pos() == (6, 1)
+    assert my_source.get_pos() == (1, 1)
 
     my_source.get_next_char()
     assert my_source.get_char() == "i"
-    assert my_source.get_pos() == (6, 2)
+    assert my_source.get_pos() == (1, 2)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "EOF"
-    assert my_source.get_pos() == (6, 3)
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (1, 3)
 
     my_source.get_next_char()
-    assert my_source.get_char() == "EOF"
-    assert my_source.get_pos() == (6, 3)
+    assert my_source.get_char() == "M"
+    assert my_source.get_pos() == (2, 1)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (2, 2)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == " "
+    assert my_source.get_pos() == (2, 3)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (2, 4)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "H"
+    assert my_source.get_pos() == (3, 1)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (3, 2)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "e"
+    assert my_source.get_pos() == (4, 1)
+
+    my_source.get_next_char()
+    assert my_source.get_char() == "\n"
+    assert my_source.get_pos() == (4, 2)
+
+    with pytest.raises(NewLineException):
+        my_source.get_next_char()
 
 
 def test_escaping():

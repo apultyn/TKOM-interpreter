@@ -23,6 +23,11 @@ class InvalidValueException(PyscriptException):
         super().__init__("INVALID VALUE", *args)
 
 
+class NewLineException(PyscriptException):
+    def __init__(self, *args):
+        super().__init__("NEWLINE", *args)
+
+
 class SyntaxException(PyscriptException):
     def __init__(self, *args):
         super().__init__("SYNTAX", *args)
