@@ -1,6 +1,8 @@
 import io
 import pytest
 
+from tests.util import get_token_list
+
 from src.lexer import Lexer
 from src.my_token import Token
 from src.token_type import TokenType
@@ -17,7 +19,7 @@ def test_empty_input():
     source = io.StringIO("")
     lexer = Lexer(source)
 
-    assert lexer.get_token_list() == [Token(TokenType.EOF, (1, 1))]
+    assert get_token_list(lexer) == [Token(TokenType.EOF, (1, 1))]
 
 
 def test_unknown_char():
@@ -34,7 +36,7 @@ def test_build_simple_and_operators():
     source = io.StringIO(".,:;*(){}[]!=!-=-/*He/*l*lo*///Hel/**/llo\r\n+=+ ===\t>=><=<")
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     assert tokens == [
         Token(TokenType.DOT_OPERATOR, (1, 1)),
         Token(TokenType.COMMA, (1, 2)),
@@ -101,40 +103,47 @@ def test_keywords():
     )
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(TokenType.IF_KEYWORD, (1, 1))
-    assert lexer.get_next_token() == Token(TokenType.ELSE_KEYWORD, (1, 4))
-    assert lexer.get_next_token() == Token(TokenType.FUNCTION_KEYWORD, (1, 9))
-    assert lexer.get_next_token() == Token(TokenType.RETURN_KEYWORD, (1, 18))
-    assert lexer.get_next_token() == Token(TokenType.WHILE_KEYWORD, (1, 25))
-    assert lexer.get_next_token() == Token(TokenType.FOR_KEYWORD, (1, 31))
-    assert lexer.get_next_token() == Token(TokenType.FROM_KEYWORD, (1, 35))
-    assert lexer.get_next_token() == Token(TokenType.IN_KEYWORD, (1, 40))
-    assert lexer.get_next_token() == Token(TokenType.SELECT_KEYWORD, (1, 43))
-    assert lexer.get_next_token() == Token(TokenType.WHERE_KEYWORD, (1, 50))
-    assert lexer.get_next_token() == Token(TokenType.ORDER_KEYWORD, (1, 56))
-    assert lexer.get_next_token() == Token(TokenType.BY_KEYWORD, (1, 62))
-    assert lexer.get_next_token() == Token(TokenType.DESCENDING_KEYWORD, (1, 65))
-    assert lexer.get_next_token() == Token(TokenType.TRUE_LITERAL, (1, 76))
-    assert lexer.get_next_token() == Token(TokenType.FALSE_LITERAL, (1, 81))
-    assert lexer.get_next_token() == Token(TokenType.OR_OPERATOR, (1, 87))
-    assert lexer.get_next_token() == Token(TokenType.AND_OPERATOR, (1, 90))
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.IF_KEYWORD, (1, 1)),
+        Token(TokenType.ELSE_KEYWORD, (1, 4)),
+        Token(TokenType.FUNCTION_KEYWORD, (1, 9)),
+        Token(TokenType.RETURN_KEYWORD, (1, 18)),
+        Token(TokenType.WHILE_KEYWORD, (1, 25)),
+        Token(TokenType.FOR_KEYWORD, (1, 31)),
+        Token(TokenType.FROM_KEYWORD, (1, 35)),
+        Token(TokenType.IN_KEYWORD, (1, 40)),
+        Token(TokenType.SELECT_KEYWORD, (1, 43)),
+        Token(TokenType.WHERE_KEYWORD, (1, 50)),
+        Token(TokenType.ORDER_KEYWORD, (1, 56)),
+        Token(TokenType.BY_KEYWORD, (1, 62)),
+        Token(TokenType.DESCENDING_KEYWORD, (1, 65)),
+        Token(TokenType.TRUE_LITERAL, (1, 76)),
+        Token(TokenType.FALSE_LITERAL, (1, 81)),
+        Token(TokenType.OR_OPERATOR, (1, 87)),
+        Token(TokenType.AND_OPERATOR, (1, 90)),
+        Token(TokenType.EOF, (1, 93)),
+    ]
 
 
 def test_identifiers():
     source = io.StringIO("Hello there val1d_1d3nt1f13r")
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 1), "Hello")
-    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 7), "there")
-    assert lexer.get_next_token() == Token(
-        TokenType.IDENTIFIER, (1, 13), "val1d_1d3nt1f13r"
-    )
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.IDENTIFIER, (1, 1), "Hello"),
+        Token(TokenType.IDENTIFIER, (1, 7), "there"),
+        Token(TokenType.IDENTIFIER, (1, 13), "val1d_1d3nt1f13r"),
+        Token(TokenType.EOF, (1, 29)),
+    ]
 
 
 def test_too_long_identifiers():
     config = LexerConfig(max_identifier_length=10)
     source = io.StringIO("good descending toolongidentifier")
     lexer = Lexer(source, config)
+
     assert lexer.get_next_token().get_type() == TokenType.IDENTIFIER
     assert lexer.get_next_token().get_type() == TokenType.DESCENDING_KEYWORD
     with pytest.raises(LengthException):
@@ -145,12 +154,12 @@ def test_string_literal():
     source = io.StringIO(r'"Hello there""another string"')
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 1), "Hello there"
-    )
-    assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 14), "another string"
-    )
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.STRING_LITERAL, (1, 1), "Hello there"),
+        Token(TokenType.STRING_LITERAL, (1, 14), "another string"),
+        Token(TokenType.EOF, (1, 30)),
+    ]
 
 
 def test_string_not_closed():
@@ -179,26 +188,28 @@ def test_escaping_strings():
     )
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 1), r'Hello with "escaping" chars'
-    )
-    assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'
-    )
-    assert lexer.get_next_token() == Token(
-        TokenType.STRING_LITERAL, (1, 56), r'Escaping at the end"'
-    )
-    assert lexer.get_next_token() == Token(TokenType.SEMICOLON, (1, 79))
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.STRING_LITERAL, (1, 1), r'Hello with "escaping" chars'),
+        Token(TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'),
+        Token(TokenType.STRING_LITERAL, (1, 56), r'Escaping at the end"'),
+        Token(TokenType.SEMICOLON, (1, 79)),
+        Token(TokenType.EOF, (1, 80)),
+    ]
 
 
 def test_int_literal():
     source = io.StringIO("12345 0 14000 25")
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
-    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 7), 0)
-    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 9), 14000)
-    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 15), 25)
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.INT_LITERAL, (1, 1), 12345),
+        Token(TokenType.INT_LITERAL, (1, 7), 0),
+        Token(TokenType.INT_LITERAL, (1, 9), 14000),
+        Token(TokenType.INT_LITERAL, (1, 15), 25),
+        Token(TokenType.EOF, (1, 17)),
+    ]
 
 
 def test_int_something_after_0():
@@ -225,13 +236,17 @@ def test_float_literal():
     source = io.StringIO("1.0 2.45 5.43215 5123154.0 0.0 0.91 1.5")
     lexer = Lexer(source)
 
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 5), 2.45)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 10), 5.43215)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 18), 5123154.0)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 28), 0.0)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 32), 0.91)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 37), 1.5)
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 5), 2.45),
+        Token(TokenType.FLOAT_LITERAL, (1, 10), 5.43215),
+        Token(TokenType.FLOAT_LITERAL, (1, 18), 5123154.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 28), 0.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 32), 0.91),
+        Token(TokenType.FLOAT_LITERAL, (1, 37), 1.5),
+        Token(TokenType.EOF, (1, 40)),
+    ]
 
 
 def test_float_nothing_after_dot():

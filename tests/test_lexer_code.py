@@ -1,6 +1,8 @@
 import io
 import pytest
 
+from tests.util import get_token_list
+
 from src.lexer import Lexer
 from src.token_type import TokenType
 from src.my_token import Token
@@ -8,30 +10,27 @@ from src.my_token import Token
 
 def test_code_integer():
     source = io.StringIO(
-        """
-{
+        """{
     10;
     -50 +-29;
-}
-"""
+}"""
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
-    types = [t.get_type() for t in tokens]
+    tokens = get_token_list(lexer)
 
-    assert types == [
-        TokenType.LEFT_CURLY_BRACKET,
-        TokenType.INT_LITERAL,
-        TokenType.SEMICOLON,
-        TokenType.MINUS_OPERATOR,
-        TokenType.INT_LITERAL,
-        TokenType.PLUS_OPERATOR,
-        TokenType.MINUS_OPERATOR,
-        TokenType.INT_LITERAL,
-        TokenType.SEMICOLON,
-        TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.EOF,
+    assert tokens == [
+        Token(TokenType.LEFT_CURLY_BRACKET, (1, 1)),
+        Token(TokenType.INT_LITERAL, (2, 5), 10),
+        Token(TokenType.SEMICOLON, (2, 7)),
+        Token(TokenType.MINUS_OPERATOR, (3, 5)),
+        Token(TokenType.INT_LITERAL, (3, 6), 50),
+        Token(TokenType.PLUS_OPERATOR, (3, 9)),
+        Token(TokenType.MINUS_OPERATOR, (3, 10)),
+        Token(TokenType.INT_LITERAL, (3, 11), 29),
+        Token(TokenType.SEMICOLON, (3, 13)),
+        Token(TokenType.RIGHT_CURLY_BRACKET, (4, 1)),
+        Token(TokenType.EOF, (4, 2)),
     ]
 
 
@@ -46,7 +45,7 @@ def test_code_float():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -74,7 +73,7 @@ def test_string_code():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -99,7 +98,7 @@ def test_bool_code():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -127,7 +126,7 @@ def test_list_code():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -194,7 +193,7 @@ def test_dict_code():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -259,7 +258,7 @@ def test_variable_code():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -310,7 +309,7 @@ a-=5  a-= 5 a -=5 a -= 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -338,7 +337,7 @@ a=5  a= 5 a =5 a = 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -366,7 +365,7 @@ a+=5  a+= 5 a +=5 a += 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -394,7 +393,7 @@ a or b (a)or(b)
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -420,7 +419,7 @@ a and b (a)and(b)
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -446,7 +445,7 @@ a!=5  a!= 5 a !=5 a != 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -474,7 +473,7 @@ a==5  a== 5 a ==5 a == 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -502,7 +501,7 @@ a<=5  a<= 5 a <=5 a <= 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -530,7 +529,7 @@ a>=5  a>= 5 a >=5 a >= 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -558,7 +557,7 @@ a<5  a< 5 a <5 a < 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -586,7 +585,7 @@ a>5  a> 5 a >5 a > 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -614,7 +613,7 @@ a+5  a+ 5 a +5 a + 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -642,7 +641,7 @@ a/5  a/ 5 a /5 a / 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -670,7 +669,7 @@ a*5  a* 5 a *5 a * 5
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -698,7 +697,7 @@ def test_log_neg_operator():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -722,7 +721,7 @@ a.copy()  [1, 2, 3] .get(). length() "string" . length()
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -763,7 +762,7 @@ def test_minus_operator():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -801,7 +800,7 @@ if(a < 4) {
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -853,7 +852,7 @@ while(a < 10) {
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -893,7 +892,7 @@ print(element.key()); // "first" "second"
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -944,7 +943,7 @@ print(my_func(5, 10)); // 15
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -994,7 +993,7 @@ print(another_function(passed_func, 10));
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -1057,7 +1056,7 @@ def test_line_comment():
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -1081,7 +1080,7 @@ a = (arg1,/*Comment*/arg2);
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -1130,7 +1129,7 @@ order by city.key()descending;
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
     types = [t.get_type() for t in tokens]
 
     assert types == [
@@ -1240,7 +1239,7 @@ order by item descending;"""
     )
     lexer = Lexer(source)
 
-    tokens = lexer.get_token_list()
+    tokens = get_token_list(lexer)
 
     assert tokens == [
         Token(TokenType.BLOCK_COMMENT, (1, 1)),
