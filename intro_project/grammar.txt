@@ -48,7 +48,7 @@ identifier_list = identifier, { ",", identifier } ;
 argument_list	= [ expression, { ",", expression } ] ;
 list_literal	= "[", [ expression { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
-item_literal	= "(", string, ":", expression, ")" ;
+item_literal	= "(", expression, ":", expression, ")" ;
 
 linq_query		= "from", identifier, "in", expression,
 					"select", expression, { ",", expression }
