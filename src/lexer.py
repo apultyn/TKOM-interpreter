@@ -45,6 +45,22 @@ QUICK_TOKENS = {
 }
 
 
+OPERATORS = {
+    "!": {
+        "=": TokenType.NEQ_OPERATOR,
+        "default": TokenType.LOGIC_NEG_OPERATOR,
+    },
+    "-": {
+        "=": TokenType.ASSIGN_MINUS_OPERATOR,
+        "default": TokenType.MINUS_OPERATOR,
+    },
+    "+": {"=": TokenType.ASSIGN_PLUS_OPERATOR, "default": TokenType.PLUS_OPERATOR},
+    "=": {"=": TokenType.EQ_OPERATOR, "default": TokenType.ASSIGN_OPERATOR},
+    ">": {"=": TokenType.GEQ_OPERATOR, "default": TokenType.GREATER_OPERATOR},
+    "<": {"=": TokenType.LEQ_OPERATOR, "default": TokenType.LESS_OPERATOR},
+}
+
+
 class Lexer:
     def __init__(self, source: Source, config: LexerConfig = LexerConfig()):
         self._source = Source(source)
@@ -80,51 +96,26 @@ class Lexer:
         start_pos = self.get_pos()
         token_type = None
 
-        if char == "!":
-            if self.get_next_char() == "=":
-                token_type = TokenType.NEQ_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.LOGIC_NEG_OPERATOR
-        elif char == "-":
-            if self.get_next_char() == "=":
-                token_type = TokenType.ASSIGN_MINUS_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.MINUS_OPERATOR
-        elif char == "/":
+        if char in OPERATORS:
             next_char = self.get_next_char()
+            char_info = OPERATORS[char]
+            if next_char in char_info:
+                token_type = char_info[next_char]
+                self.get_next_char()
+            else:
+                token_type = char_info["default"]
 
+        if token_type is None and char == "/":
+            next_char = self.get_next_char()
             if next_char == "*":
                 token_type = self.build_block_comment()
+                self.get_next_char()
             elif next_char == "/":
                 token_type = self.build_line_comment()
+                self.get_next_char()
             else:
                 token_type = TokenType.DIV_OPERATOR
-        elif char == "+":
-            if self.get_next_char() == "=":
-                token_type = TokenType.ASSIGN_PLUS_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.PLUS_OPERATOR
-        elif char == "=":
-            if self.get_next_char() == "=":
-                token_type = TokenType.EQ_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.ASSIGN_OPERATOR
-        elif char == ">":
-            if self.get_next_char() == "=":
-                token_type = TokenType.GEQ_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.GREATER_OPERATOR
-        elif char == "<":
-            if self.get_next_char() == "=":
-                token_type = TokenType.LEQ_OPERATOR
-                self.get_next_char()
-            else:
-                token_type = TokenType.LESS_OPERATOR
+
         return Token(token_type, start_pos) if token_type else None
 
     def build_block_comment(self):
@@ -134,7 +125,6 @@ class Lexer:
         while i <= self._config.max_comment_length:
             if char == "*":
                 if char := self.get_next_char() == "/":
-                    self.get_next_char()
                     return TokenType.BLOCK_COMMENT
             elif char == "EOF":
                 raise UnclosedException(f"Comment not closed", self.get_pos())
@@ -151,7 +141,6 @@ class Lexer:
         i = 0
         while i <= self._config.max_comment_length:
             if self.get_next_char() == "\n":
-                self.get_next_char()
                 return TokenType.LINE_COMMENT
             i += 1
         else:
