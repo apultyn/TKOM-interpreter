@@ -95,42 +95,10 @@ class Lexer:
         elif char == "/":
             next_char = self.get_next_char()
 
-            # Block Comment
             if next_char == "*":
-                token_type = TokenType.BLOCK_COMMENT
-                i = 0
-                char = self.get_next_char()
-
-                while i <= self._config.max_comment_length:
-                    if char == "*":
-                        if char := self.get_next_char() == "/":
-                            self.get_next_char()
-                            break
-                    elif char == "EOF":
-                        raise UnclosedException(f"Comment not closed", self.get_pos())
-                    else:
-                        char = self.get_next_char()
-                    i += 1
-                else:
-                    raise LengthException(
-                        f"Maximum comment length ({self._config.max_comment_length}) exceeded",
-                        self.get_prev_pos(),
-                    )
-
-            # Line comment
+                token_type = self.build_block_comment()
             elif next_char == "/":
-                token_type = TokenType.LINE_COMMENT
-                i = 0
-                while i <= self._config.max_comment_length:
-                    if self.get_next_char() == "\n":
-                        self.get_next_char()
-                        break
-                    i += 1
-                else:
-                    raise LengthException(
-                        f"Maximum comment length ({self._config.max_comment_length}) exceeded",
-                        self.get_pos(),
-                    )
+                token_type = self.build_line_comment()
             else:
                 token_type = TokenType.DIV_OPERATOR
         elif char == "+":
@@ -158,6 +126,39 @@ class Lexer:
             else:
                 token_type = TokenType.LESS_OPERATOR
         return Token(token_type, start_pos) if token_type else None
+
+    def build_block_comment(self):
+        i = 0
+        char = self.get_next_char()
+
+        while i <= self._config.max_comment_length:
+            if char == "*":
+                if char := self.get_next_char() == "/":
+                    self.get_next_char()
+                    return TokenType.BLOCK_COMMENT
+            elif char == "EOF":
+                raise UnclosedException(f"Comment not closed", self.get_pos())
+            else:
+                char = self.get_next_char()
+            i += 1
+        else:
+            raise LengthException(
+                f"Maximum comment length ({self._config.max_comment_length}) exceeded",
+                self.get_prev_pos(),
+            )
+
+    def build_line_comment(self):
+        i = 0
+        while i <= self._config.max_comment_length:
+            if self.get_next_char() == "\n":
+                self.get_next_char()
+                return TokenType.LINE_COMMENT
+            i += 1
+        else:
+            raise LengthException(
+                f"Maximum comment length ({self._config.max_comment_length}) exceeded",
+                self.get_pos(),
+            )
 
     def build_identifier(self):
         start_pos = self.get_pos()
