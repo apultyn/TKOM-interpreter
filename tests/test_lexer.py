@@ -11,7 +11,7 @@ from src.pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,
-    SyntaxException,
+    TokenException,
 )
 
 
@@ -28,8 +28,11 @@ def test_unknown_char():
 
     lexer.get_next_token()
     lexer.get_next_token()
-    with pytest.raises(SyntaxException):
+    with pytest.raises(TokenException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 14)
 
 
 def test_build_simple_and_operators():
@@ -74,8 +77,11 @@ def test_too_long_block_comments():
 
     assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 1))
     assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 10))
-    with pytest.raises(LengthException):
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 27)
 
 
 def test_too_long_line_comments():
@@ -85,16 +91,22 @@ def test_too_long_line_comments():
 
     assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (1, 1))
     assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (2, 1))
-    with pytest.raises(LengthException):
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (3, 8)
 
 
 def test_block_comment_not_closed():
     source = io.StringIO("/*Comment not closed*")
     lexer = Lexer(source)
 
-    with pytest.raises(UnclosedException):
+    with pytest.raises(UnclosedException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 22)
 
 
 def test_keywords():
@@ -144,10 +156,13 @@ def test_too_long_identifiers():
     source = io.StringIO("good descending toolongidentifier")
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.IDENTIFIER
-    assert lexer.get_next_token().get_type() == TokenType.DESCENDING_KEYWORD
-    with pytest.raises(LengthException):
+    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 1), "good")
+    assert lexer.get_next_token() == Token(TokenType.DESCENDING_KEYWORD, (1, 6))
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 27)
 
 
 def test_string_literal():
@@ -167,8 +182,11 @@ def test_string_not_closed():
     lexer = Lexer(source)
 
     assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
-    with pytest.raises(UnclosedException):
+    with pytest.raises(UnclosedException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 31)
 
 
 def test_too_long_strings():
@@ -176,10 +194,15 @@ def test_too_long_strings():
     source = io.StringIO(r'"Goodstr" "Atlimitstr" "Too long string"')
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
-    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
-    with pytest.raises(LengthException):
+    assert lexer.get_next_token() == Token(TokenType.STRING_LITERAL, (1, 1), "Goodstr")
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 11), "Atlimitstr"
+    )
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 35)
 
 
 def test_escaping_strings():
@@ -217,8 +240,11 @@ def test_int_something_after_0():
     lexer = Lexer(source)
 
     assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
-    with pytest.raises(InvalidValueException):
+    with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 7)
 
 
 def test_too_long_int():
@@ -226,10 +252,13 @@ def test_too_long_int():
     config = LexerConfig(max_num_literal_length=5)
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.INT_LITERAL
-    assert lexer.get_next_token().get_type() == TokenType.INT_LITERAL
-    with pytest.raises(LengthException):
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 1234)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 6), 12345)
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 17)
 
 
 def test_float_literal():
@@ -253,25 +282,34 @@ def test_float_nothing_after_dot():
     source = io.StringIO("1.0 0. 54.1")
     lexer = Lexer(source)
 
-    assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
-    with pytest.raises(InvalidValueException):
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0)
+    with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 7)
 
 
 def test_float_2_zeroes():
     source = io.StringIO("0.00")
     lexer = Lexer(source)
 
-    with pytest.raises(InvalidValueException):
+    with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 4)
 
 
 def test_float_more_zeroes():
     source = io.StringIO("0.000000")
     lexer = Lexer(source)
 
-    with pytest.raises(InvalidValueException):
+    with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 4)
 
 
 def test_too_long_floats():
@@ -279,15 +317,21 @@ def test_too_long_floats():
     config = LexerConfig(max_num_literal_length=5)
     lexer = Lexer(source, config)
 
-    assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
-    assert lexer.get_next_token().get_type() == TokenType.FLOAT_LITERAL
-    with pytest.raises(LengthException):
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 12.0)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 5), 123.5)
+    with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 17)
 
 
 def test_2_dotted_floats():
     source = io.StringIO("127.0.0.1")
     lexer = Lexer(source)
 
-    with pytest.raises(InvalidValueException):
+    with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
+
+    exception = excinfo.value
+    assert exception._position == (1, 6)

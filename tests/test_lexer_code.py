@@ -74,7 +74,11 @@ def test_string_code():
         Token(TokenType.LEFT_CURLY_BRACKET, (1, 1)),
         Token(TokenType.STRING_LITERAL, (2, 5), "Hello World!"),
         Token(TokenType.SEMICOLON, (2, 19)),
-        Token(TokenType.STRING_LITERAL, (3, 5), r'Typing with quotes: "" and backslash: \ there'),
+        Token(
+            TokenType.STRING_LITERAL,
+            (3, 5),
+            r'Typing with quotes: "" and backslash: \ there',
+        ),
         Token(TokenType.SEMICOLON, (3, 55)),
         Token(TokenType.RIGHT_CURLY_BRACKET, (4, 1)),
         Token(TokenType.EOF, (4, 2)),

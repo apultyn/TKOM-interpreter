@@ -28,6 +28,6 @@ class NewLineException(PyscriptException):
         super().__init__("NEWLINE", *args)
 
 
-class SyntaxException(PyscriptException):
+class TokenException(PyscriptException):
     def __init__(self, *args):
         super().__init__("SYNTAX", *args)

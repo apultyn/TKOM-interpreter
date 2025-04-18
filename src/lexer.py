@@ -5,7 +5,7 @@ from .pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,
-    SyntaxException,
+    TokenException,
 )
 from .lexer_config import LexerConfig
 
@@ -61,7 +61,7 @@ class Lexer:
         )
 
         if not token:
-            raise SyntaxException("Unknown token", self.get_pos())
+            raise TokenException("Unknown token", self.get_pos())
 
         return token
 
