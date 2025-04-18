@@ -72,7 +72,7 @@ def test_build_simple_and_operators():
 
 def test_too_long_block_comments():
     config = LexerConfig(max_comment_length=5)
-    source = io.StringIO("/*Shor*/ /*Exact*/ /*TooLon*/")
+    source = io.StringIO("/*Shor*/ /*Exact*/ /*TooLong*/")
     lexer = Lexer(source, config)
 
     assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 1))
@@ -291,7 +291,7 @@ def test_float_nothing_after_dot():
 
 
 def test_float_2_zeroes():
-    source = io.StringIO("0.00")
+    source = io.StringIO("0.00 0.15")
     lexer = Lexer(source)
 
     with pytest.raises(InvalidValueException) as excinfo:
@@ -302,14 +302,14 @@ def test_float_2_zeroes():
 
 
 def test_float_more_zeroes():
-    source = io.StringIO("0.000000")
+    source = io.StringIO("0.000000 123")
     lexer = Lexer(source)
 
     with pytest.raises(InvalidValueException) as excinfo:
         lexer.get_next_token()
 
     exception = excinfo.value
-    assert exception._position == (1, 4)
+    assert exception._position == (1, 8)
 
 
 def test_too_long_floats():
@@ -318,7 +318,7 @@ def test_too_long_floats():
     lexer = Lexer(source, config)
 
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 12.0)
-    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 5), 123.5)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 6), 123.5)
     with pytest.raises(LengthException) as excinfo:
         lexer.get_next_token()
 

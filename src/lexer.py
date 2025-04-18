@@ -106,17 +106,15 @@ class Lexer:
                         if char := self.get_next_char() == "/":
                             self.get_next_char()
                             break
-                        else:
-                            i += 1
                     elif char == "EOF":
                         raise UnclosedException(f"Comment not closed", self.get_pos())
                     else:
-                        i += 1
                         char = self.get_next_char()
+                    i += 1
                 else:
                     raise LengthException(
                         f"Maximum comment length ({self._config.max_comment_length}) exceeded",
-                        self.get_pos(),
+                        self.get_prev_pos(),
                     )
 
             # Line comment
@@ -177,7 +175,7 @@ class Lexer:
         else:
             raise LengthException(
                 f"Maximum identifier length ({self._config.max_identifier_length}) exceeded",
-                self.get_pos(),
+                self.get_prev_pos(),
             )
 
         if len(chars) == 0:
@@ -228,7 +226,7 @@ class Lexer:
         else:
             raise LengthException(
                 f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
-                self.get_pos(),
+                self.get_prev_pos(),
             )
 
         return Token(TokenType.STRING_LITERAL, start_pos, "".join(string_value))
@@ -248,7 +246,7 @@ class Lexer:
             next_char = self.get_next_char()
             if next_char.isdigit():
                 raise InvalidValueException(
-                    "Integer can't have anything after starting 0", self.get_pos()
+                    "Integer can't have anything after starting 0", self.get_prev_pos()
                 )
             elif next_char == ".":
                 building_float = True
@@ -282,7 +280,7 @@ class Lexer:
         else:
             raise LengthException(
                 f"Maximum int literal length ({self._config.max_num_literal_length}) exceeded",
-                self.get_pos(),
+                self.get_prev_pos(),
             )
 
         if building_float:
@@ -292,7 +290,7 @@ class Lexer:
                 )
             if num_value[-2:] == "00":
                 raise InvalidValueException(
-                    "Float can't have many zeroes at the end", self.get_pos()
+                    "Float can't have many zeroes at the end", self.get_prev_pos()
                 )
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
         else:
@@ -310,3 +308,6 @@ class Lexer:
 
     def get_pos(self):
         return self._source.get_pos()
+
+    def get_prev_pos(self):
+        return (self.get_pos()[0], self.get_pos()[1] - 1)
