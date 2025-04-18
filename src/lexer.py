@@ -44,7 +44,6 @@ QUICK_TOKENS = {
     "EOF": TokenType.EOF,
 }
 
-
 OPERATORS = {
     "!": {
         "=": TokenType.NEQ_OPERATOR,
@@ -58,6 +57,13 @@ OPERATORS = {
     "=": {"=": TokenType.EQ_OPERATOR, "default": TokenType.ASSIGN_OPERATOR},
     ">": {"=": TokenType.GEQ_OPERATOR, "default": TokenType.GREATER_OPERATOR},
     "<": {"=": TokenType.LEQ_OPERATOR, "default": TokenType.LESS_OPERATOR},
+}
+
+ESCAPING_SIGNS = {
+    '"': '"',
+    "n": "\n",
+    "t": "\t",
+    "\\": "\\",
 }
 
 
@@ -191,14 +197,8 @@ class Lexer:
         while i <= self._config.max_string_literal_length:
             if char == "\\":
                 next_char = self.get_next_char()
-                if next_char == '"':
-                    string_value.append('"')
-                elif next_char == "n":
-                    string_value.append("\n")
-                elif next_char == "t":
-                    string_value.append("\t")
-                elif next_char == "\\":
-                    string_value.append("\\")
+                if next_char in ESCAPING_SIGNS:
+                    string_value.append(ESCAPING_SIGNS.get(next_char))
                 else:
                     string_value.append(next_char)
                 char = self.get_next_char()
