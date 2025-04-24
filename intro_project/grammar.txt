@@ -1,23 +1,24 @@
 TKOM gramatyka
 
 program 		= { statement } ;
-statement 		= ( assigment, ";" )
-				| ( expression, ";" )
-				| func_definition
+statement 		= ( statement_with_ident, ";" )
 				| if_statement
 				| while_loop
 				| for_loop
-				| return_statement
+				| ( return_statement, ";" )
 				| block ;
 
-assigment 		= identifier, ( "=" | "+=" | "-=" ), expression ;
-func_definition = identifier, "=", "function", "(", identifier_list, ")", block ;
+statement_with_ident = identifier, ( member | assignment )
+
+member 			= { ( ".", identifier ) | ( "(", [ argument_list ], ")" ) }
+assignment 		= ( "=" | "+=" | "-=" ), expression ;
+
 if_statement 	= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
 else_if 		= "else", "if", "(", expression, ")", block ;
 
 while_loop 		= "while", "(", expression, ")", block ;
 for_loop 		= "for", identifier, "in", expression, block ;
-return_statement= "return", [ expression ] ";" ;
+return_statement= "return", [ expression ] ;
 block 			= "{", { statement }, "}" ;
 
 expression		= logic_or ;
@@ -28,32 +29,37 @@ comparison		= additive, { (">" | ">=" | "<" | "<="), additive } ;
 additive		= multiplicative, { ("+" | "-"), multiplicative } ;
 multiplicative	= unary, { ( "*" | "/" ), unary } ;
 unary			= ("!" | "-"), unary | postfix ;
-postfix			= primary, { ( ".", identifier ) | ( "(", argument_list, ")" ) } ;
+postfix			= primary  [ member ] ;
 
 primary			= integer
 				| float
 				| string
 				| "True" | "False"
-				| identifier
 				| list_literal
 				| dict_literal
+				| func_literal
+				| item_literal
 				| linq_query
+				| identifier
 				| ( "(", expression, ")" ) ;
 
 integer 		= "0" | ( digit-positive , { digit } ) ;
 float			= integer, ".", integer ;
 string			= '"', { unicode_symbol }, '"' ;
 identifier		= letter, { alphanumeric } ;
-identifier_list = identifier, { ",", identifier } ;
-argument_list	= [ expression, { ",", expression } ] ;
 list_literal	= "[", [ expression { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
 item_literal	= "(", expression, ":", expression, ")" ;
+
+func_literal    = "function", "(", [ identifier_list ], ")", block ;
 
 linq_query		= "from", identifier, "in", expression,
 					"select", expression, { ",", expression }
 					[ "where", expression ],
 					[ "order", "by", expression, [ "descending" ] ] ;
+
+identifier_list = identifier, { ",", identifier } ;
+argument_list	= [ expression, { ",", expression } ] ;
 
 unicode_symbol 	= { *symbole UNICODE* } ;
 letter			= { *litery* } ;
