@@ -1,25 +1,25 @@
 TKOM gramatyka
 
 program 		= { statement } ;
-statement 		= ( statement_with_ident, ";" )
-				| if_statement
-				| while_loop
-				| for_loop
-				| ( return_statement, ";" )
-				| block ;
 
-statement_with_ident = identifier, ( member | assignment )
+statement 		= ( stmt_with_ident, ";" )
+					| if_statement
+					| while_loop
+					| for_loop
+					| ( return_statement, ";" )
+					| block ;
 
-member 			= { ( ".", identifier ) | ( "(", [ argument_list ], ")" ) }
-assignment 		= ( "=" | "+=" | "-=" ), expression ;
+stmt_with_ident 	= identifier, ( member | assignment )
+member 				= { ( ".", identifier ) | ( "(", [ argument_list ], ")" ) }
+assignment 			= ( "=" | "+=" | "-=" ), expression ;
 
-if_statement 	= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
-else_if 		= "else", "if", "(", expression, ")", block ;
+if_statement 		= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
+else_if 			= "else", "if", "(", expression, ")", block ;
 
-while_loop 		= "while", "(", expression, ")", block ;
-for_loop 		= "for", identifier, "in", expression, block ;
-return_statement= "return", [ expression ] ;
-block 			= "{", { statement }, "}" ;
+while_loop 			= "while", "(", expression, ")", block ;
+for_loop 			= "for", identifier, "in", expression, block ;
+return_statement	= "return", [ expression ] ;
+block 				= "{", { statement }, "}" ;
 
 expression		= logic_or ;
 logic_or		= logic_and, { "or", logic_and } ;
@@ -29,28 +29,26 @@ comparison		= additive, { (">" | ">=" | "<" | "<="), additive } ;
 additive		= multiplicative, { ("+" | "-"), multiplicative } ;
 multiplicative	= unary, { ( "*" | "/" ), unary } ;
 unary			= ("!" | "-"), unary | postfix ;
-postfix			= primary  [ member ] ;
+postfix			= primary, member ;
 
 primary			= integer
-				| float
-				| string
-				| "True" | "False"
-				| list_literal
-				| dict_literal
-				| func_literal
-				| item_literal
-				| linq_query
-				| identifier
-				| ( "(", expression, ")" ) ;
+					| float
+					| string
+					| "True" | "False"
+					| list_literal
+					| dict_literal
+					| func_literal
+					| item_literal
+					| linq_query
+					| identifier
+					| item_literal_or_parenthisis
 
-integer 		= "0" | ( digit-positive , { digit } ) ;
-float			= integer, ".", integer ;
-string			= '"', { unicode_symbol }, '"' ;
-identifier		= letter, { alphanumeric } ;
+item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;
+item_literal_tail 			= ":", expression, ")" ;
+right_parenthisis 			= ")"
+
 list_literal	= "[", [ expression { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
-item_literal	= "(", expression, ":", expression, ")" ;
-
 func_literal    = "function", "(", [ identifier_list ], ")", block ;
 
 linq_query		= "from", identifier, "in", expression,
@@ -61,15 +59,17 @@ linq_query		= "from", identifier, "in", expression,
 identifier_list = identifier, { ",", identifier } ;
 argument_list	= [ expression, { ",", expression } ] ;
 
+integer 		= "0" | ( digit-positive , { digit } ) ;
+float			= integer, ".", integer ;
+string			= '"', { unicode_symbol }, '"' ;
+identifier		= letter, { alphanumeric } ;
+
 unicode_symbol 	= { *symbole UNICODE* } ;
 letter			= { *litery* } ;
 alphanumeric	= letter | digit | "_" ;
 
-
-
 comment-endline = "//", { unicode_symbol }, "\n";
 comment-inline 	= "/*", { unicode_symbol }, "*/";
-
 
 digit-positive 	= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 digit 			= "0" | digit-positive;
