@@ -68,7 +68,7 @@ class ReturnStmt(Statement):
 @dataclass
 class AssignmentStmt(Statement):
     l_value: Identifier
-    type: AssignmentType
+    assign_type: AssignmentType
     r_value: Expression
 
 
@@ -87,19 +87,19 @@ class NegationExpr(Expression):
 
 @dataclass
 class Member(Expression):
-    object: Expression
+    source: Expression
     target: Identifier
 
 
 @dataclass
 class Call(Expression):
-    object: Expression
+    callee: Expression
     args: List[Expression]
 
 
 @dataclass
 class SimpleTypeExpr(Expression):
-    type: SimpleLiteralType
+    value_type: SimpleLiteralType
     value: Any
 
 
