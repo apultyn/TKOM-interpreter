@@ -1,4 +1,4 @@
-from src.util.pyscript_exceptions import PyscriptException
+from pyscript_exceptions import PyscriptException
 
 
 class ErrorHandler:

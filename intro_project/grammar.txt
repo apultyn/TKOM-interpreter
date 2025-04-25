@@ -9,8 +9,9 @@ statement 		= ( stmt_with_ident, ";" )
 					| ( return_statement, ";" )
 					| block ;
 
-stmt_with_ident 	= identifier, ( member | assignment )
-member 				= { ( ".", identifier ) | ( "(", [ argument_list ], ")" ) }
+stmt_with_ident 	= identifier, ( assignment | { access_suff | call_suff }, call_suff );
+access_suff 		= ".", identifier ;
+call_suff			= "(", [ argument_list ], ")"
 assignment 			= ( "=" | "+=" | "-=" ), expression ;
 
 if_statement 		= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
@@ -28,8 +29,8 @@ equality		= comparison, { ("==" | "!="), comparison } ;
 comparison		= additive, { (">" | ">=" | "<" | "<="), additive } ;
 additive		= multiplicative, { ("+" | "-"), multiplicative } ;
 multiplicative	= unary, { ( "*" | "/" ), unary } ;
-unary			= ("!" | "-"), unary | postfix ;
-postfix			= primary, member ;
+unary			= { ("!" | "-") }, postfix ;
+postfix			= primary, { call_suff | member_suff} ;
 
 primary			= integer
 					| float
@@ -38,7 +39,6 @@ primary			= integer
 					| list_literal
 					| dict_literal
 					| func_literal
-					| item_literal
 					| linq_query
 					| identifier
 					| item_literal_or_parenthisis

@@ -8,7 +8,7 @@ from src.util.pyscript_exceptions import (
     TokenException,
 )
 
-from src.lexer.lexer_config import LexerConfig
+from .lexer_config import LexerConfig
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,

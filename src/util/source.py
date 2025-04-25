@@ -1,4 +1,4 @@
-from src.util.pyscript_exceptions import NewLineException
+from .pyscript_exceptions import NewLineException
 
 
 class Source:
