@@ -1,11 +1,11 @@
 import io
-import pytest
 
 from tests.util import get_token_list
 
-from src.lexer import Lexer
-from src.token_type import TokenType
-from src.my_token import Token
+from src.lexer.lexer import Lexer
+
+from src.util.token_type import TokenType
+from src.util.my_token import Token
 
 
 def test_code_integer():

@@ -1,4 +1,4 @@
-from src.token_type import TokenType
+from src.util.token_type import TokenType
 
 
 def get_token_list(lexer):

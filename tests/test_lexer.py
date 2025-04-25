@@ -3,11 +3,12 @@ import pytest
 
 from tests.util import get_token_list
 
-from src.lexer import Lexer
-from src.my_token import Token
-from src.token_type import TokenType
-from src.lexer_config import LexerConfig
-from src.pyscript_exceptions import (
+from src.lexer.lexer import Lexer
+from src.lexer.lexer_config import LexerConfig
+
+from src.util.my_token import Token
+from src.util.token_type import TokenType
+from src.util.pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,

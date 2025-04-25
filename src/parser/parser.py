@@ -1,15 +1,20 @@
 from lexer import Lexer
 from token_type import TokenType
+from src.util.error_handler import ErrorHandler
+from src.util.pyscript_exceptions import PyscriptException
 
 class Parser:
-    def __init__(self, lexer: Lexer, error_handler):
+    def __init__(self, lexer: Lexer, error_handler: ErrorHandler):
         self.lexer = lexer
         self.current_token = None
         self.error_handler = error_handler
         self.current_token = self.get_next_token()
 
     def get_next_token(self):
-        self.current_token = self.lexer.get_next_token()
+        try:
+            self.current_token = self.lexer.get_next_token()
+        except PyscriptException as e:
+            self.error_handler.handle_error(e)
 
         while self.current_token in [
             TokenType.BLOCK_COMMENT,

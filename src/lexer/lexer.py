@@ -1,13 +1,14 @@
-from .source import Source
-from .my_token import Token
-from .token_type import TokenType
-from .pyscript_exceptions import (
+from src.util.source import Source
+from src.util.my_token import Token
+from src.util.token_type import TokenType
+from src.util.pyscript_exceptions import (
     LengthException,
     UnclosedException,
     InvalidValueException,
     TokenException,
 )
-from .lexer_config import LexerConfig
+
+from src.lexer.lexer_config import LexerConfig
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
