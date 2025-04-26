@@ -43,7 +43,7 @@ primary			= integer
 					| dict_literal
 					| func_literal
 					| linq_query
-					| item_literal_or_parenthisis
+					| item_literal_or_parenthesis
 
 list_literal	= "[", [ expression, { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { ",", item_literal } ], "}" ;
@@ -54,7 +54,7 @@ linq_query		= "from", identifier, "in", expression,
 					[ "where", expression ],
 					[ "order", "by", expression, [ "descending" ] ] ;
 
-item_literal_or_parenthisis = "(", expression, ( item_literal_tail | ")" ) ;
+item_literal_or_parenthesis = "(", expression, ( item_literal_tail | ")" ) ;
 item_literal 				= "(", expression, item_literal_tail ;
 item_literal_tail 			= ":", expression, ")" ;
 

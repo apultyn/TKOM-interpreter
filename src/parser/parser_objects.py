@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List, Any, Optional
 
 from parser_util import (
-    Node,
+    ParserObject,
     AssignmentType,
     BinaryOperation,
     NegationType,
@@ -10,12 +10,14 @@ from parser_util import (
 )
 
 
-class Statement(Node):
-    pass
+class Statement(ParserObject):
+    def __repr__(self):
+        return None
 
 
-class Expression(Node):
-    pass
+class Expression(ParserObject):
+    def __repr__(self):
+        return None
 
 
 @dataclass

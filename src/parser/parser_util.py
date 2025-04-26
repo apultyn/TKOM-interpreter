@@ -2,7 +2,7 @@ from enum import Enum, auto
 from src.util.token_type import TokenType
 
 
-class Node:
+class ParserObject:
     def accept(self, visitor):
         return visitor.visit(self)
 

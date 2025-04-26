@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from lexer import Lexer
 from src.util.token_type import TokenType
 from src.util.error_handler import ErrorHandler
@@ -53,7 +55,9 @@ class Parser:
             return token
         return None
 
-    def binary_operation_builder(self, subrule: function, *tokens: TokenType):
+    def binary_operation_builder(
+        self, subrule: Callable[[], po.Expressio], *tokens: TokenType
+    ):
         expr = subrule()
         while found_token := self.might_be_in(tokens):
             right = subrule()
@@ -62,17 +66,23 @@ class Parser:
             )
         return expr
 
-    def parse_list(self, element_function: function, separator: TokenType, expected_item: str):
+    def parse_list(
+        self,
+        element_function: Callable[[], po.ParserObject],
+        separator: TokenType,
+        expected_item: str,
+    ):
         items = []
         first_item = element_function()
         if first_item:
             items.append(first_item)
 
             while self.might_be(separator):
-                next_item = self.must_be_created(self.element_function(), f"{expected_item} expected")
+                next_item = self.must_be_created(
+                    element_function(), f"{expected_item} expected"
+                )
                 items.append(next_item)
         return items
-
 
     # program = { statement }, "EOF" ;
     def parse_program(self):
@@ -166,9 +176,7 @@ class Parser:
             return None
 
         arguments = self.parse_list(
-            self.parse_expression,
-            TokenType.COMMA,
-            "Expression"
+            self.parse_expression, TokenType.COMMA, "Expression"
         )
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
@@ -182,8 +190,8 @@ class Parser:
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
         condition = self.must_be_created(
-            self.parse_expression(),
-            "Expression exprected")
+            self.parse_expression(), "Expression exprected"
+        )
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
@@ -257,7 +265,7 @@ class Parser:
 
     # block	= "{", { statement }, "}" ;
     def parse_block(self):
-        if self.might_be(TokenType.LEFT_CURLY_BRACKET):
+        if not self.might_be(TokenType.LEFT_CURLY_BRACKET):
             return None
 
         statements = []
@@ -328,7 +336,7 @@ class Parser:
 
     # postfix = primary, { call_suff | member_suff} ;
     def parse_postfix(self):
-        expr = self.parse_primary()
+        expr = self.must_be_created(self.parse_primary(), "Value expected")
 
         while (
             new_expr := (self.parse_access_suff(expr) or self.parse_call_suff(expr))
@@ -346,7 +354,7 @@ class Parser:
     # 				| dict_literal
     #               | func_literal
     # 				| linq_query
-    # 				| item_literal_or_parenthisis
+    # 				| item_literal_or_parenthesis
     def parse_primary(self):
         token = self.current_token
 
@@ -369,7 +377,7 @@ class Parser:
             TokenType.IDENTIFIER: po.Identifier(token.value),
         }
 
-        if simple_type := mapping.get(token.type, None) is not None:
+        if (simple_type := mapping.get(token.type, None)) is not None:
             self.get_next_token()
             return simple_type
 
@@ -378,7 +386,7 @@ class Parser:
             or self.parse_func_literal()
             or self.parse_dict_literal()
             or self.parse_linq_query()
-            or self.parse_item_literal_or_parenthisis()
+            or self.parse_item_literal_or_parenthesis()
         }
 
     # list_literal = "[", [ expression, { ",", expression } ] "]" ;
@@ -386,11 +394,7 @@ class Parser:
         if not self.might_be(TokenType.LEFT_SQUARE_BRACKET):
             return None
 
-        elements = self.parse_list(
-            self.parse_expression,
-            TokenType.COMMA,
-            "Expression"
-        )
+        elements = self.parse_list(self.parse_expression, TokenType.COMMA, "Expression")
 
         self.must_be(TokenType.RIGHT_SQUARE_BRACKET, "']' expected")
 
@@ -402,9 +406,7 @@ class Parser:
             return None
 
         items = self.parse_list(
-            self.parse_item_literal,
-            TokenType.COMMA,
-            "Item literal"
+            self.parse_item_literal, TokenType.COMMA, "Item literal"
         )
 
         self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' expected")
@@ -448,27 +450,34 @@ class Parser:
 
         selects = [self.must_be_created(self.parse_expression(), "Expression expected")]
         while self.might_be(TokenType.COMMA):
-            selects.append(self.must_be_created(self.parse_expression(), "Expression expected"))
+            selects.append(
+                self.must_be_created(self.parse_expression(), "Expression expected")
+            )
 
+        where = None
         if self.might_be(TokenType.WHERE_KEYWORD):
             where = self.must_be_created(self.parse_expression(), "Expression expected")
 
+        order_by = None
+        descending = False
         if self.might_be(TokenType.ORDER_KEYWORD):
             self.must_be(TokenType.BY_KEYWORD, "'by' keyword expected")
-            order_by = self.must_be_created(self.parse_expression(), "Expression expected")
+            order_by = self.must_be_created(
+                self.parse_expression(), "Expression expected"
+            )
             if self.might_be(TokenType.DESCENDING_KEYWORD):
                 descending = True
 
         return po.LinqExpr(var, source, selects, where, order_by, descending)
 
-
-
-    # item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;
-    def parse_item_literal_or_parenthisis(self):
+    # item_literal_or_parenthesis = "(", expression, ( item_literal_tail | right_parenthesis ) ;
+    def parse_item_literal_or_parenthesis(self):
         if not self.might_be(TokenType.LEFT_BRACKET):
             return None
 
-        first_expression = self.must_be_created(self.parse_expression(), "Expression expected")
+        first_expression = self.must_be_created(
+            self.parse_expression(), "Expression expected"
+        )
 
         if item_literal := self.parse_item_literal_tail(first_expression):
             return item_literal
@@ -482,7 +491,9 @@ class Parser:
         if not self.might_be(TokenType.LEFT_BRACKET):
             return None
 
-        first_expression = self.must_be_created(self.parse_expression(), "Expression expected")
+        first_expression = self.must_be_created(
+            self.parse_expression(), "Expression expected"
+        )
 
         return self.must_be_created(self.parse_item_literal_tail(first_expression))
 
