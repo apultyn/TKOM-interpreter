@@ -48,6 +48,13 @@ class Parser:
             return token
         return None
 
+    def binary_operation_builder(self, subrule: function, *tokens: TokenType):
+        expr = subrule()
+        while found_token := self.might_be_in(tokens):
+            right = subrule()
+            expr = po.BinaryExpr(expr, pu.match_binary_operation(found_token.type), right)
+        return expr
+
     # program = { statement }, "EOF" ;
     def parse_program(self):
         statements = []
@@ -103,7 +110,7 @@ class Parser:
 
         if not assign_token:
             return None
-        assignment_type = pu.match_assignment_type(assign_token)
+        assignment_type = pu.match_assignment_type(assign_token.type)
 
         expression = self.parse_expression()
         if not expression:
@@ -116,7 +123,7 @@ class Parser:
         expr = first_ident
 
         while (
-            new_expr := self.parse_access_suff(expr) or self.parse_call_suff(expr)
+            new_expr := (self.parse_access_suff(expr) or self.parse_call_suff(expr))
         ) is not None:
             expr = new_expr
 
@@ -253,8 +260,119 @@ class Parser:
 
         return po.Block(statements)
 
-    def parse_argument_list(self):
+    # expression = logic_or ;
+    def parse_expression(self):
+        return self.parse_logic_or()
+
+    # logic_or = logic_and, { "or", logic_and } ;
+    def parse_logic_or(self):
+        return self.binary_operation_builder(
+            self.parse_logic_and, TokenType.OR_OPERATOR
+        )
+
+    # logic_and = equality, { "and", equality } ;
+    def parse_logic_and(self):
+        return self.binary_operation_builder(
+            self.parse_equality, TokenType.AND_OPERATOR
+        )
+
+    # equality = comparison, { ("==" | "!="), comparison } ;
+    def parse_equality(self):
+        return self.binary_operation_builder(
+            self.parse_comparison, TokenType.EQ_OPERATOR, TokenType.NEQ_OPERATOR
+        )
+
+    # comparison = additive, { (">" | ">=" | "<" | "<="), additive } ;
+    def parse_comparison(self):
+        return self.binary_operation_builder(
+            self.parse_additive,
+            TokenType.GT_OPERATOR,
+            TokenType.GEQ_OPERATOR,
+            TokenType.LT_OPERATOR,
+            TokenType.LEQ_OPERATOR,
+        )
+
+    # additive = multiplicative, { ("+" | "-"), multiplicative } ;
+    def parse_additive(self):
+        return self.binary_operation_builder(
+            self.parse_multiplicative, TokenType.PLUS_OPERATOR, TokenType.MINUS_OPERATOR
+        )
+
+    # multiplicative = unary, { ( "*" | "/" ), unary } ;
+    def parse_multiplicative(self):
+        return self.binary_operation_builder(
+            self.parse_unary, TokenType.MUL_OPERATOR, TokenType.DIV_OPERATOR
+        )
+
+    # unary	= { ("!" | "-") }, postfix ;
+    def parse_unary(self):
+        prefixes: list[TokenType] = []
+        while found_token := self.might_be_in(
+            [TokenType.LOGIC_NEG_OPERATOR, TokenType.MINUS_OPERATOR]
+        ):
+            prefixes.append(found_token)
+
+        expr = self.parse_postfix()
+
+        for token in reversed(prefixes):
+            expr = po.NegationExpr(pu.match_negation_type(token.type), expr)
+        return expr
+
+    # postfix = primary, { call_suff | member_suff} ;
+    def parse_postfix(self):
+        expr = self.parse_primary()
+
+        while (
+            new_expr := (self.parse_access_suff(expr) or self.parse_call_suff(expr))
+        ) is not None:
+            expr = new_expr
+
+        return expr
+
+    # primary = integer
+    # 				| float
+    # 				| string
+    # 				| "True" | "False"
+    # 				| identifier
+    # 				| list_literal
+    # 				| dict_literal
+    # 				| linq_query
+    # 				| item_literal_or_parenthisis
+    def parse_primary(self):
+        token = self.current_token
+
+        mapping = {
+            TokenType.INT_LITERAL: po.SimpleTypeExpr(pu.SimpleLiteralType.INT, token.value),
+            TokenType.FLOAT_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.FLOAT, token.value),
+            TokenType.STRING_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.STRING, token.value),
+            TokenType.TRUE_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.BOOL, True),
+            TokenType.FALSE_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.BOOL, False),
+            TokenType.IDENTIFIER: po.Identifier(token.value)
+        }
+
+        if simple_type := mapping.get(token.type, None) is not None:
+            self.get_next_token()
+            return simple_type
+
+        return {
+            self.parse_list_literal()
+            or self.parse_dict_literal()
+            or self.parse_linq_query()
+            or self.parse_item_literal_or_parenthisis()
+        }
+
+
+    def parse_list_literal(self):
         pass
 
-    def parse_expression(self):
+    def parse_dict_literal(self):
+        pass
+
+    def parse_linq_query(self):
+        pass
+
+    def parse_item_literal_or_parenthisis(self):
+        pass
+
+    def parse_argument_list(self):
         pass

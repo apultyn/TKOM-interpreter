@@ -38,11 +38,11 @@ primary			= integer
 					| float
 					| string
 					| "True" | "False"
+					| identifier
 					| list_literal
 					| dict_literal
 					| func_literal
 					| linq_query
-					| identifier
 					| item_literal_or_parenthisis
 
 item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;

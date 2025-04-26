@@ -57,8 +57,8 @@ OPERATORS = {
     },
     "+": {"=": TokenType.ASSIGN_PLUS_OPERATOR, "default": TokenType.PLUS_OPERATOR},
     "=": {"=": TokenType.EQ_OPERATOR, "default": TokenType.ASSIGN_OPERATOR},
-    ">": {"=": TokenType.GEQ_OPERATOR, "default": TokenType.GREATER_OPERATOR},
-    "<": {"=": TokenType.LEQ_OPERATOR, "default": TokenType.LESS_OPERATOR},
+    ">": {"=": TokenType.GEQ_OPERATOR, "default": TokenType.GT_OPERATOR},
+    "<": {"=": TokenType.LEQ_OPERATOR, "default": TokenType.LT_OPERATOR},
 }
 
 ESCAPING_SIGNS = {

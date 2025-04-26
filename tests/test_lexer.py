@@ -64,9 +64,9 @@ def test_build_simple_and_operators():
         Token(TokenType.EQ_OPERATOR, (2, 5)),
         Token(TokenType.ASSIGN_OPERATOR, (2, 7)),
         Token(TokenType.GEQ_OPERATOR, (2, 9)),
-        Token(TokenType.GREATER_OPERATOR, (2, 11)),
+        Token(TokenType.GT_OPERATOR, (2, 11)),
         Token(TokenType.LEQ_OPERATOR, (2, 12)),
-        Token(TokenType.LESS_OPERATOR, (2, 14)),
+        Token(TokenType.LT_OPERATOR, (2, 14)),
         Token(TokenType.EOF, (2, 15)),
     ]
 
