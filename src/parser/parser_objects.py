@@ -37,12 +37,12 @@ class Program:
 class IfStmt(Statement):
     condition: Expression
     body: Block
-    else_if_statements: List["ElseIfStmt"]
+    elif_statements: List["ElifStmt"]
     else_body: Block
 
 
 @dataclass
-class ElseIfStmt(Statement):
+class ElifStmt(Statement):
     condition: Expression
     body: Block
 

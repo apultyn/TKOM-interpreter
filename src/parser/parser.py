@@ -1,7 +1,7 @@
 from lexer import Lexer
 from src.util.token_type import TokenType
 from src.util.error_handler import ErrorHandler
-from src.util.pyscript_exceptions import PyscriptException
+from src.util.pyscript_exceptions import SyntaxException
 
 import parser_objects as po
 import parser_util as pu
@@ -17,7 +17,7 @@ class Parser:
     def get_next_token(self):
         try:
             self.current_token = self.lexer.get_next_token()
-        except PyscriptException as e:
+        except SyntaxException as e:
             self.error_handler.handle_error(e)
 
         while self.current_token.type in [
@@ -27,10 +27,10 @@ class Parser:
             self.current_token = self.lexer.get_next_token()
         return self.current_token
 
-    def must_be(self, token_type: TokenType, exception: PyscriptException):
+    def must_be(self, token_type: TokenType, msg: str):
         token = self.current_token
         if token.type != token_type:
-            raise exception
+            raise SyntaxException(self.current_token.pos, msg)
         self.get_next_token()
         return token
 
@@ -54,7 +54,7 @@ class Parser:
         while self.current_token.type != TokenType.EOF:
             statement = self.parse_statement()
             if not statement:
-                raise PyscriptException()
+                raise SyntaxException()
             statements.append(statement)
         return po.Program(statements)
 
@@ -76,16 +76,18 @@ class Parser:
 
     # stmt_with_ident = identifier, ( assignment | call_stmt ) ;
     def parse_stmt_with_ident(self):
-        token = self.must_be(TokenType.IDENTIFIER, PyscriptException())
-        identifier = po.Identifier(token)
+        token = self.might_be(TokenType.IDENTIFIER)
+        if not token:
+            return None
 
+        identifier = po.Identifier(token)
         statement = self.parse_assignment(identifier) or self.parse_call_stmt(
             identifier
         )
         if not statement:
-            raise PyscriptException()
+            raise SyntaxException()
 
-        self.must_be(TokenType.SEMICOLON, PyscriptException())
+        self.must_be(TokenType.SEMICOLON, "';' expected")
 
         return statement
 
@@ -105,7 +107,7 @@ class Parser:
 
         expression = self.parse_expression()
         if not expression:
-            raise PyscriptException()
+            raise SyntaxException()
 
         return po.AssignmentStmt(identifier, assignment_type, expression)
 
@@ -119,56 +121,140 @@ class Parser:
             expr = new_expr
 
         if new_expr := self.parse_call_suff(expr) is None:
-            raise PyscriptException()
+            raise SyntaxException()
         return new_expr
 
     # access_suff = ".", identifier ;
     def parse_access_suff(self, source: po.Expression):
-        if self.might_be(TokenType.DOT_OPERATOR) is None:
+        if not self.might_be(TokenType.DOT_OPERATOR):
             return None
 
-        ident_token = self.must_be(TokenType.IDENTIFIER, PyscriptException())
+        ident_token = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
         identifier = po.Identifier(ident_token)
 
         return po.AccessExpr(source, identifier)
 
     # call_suff = "(", [ argument_list ], ")" ;
     def parse_call_suff(self, source: po.Expression):
-        if self.might_be(TokenType.LEFT_PARENTHESIS) is None:
+        if not self.might_be(TokenType.LEFT_BRACKET):
             return None
 
         arguments = self.parse_argument_list()
 
-        self.must_be(TokenType.RIGHT_PARENTHESIS, PyscriptException())
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
         return po.CallExpr(source, arguments)
 
-    # if_statement = "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
+    # if_statement = "if", "(", expression, ")", block, { elif }, [ "else", block ] ;
     def parse_if_statement(self):
-        if self.might_be(TokenType.IF_KEYWORD) is None:
+        if not self.might_be(TokenType.IF_KEYWORD):
             return None
 
-        self.must_be(TokenType.LEFT_PARENTHESIS, PyscriptException())
+        self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
         condition = self.parse_expression()
         if not condition:
-            raise PyscriptException()
+            raise SyntaxException()
 
-        self.must_be(TokenType.RIGHT_PARENTHESIS, PyscriptException())
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
         body = self.parse_block()
         if not body:
-            raise PyscriptException()
+            raise SyntaxException()
 
-        else_if_statements = []
-        while else_if := self.parse_else_if():
-            else_if_statements.append(else_if)
+        elif_statements = []
+        while elif_stmt := self.parse_elif():
+            elif_statements.append(elif_stmt)
 
         else_body = None
         if self.might_be(TokenType.ELSE_KEYWORD):
             else_body = self.parse_block()
 
-        return po.IfStmt(condition, body, else_if_statements, else_body)
+        return po.IfStmt(condition, body, elif_statements, else_body)
 
+    # elif = "elif", "(", expression, ")", block ;
+    def parse_elif(self):
+        if not self.might_be(TokenType.ELIF_KEYWORD):
+            return None
+
+        self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
+
+        condition = self.parse_expression()
+        if not condition:
+            raise SyntaxException()
+
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
+
+        body = self.parse_block()
+        if not body:
+            raise SyntaxException()
+
+        return po.ElifStmt(condition, body)
+
+    # while_loop = "while", "(", expression, ")", block ;
+    def parse_while_loop(self):
+        if not self.might_be(TokenType.WHILE_KEYWORD):
+            return None
+
+        self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
+
+        condition = self.parse_expression()
+        if not condition:
+            raise SyntaxException()
+
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
+
+        body = self.parse_block()
+        if not body:
+            raise SyntaxException()
+
+        return po.WhileStmt(condition, body)
+
+    # for_loop = "for", identifier, "in", expression, block ;
+    def parse_for_loop(self):
+        if not self.might_be(TokenType.FOR_KEYWORD):
+            return None
+
+        token = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
+        var = po.Identifier(token.value)
+
+        self.must_be(TokenType.IN_KEYWORD, "'in' keyword expected")
+
+        source = self.parse_expression()
+        if not source:
+            raise SyntaxException()
+
+        body = self.parse_block()
+        if not body:
+            raise SyntaxException()
+
+        return po.ForStmt(var, source, body)
+
+    # return_statement = "return", [ expression ], ";" ;
+    def parse_return_statement(self):
+        if not self.might_be(TokenType.RETURN_KEYWORD):
+            return None
+
+        value = self.parse_expression()
+
+        self.must_be(TokenType.SEMICOLON, "';' expected")
+
+        return po.ReturnStmt(value)
+
+    # block	= "{", { statement }, "}" ;
+    def parse_block(self):
+        if self.might_be(TokenType.LEFT_CURLY_BRACKET):
+            return None
+
+        statements = []
+        while statement := self.parse_statement():
+            statements.append(statement)
+
+        self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' expected")
+
+        return po.Block(statements)
 
     def parse_argument_list(self):
+        pass
+
+    def parse_expression(self):
         pass

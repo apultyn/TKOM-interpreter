@@ -30,4 +30,9 @@ class NewLineException(PyscriptException):
 
 class TokenException(PyscriptException):
     def __init__(self, *args):
+        super().__init__("TOKEN", *args)
+
+
+class SyntaxException(PyscriptException):
+    def __init__(self, *args):
         super().__init__("SYNTAX", *args)

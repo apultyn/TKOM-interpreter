@@ -16,8 +16,8 @@ call_stmt			= { access_suff | call_suff }, call_suff ;
 access_suff 		= ".", identifier ;
 call_suff			= "(", [ argument_list ], ")"
 
-if_statement 		= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
-else_if 			= "elif", "(", expression, ")", block ;
+if_statement 		= "if", "(", expression, ")", block, { elif }, [ "else", block ] ;
+elif 				= "elif", "(", expression, ")", block ;
 
 while_loop 			= "while", "(", expression, ")", block ;
 for_loop 			= "for", identifier, "in", expression, block ;
