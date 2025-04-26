@@ -52,7 +52,9 @@ class Parser:
         expr = subrule()
         while found_token := self.might_be_in(tokens):
             right = subrule()
-            expr = po.BinaryExpr(expr, pu.match_binary_operation(found_token.type), right)
+            expr = po.BinaryExpr(
+                expr, pu.match_binary_operation(found_token.type), right
+            )
         return expr
 
     # program = { statement }, "EOF" ;
@@ -336,18 +338,29 @@ class Parser:
     # 				| identifier
     # 				| list_literal
     # 				| dict_literal
+    #               | func_literal
     # 				| linq_query
     # 				| item_literal_or_parenthisis
     def parse_primary(self):
         token = self.current_token
 
         mapping = {
-            TokenType.INT_LITERAL: po.SimpleTypeExpr(pu.SimpleLiteralType.INT, token.value),
-            TokenType.FLOAT_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.FLOAT, token.value),
-            TokenType.STRING_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.STRING, token.value),
-            TokenType.TRUE_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.BOOL, True),
-            TokenType.FALSE_LITERAL: po.SimpleLiteralType(pu.SimpleLiteralType.BOOL, False),
-            TokenType.IDENTIFIER: po.Identifier(token.value)
+            TokenType.INT_LITERAL: po.SimpleTypeExpr(
+                pu.SimpleLiteralType.INT, token.value
+            ),
+            TokenType.FLOAT_LITERAL: po.SimpleLiteralType(
+                pu.SimpleLiteralType.FLOAT, token.value
+            ),
+            TokenType.STRING_LITERAL: po.SimpleLiteralType(
+                pu.SimpleLiteralType.STRING, token.value
+            ),
+            TokenType.TRUE_LITERAL: po.SimpleLiteralType(
+                pu.SimpleLiteralType.BOOL, True
+            ),
+            TokenType.FALSE_LITERAL: po.SimpleLiteralType(
+                pu.SimpleLiteralType.BOOL, False
+            ),
+            TokenType.IDENTIFIER: po.Identifier(token.value),
         }
 
         if simple_type := mapping.get(token.type, None) is not None:
@@ -356,23 +369,67 @@ class Parser:
 
         return {
             self.parse_list_literal()
+            or self.parse_func_literal()
             or self.parse_dict_literal()
             or self.parse_linq_query()
             or self.parse_item_literal_or_parenthisis()
         }
 
-
+    # list_literal = "[", [ expression, { ",", expression } ] "]" ;
     def parse_list_literal(self):
-        pass
+        if not self.might_be(TokenType.LEFT_SQUARE_BRACKET):
+            return None
 
+        elements = []
+        while expression := self.parse_expression():
+            elements.append(expression)
+            self.must_be(TokenType.COMMA, "',' expected")
+
+        self.must_be(TokenType.RIGHT_SQUARE_BRACKET, "']' expected")
+
+        return po.ListExpr(elements)
+
+    # dict_literal = "{", [ item_literal, { item_literal } ], "}" ;
     def parse_dict_literal(self):
-        pass
+        if not self.might_be(TokenType.LEFT_CURLY_BRACKET):
+            return None
 
+        items = []
+        while item := self.parse_item_literal():
+            items.append(item)
+
+        self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' expected")
+
+        return po.DictExpr(items)
+
+
+    # func_literal = "function", "(", [ identifier_list ], ")", block ;
+    def parse_func_literal(self):
+        if not self.might_be(TokenType.FUNCTION_KEYWORD):
+            return None
+
+        self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
+
+
+    # linq_query = "from", identifier, "in", expression,
+    # 				    "select", expression, { ",", expression }
+    # 				    [ "where", expression ],
+    # 				    [ "order", "by", expression, [ "descending" ] ] ;
     def parse_linq_query(self):
         pass
 
+    # item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;
     def parse_item_literal_or_parenthisis(self):
         pass
 
+    def parse_item_literal_tail(self):
+        pass
+
+    def parse_item_literal(self):
+        pass
+
     def parse_argument_list(self):
+        pass
+
+    def parse_identifier_list(self):
         pass

@@ -45,18 +45,18 @@ primary			= integer
 					| linq_query
 					| item_literal_or_parenthisis
 
-item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;
-item_literal_tail 			= ":", expression, ")" ;
-right_parenthisis 			= ")"
-
-list_literal	= "[", [ expression { ",", expression } ] "]" ;
-dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
+list_literal	= "[", [ expression, { ",", expression } ] "]" ;
+dict_literal	= "{", [ item_literal, { ",", item_literal } ], "}" ;
 func_literal    = "function", "(", [ identifier_list ], ")", block ;
 
 linq_query		= "from", identifier, "in", expression,
 					"select", expression, { ",", expression }
 					[ "where", expression ],
 					[ "order", "by", expression, [ "descending" ] ] ;
+
+item_literal_or_parenthisis = "(", expression, ( item_literal_tail | ")" ) ;
+item_literal 				= "(", expression, item_literal_tail ;
+item_literal_tail 			= ":", expression, ")" ;
 
 identifier_list = identifier, { ",", identifier } ;
 argument_list	= [ expression, { ",", expression } ] ;

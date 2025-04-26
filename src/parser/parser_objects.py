@@ -116,7 +116,7 @@ class ItemExpr(Expression):
 
 @dataclass
 class DictExpr(Expression):
-    pairs: List[ItemExpr]
+    items: List[ItemExpr]
 
 
 @dataclass
