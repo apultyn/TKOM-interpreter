@@ -32,13 +32,17 @@ class Parser:
     def must_be(self, token_type: TokenType, msg: str):
         token = self.current_token
         if token.type != token_type:
-            raise SyntaxException(self.current_token.pos, msg)
+            self.error_handler.handle_error(
+                SyntaxException(self.current_token.pos, msg)
+            )
         self.get_next_token()
         return token
 
     def must_be_created(self, parser_object, msg):
         if not parser_object:
-            raise SyntaxException(self.current_token.pos, msg)
+            self.error_handler.handle_error(
+                SyntaxException(self.current_token.pos, msg)
+            )
         return parser_object
 
     def might_be(self, token_type: TokenType):

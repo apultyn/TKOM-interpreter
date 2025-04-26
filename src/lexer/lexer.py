@@ -1,6 +1,7 @@
 from src.util.source import Source
 from src.util.my_token import Token
 from src.util.token_type import TokenType
+from src.util.error_handler import ErrorHandler
 from src.util.pyscript_exceptions import (
     LengthException,
     UnclosedException,
@@ -70,9 +71,15 @@ ESCAPING_SIGNS = {
 
 
 class Lexer:
-    def __init__(self, source: Source, config: LexerConfig = LexerConfig()):
-        self._source = Source(source)
-        self._config = config
+    def __init__(
+        self,
+        source: Source,
+        error_handler: ErrorHandler = ErrorHandler(),
+        config: LexerConfig = LexerConfig(),
+    ):
+        self.source = Source(source)
+        self.config = config
+        self.error_handler = error_handler
 
     def get_next_token(self):
         self.skip_whitespaces()
@@ -85,7 +92,9 @@ class Lexer:
         )
 
         if not token:
-            raise TokenException("Unknown token", self.get_pos())
+            self.error_handler.handle_error(
+                TokenException("Unknown token", self.get_pos())
+            )
 
         return token
 
@@ -130,31 +139,37 @@ class Lexer:
         i = 0
         char = self.get_next_char()
 
-        while i <= self._config.max_comment_length:
+        while i <= self.config.max_comment_length:
             if char == "*":
                 if char := self.get_next_char() == "/":
                     return TokenType.BLOCK_COMMENT
             elif char == "EOF":
-                raise UnclosedException(f"Comment not closed", self.get_pos())
+                self.error_handler.handle_error(
+                    UnclosedException(f"Comment not closed", self.get_pos())
+                )
             else:
                 char = self.get_next_char()
             i += 1
         else:
-            raise LengthException(
-                f"Maximum comment length ({self._config.max_comment_length}) exceeded",
-                self.get_prev_pos(),
+            self.error_handler.handle_error(
+                LengthException(
+                    f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    self.get_prev_pos(),
+                )
             )
 
     def build_line_comment(self):
         i = 0
-        while i <= self._config.max_comment_length:
+        while i <= self.config.max_comment_length:
             if self.get_next_char() == "\n":
                 return TokenType.LINE_COMMENT
             i += 1
         else:
-            raise LengthException(
-                f"Maximum comment length ({self._config.max_comment_length}) exceeded",
-                self.get_pos(),
+            self.error_handler.handle_error(
+                LengthException(
+                    f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    self.get_pos(),
+                )
             )
 
     def build_identifier(self):
@@ -163,7 +178,7 @@ class Lexer:
         char = self.get_char()
         i = 0
 
-        while i <= self._config.max_identifier_length:
+        while i <= self.config.max_identifier_length:
             if (char.isalnum() or char == "_") and char != "EOF":
                 chars.append(char)
                 i += 1
@@ -171,9 +186,11 @@ class Lexer:
             else:
                 break
         else:
-            raise LengthException(
-                f"Maximum identifier length ({self._config.max_identifier_length}) exceeded",
-                self.get_prev_pos(),
+            self.error_handler.handle_error(
+                LengthException(
+                    f"Maximum identifier length ({self.config.max_identifier_length}) exceeded",
+                    self.get_prev_pos(),
+                )
             )
 
         if len(chars) == 0:
@@ -196,7 +213,7 @@ class Lexer:
         i = 0
         string_value = []
 
-        while i <= self._config.max_string_literal_length:
+        while i <= self.config.max_string_literal_length:
             if char == "\\":
                 next_char = self.get_next_char()
                 if next_char in ESCAPING_SIGNS:
@@ -209,16 +226,20 @@ class Lexer:
                 self.get_next_char()
                 break
             elif char == "EOF":
-                raise UnclosedException("String literal unclosed", self.get_pos())
+                self.error_handler.handle_error(
+                    UnclosedException("String literal unclosed", self.get_pos())
+                )
             else:
                 string_value.append(char)
                 prev_char = char
                 char = self.get_next_char()
                 i += 1
         else:
-            raise LengthException(
-                f"Maximum string literal length ({self._config.max_string_literal_length}) exceeded",
-                self.get_prev_pos(),
+            self.error_handler.handle_error(
+                LengthException(
+                    f"Maximum string literal length ({self.config.max_string_literal_length}) exceeded",
+                    self.get_prev_pos(),
+                )
             )
 
         return Token(TokenType.STRING_LITERAL, start_pos, "".join(string_value))
@@ -237,8 +258,11 @@ class Lexer:
         if char == "0":
             next_char = self.get_next_char()
             if next_char.isdigit():
-                raise InvalidValueException(
-                    "Integer can't have anything after starting 0", self.get_prev_pos()
+                self.error_handler.handle_error(
+                    InvalidValueException(
+                        "Integer can't have anything after starting 0",
+                        self.get_prev_pos(),
+                    )
                 )
             elif next_char == ".":
                 building_float = True
@@ -248,7 +272,7 @@ class Lexer:
             else:
                 return Token(TokenType.INT_LITERAL, start_pos, 0)
 
-        while i <= self._config.max_num_literal_length:
+        while i <= self.config.max_num_literal_length:
             if char.isdigit():
                 if building_float:
                     num_value += char
@@ -264,25 +288,33 @@ class Lexer:
                     i += 1
                     char = self.get_next_char()
                 else:
-                    raise InvalidValueException(
-                        "Float can't have many decimal points", self.get_pos()
+                    self.error_handler.handle_error(
+                        InvalidValueException(
+                            "Float can't have many decimal points", self.get_pos()
+                        )
                     )
             else:
                 break
         else:
-            raise LengthException(
-                f"Maximum int literal length ({self._config.max_num_literal_length}) exceeded",
-                self.get_prev_pos(),
+            self.error_handler.handle_error(
+                LengthException(
+                    f"Maximum int literal length ({self.config.max_num_literal_length}) exceeded",
+                    self.get_prev_pos(),
+                )
             )
 
         if building_float:
             if num_value[-1:] == ".":
-                raise InvalidValueException(
-                    "Missing digits after decimal point", self.get_pos()
+                self.error_handler.handle_error(
+                    InvalidValueException(
+                        "Missing digits after decimal point", self.get_pos()
+                    )
                 )
             if num_value[-2:] == "00":
-                raise InvalidValueException(
-                    "Float can't have many zeroes at the end", self.get_prev_pos()
+                self.error_handler.handle_error(
+                    InvalidValueException(
+                        "Float can't have many zeroes at the end", self.get_prev_pos()
+                    )
                 )
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
         else:
@@ -293,13 +325,13 @@ class Lexer:
             self.get_next_char()
 
     def get_char(self):
-        return self._source.get_char()
+        return self.source.get_char()
 
     def get_next_char(self):
-        return self._source.get_next_char()
+        return self.source.get_next_char()
 
     def get_pos(self):
-        return self._source.get_pos()
+        return self.source.get_pos()
 
     def get_prev_pos(self):
         return (self.get_pos()[0], self.get_pos()[1] - 1)

@@ -1,11 +1,13 @@
+from dataclasses import dataclass
+
+@dataclass
 class PyscriptException(Exception):
-    def __init__(self, error_type, message, position):
-        self._error_type = error_type
-        self._message = message
-        self._position = position
+    error_type: str
+    message: str
+    position: tuple[int, int]
 
     def __str__(self):
-        return f"{self._error_type} ERROR - line {self._position[0]}, col {self._position[1]} - {self._message}"
+        return f"{self.error_type} ERROR - line {self.position[0]}, col {self.position[1]} - {self.message}"
 
 
 class LengthException(PyscriptException):
