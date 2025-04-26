@@ -34,6 +34,11 @@ class Parser:
         self.get_next_token()
         return token
 
+    def must_be_created(self, parser_object, msg):
+        if not parser_object:
+            raise SyntaxException(self.current_token.pos, msg)
+        return parser_object
+
     def might_be(self, token_type: TokenType):
         token = self.current_token
         if token.type == token_type:
@@ -57,13 +62,25 @@ class Parser:
             )
         return expr
 
+    def parse_list(self, element_function: function, separator: TokenType, expected_item: str):
+        items = []
+        first_item = element_function()
+        if first_item:
+            items.append(first_item)
+
+            while self.might_be(separator):
+                next_item = self.must_be_created(self.element_function(), f"{expected_item} expected")
+                items.append(next_item)
+        return items
+
+
     # program = { statement }, "EOF" ;
     def parse_program(self):
         statements = []
         while self.current_token.type != TokenType.EOF:
-            statement = self.parse_statement()
-            if not statement:
-                raise SyntaxException()
+            statement = self.must_be_created(
+                self.parse_statement(), "Statement expected"
+            )
             statements.append(statement)
         return po.Program(statements)
 
@@ -90,11 +107,10 @@ class Parser:
             return None
 
         identifier = po.Identifier(token)
-        statement = self.parse_assignment(identifier) or self.parse_call_stmt(
-            identifier
+        statement = self.must_be_created(
+            self.parse_assignment(identifier) or self.parse_call_stmt(identifier),
+            "Assignment or function call expected",
         )
-        if not statement:
-            raise SyntaxException()
 
         self.must_be(TokenType.SEMICOLON, "';' expected")
 
@@ -114,9 +130,9 @@ class Parser:
             return None
         assignment_type = pu.match_assignment_type(assign_token.type)
 
-        expression = self.parse_expression()
-        if not expression:
-            raise SyntaxException()
+        expression = self.must_be_created(
+            self.parse_expression(), "Expression expected"
+        )
 
         return po.AssignmentStmt(identifier, assignment_type, expression)
 
@@ -129,8 +145,9 @@ class Parser:
         ) is not None:
             expr = new_expr
 
-        if new_expr := self.parse_call_suff(expr) is None:
-            raise SyntaxException()
+        new_expr = self.must_be_created(
+            self.parse_call_suff(expr), "Function call expected"
+        )
         return new_expr
 
     # access_suff = ".", identifier ;
@@ -143,12 +160,16 @@ class Parser:
 
         return po.AccessExpr(source, identifier)
 
-    # call_suff = "(", [ argument_list ], ")" ;
+    # call_suff = "(", [ expression, { ",", expression } ], ")" ;
     def parse_call_suff(self, source: po.Expression):
         if not self.might_be(TokenType.LEFT_BRACKET):
             return None
 
-        arguments = self.parse_argument_list()
+        arguments = self.parse_list(
+            self.parse_expression,
+            TokenType.COMMA,
+            "Expression"
+        )
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
@@ -160,15 +181,13 @@ class Parser:
             return None
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
-        condition = self.parse_expression()
-        if not condition:
-            raise SyntaxException()
+        condition = self.must_be_created(
+            self.parse_expression(),
+            "Expression exprected")
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
-        body = self.parse_block()
-        if not body:
-            raise SyntaxException()
+        body = self.must_be_created(self.parse_block(), "Body expected")
 
         elif_statements = []
         while elif_stmt := self.parse_elif():
@@ -187,15 +206,11 @@ class Parser:
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
 
-        condition = self.parse_expression()
-        if not condition:
-            raise SyntaxException()
+        condition = self.must_be_created(self.parse_expression(), "Expression expected")
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
-        body = self.parse_block()
-        if not body:
-            raise SyntaxException()
+        body = self.must_be_created(self.parse_block(), "Body expected")
 
         return po.ElifStmt(condition, body)
 
@@ -206,15 +221,11 @@ class Parser:
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
 
-        condition = self.parse_expression()
-        if not condition:
-            raise SyntaxException()
+        condition = self.must_be_created(self.parse_expression(), "Expression expected")
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
-        body = self.parse_block()
-        if not body:
-            raise SyntaxException()
+        body = self.must_be_created(self.parse_block(), "Body expected")
 
         return po.WhileStmt(condition, body)
 
@@ -228,13 +239,8 @@ class Parser:
 
         self.must_be(TokenType.IN_KEYWORD, "'in' keyword expected")
 
-        source = self.parse_expression()
-        if not source:
-            raise SyntaxException()
-
-        body = self.parse_block()
-        if not body:
-            raise SyntaxException()
+        source = self.must_be_created(self.parse_expression(), "Expression expected")
+        body = self.must_be_created(self.parse_block(), "Body expected")
 
         return po.ForStmt(var, source, body)
 
@@ -380,56 +386,111 @@ class Parser:
         if not self.might_be(TokenType.LEFT_SQUARE_BRACKET):
             return None
 
-        elements = []
-        while expression := self.parse_expression():
-            elements.append(expression)
-            self.must_be(TokenType.COMMA, "',' expected")
+        elements = self.parse_list(
+            self.parse_expression,
+            TokenType.COMMA,
+            "Expression"
+        )
 
         self.must_be(TokenType.RIGHT_SQUARE_BRACKET, "']' expected")
 
         return po.ListExpr(elements)
 
-    # dict_literal = "{", [ item_literal, { item_literal } ], "}" ;
+    # dict_literal = "{", [ item_literal, { ",", item_literal } ], "}" ;
     def parse_dict_literal(self):
         if not self.might_be(TokenType.LEFT_CURLY_BRACKET):
             return None
 
-        items = []
-        while item := self.parse_item_literal():
-            items.append(item)
+        items = self.parse_list(
+            self.parse_item_literal,
+            TokenType.COMMA,
+            "Item literal"
+        )
 
         self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' expected")
 
         return po.DictExpr(items)
 
-
-    # func_literal = "function", "(", [ identifier_list ], ")", block ;
+    # func_literal = "function", "(", [ identifier, { ",", identifier } ] ")", block ;
     def parse_func_literal(self):
         if not self.might_be(TokenType.FUNCTION_KEYWORD):
             return None
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
 
+        identifier_list = []
+
+        if first_identifier := self.might_be(TokenType.IDENTIFIER):
+            identifier_list.append(first_identifier)
+
+            while self.might_be(TokenType.COMMA):
+                next_identifier = self.must_be(TokenType.IDENTIFIER)
+                identifier_list.append(next_identifier)
+
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
+
+        body = self.must_be_created(self.parse_block(), "Body expected")
+
+        return po.FunctionExpr(identifier_list, body)
 
     # linq_query = "from", identifier, "in", expression,
     # 				    "select", expression, { ",", expression }
     # 				    [ "where", expression ],
     # 				    [ "order", "by", expression, [ "descending" ] ] ;
     def parse_linq_query(self):
-        pass
+        if not self.might_be(TokenType.FROM_KEYWORD):
+            return None
+
+        var = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
+        self.must_be(TokenType.IN_KEYWORD, "'in' keyword expected")
+        source = self.must_be_created(self.parse_expression(), "Expression expected")
+        self.must_be(TokenType.SELECT_KEYWORD, "'select' keyword expected")
+
+        selects = [self.must_be_created(self.parse_expression(), "Expression expected")]
+        while self.might_be(TokenType.COMMA):
+            selects.append(self.must_be_created(self.parse_expression(), "Expression expected"))
+
+        if self.might_be(TokenType.WHERE_KEYWORD):
+            where = self.must_be_created(self.parse_expression(), "Expression expected")
+
+        if self.might_be(TokenType.ORDER_KEYWORD):
+            self.must_be(TokenType.BY_KEYWORD, "'by' keyword expected")
+            order_by = self.must_be_created(self.parse_expression(), "Expression expected")
+            if self.might_be(TokenType.DESCENDING_KEYWORD):
+                descending = True
+
+        return po.LinqExpr(var, source, selects, where, order_by, descending)
+
+
 
     # item_literal_or_parenthisis = "(", expression, ( item_literal_tail | right_parenthisis ) ;
     def parse_item_literal_or_parenthisis(self):
-        pass
+        if not self.might_be(TokenType.LEFT_BRACKET):
+            return None
 
-    def parse_item_literal_tail(self):
-        pass
+        first_expression = self.must_be_created(self.parse_expression(), "Expression expected")
 
+        if item_literal := self.parse_item_literal_tail(first_expression):
+            return item_literal
+
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
+
+        return po.BracketsExpr(first_expression)
+
+    # item_literal = "(", expression, item_literal_tail ;
     def parse_item_literal(self):
-        pass
+        if not self.might_be(TokenType.LEFT_BRACKET):
+            return None
 
-    def parse_argument_list(self):
-        pass
+        first_expression = self.must_be_created(self.parse_expression(), "Expression expected")
 
-    def parse_identifier_list(self):
-        pass
+        return self.must_be_created(self.parse_item_literal_tail(first_expression))
+
+    # item_literal_tail = ":", expression, ")" ;
+    def parse_item_literal_tail(self, first_expression):
+        if not self.might_be(TokenType.COLON):
+            return None
+
+        value = self.must_be_created(self.parse_expression(), "Expression expected")
+
+        return po.ItemExpr(first_expression, value)

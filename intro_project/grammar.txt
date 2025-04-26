@@ -14,7 +14,7 @@ assignment 			= ( "=" | "+=" | "-=" ), expression ;
 call_stmt			= { access_suff | call_suff }, call_suff ;
 
 access_suff 		= ".", identifier ;
-call_suff			= "(", [ argument_list ], ")"
+call_suff			= "(", [ expression, { ",", expression } ], ")"
 
 if_statement 		= "if", "(", expression, ")", block, { elif }, [ "else", block ] ;
 elif 				= "elif", "(", expression, ")", block ;
@@ -47,7 +47,7 @@ primary			= integer
 
 list_literal	= "[", [ expression, { ",", expression } ] "]" ;
 dict_literal	= "{", [ item_literal, { ",", item_literal } ], "}" ;
-func_literal    = "function", "(", [ identifier_list ], ")", block ;
+func_literal    = "function", "(", identifier, { ",", identifier }, ")", block ;
 
 linq_query		= "from", identifier, "in", expression,
 					"select", expression, { ",", expression }
@@ -58,8 +58,6 @@ item_literal_or_parenthisis = "(", expression, ( item_literal_tail | ")" ) ;
 item_literal 				= "(", expression, item_literal_tail ;
 item_literal_tail 			= ":", expression, ")" ;
 
-identifier_list = identifier, { ",", identifier } ;
-argument_list	= [ expression, { ",", expression } ] ;
 
 integer 		= "0" | ( digit-positive , { digit } ) ;
 float			= integer, ".", integer ;
