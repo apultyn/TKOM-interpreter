@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from src.util.token_type import TokenType
 
 
 class Node:
@@ -10,6 +11,16 @@ class AssignmentType(Enum):
     NORMAL = auto()
     PLUS = auto()
     MINUS = auto()
+
+
+def match_assignment_type(token):
+    mapping = {
+        TokenType.ASSIGN_OPERATOR: AssignmentType.NORMAL,
+        TokenType.ASSIGN_PLUS_OPERATOR: AssignmentType.PLUS,
+        TokenType.ASSIGN_MINUS_OPERATOR: AssignmentType.MINUS,
+    }
+
+    return mapping.get(token, None)
 
 
 class BinaryOperation(Enum):

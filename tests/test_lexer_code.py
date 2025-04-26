@@ -185,7 +185,7 @@ def test_dict_code():
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.LEFT_CURLY_BRACKET,
@@ -250,7 +250,7 @@ def test_variable_code():
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.LEFT_CURLY_BRACKET,
@@ -301,7 +301,7 @@ a-=5  a-= 5 a -=5 a -= 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -329,7 +329,7 @@ a=5  a= 5 a =5 a = 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -357,7 +357,7 @@ a+=5  a+= 5 a +=5 a += 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -385,7 +385,7 @@ a or b (a)or(b)
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -411,7 +411,7 @@ a and b (a)and(b)
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -437,7 +437,7 @@ a!=5  a!= 5 a !=5 a != 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -465,7 +465,7 @@ a==5  a== 5 a ==5 a == 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -493,7 +493,7 @@ a<=5  a<= 5 a <=5 a <= 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -521,7 +521,7 @@ a>=5  a>= 5 a >=5 a >= 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -549,7 +549,7 @@ a<5  a< 5 a <5 a < 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -577,7 +577,7 @@ a>5  a> 5 a >5 a > 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -605,7 +605,7 @@ a+5  a+ 5 a +5 a + 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -633,7 +633,7 @@ a/5  a/ 5 a /5 a / 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -661,7 +661,7 @@ a*5  a* 5 a *5 a * 5
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -689,7 +689,7 @@ def test_log_neg_operator():
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.LOGIC_NEG_OPERATOR,
@@ -713,7 +713,7 @@ a.copy()  [1, 2, 3] .get(). length() "string" . length()
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -754,7 +754,7 @@ def test_minus_operator():
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.MINUS_OPERATOR,
@@ -782,7 +782,7 @@ def test_if_statement():
         """
 if(a < 4) {
     do_something();
-} else if (a > 4) {
+} elif (a > 4) {
     do_something_else();
 } else {
     do_something_differently();
@@ -792,7 +792,7 @@ if(a < 4) {
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IF_KEYWORD,
@@ -807,8 +807,7 @@ if(a < 4) {
         TokenType.RIGHT_BRACKET,
         TokenType.SEMICOLON,
         TokenType.RIGHT_CURLY_BRACKET,
-        TokenType.ELSE_KEYWORD,
-        TokenType.IF_KEYWORD,
+        TokenType.ELIF_KEYWORD,
         TokenType.LEFT_BRACKET,
         TokenType.IDENTIFIER,
         TokenType.GREATER_OPERATOR,
@@ -844,7 +843,7 @@ while(a < 10) {
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -884,7 +883,7 @@ print(element.key()); // "first" "second"
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -935,7 +934,7 @@ print(my_func(5, 10)); // 15
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -985,7 +984,7 @@ print(another_function(passed_func, 10));
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -1048,7 +1047,7 @@ def test_line_comment():
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.LINE_COMMENT,
@@ -1072,7 +1071,7 @@ a = (arg1,/*Comment*/arg2);
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.BLOCK_COMMENT,
@@ -1121,7 +1120,7 @@ order by city.key()descending;
     lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
-    types = [t.get_type() for t in tokens]
+    types = [t.type for t in tokens]
 
     assert types == [
         TokenType.IDENTIFIER,
@@ -1208,7 +1207,7 @@ function myFunc(a,b){
         a+=1;
         b-=1;
         if(a==b and a<=10 or b>=0){
-            return Dict(("key1":1),("key2":2.5));}else if (typeOf(a)!="Int"){return [a*b/2];}
+            return Dict(("key1":1),("key2":2.5));}elif (typeOf(a)!="Int"){return [a*b/2];}
             else {
             return "done";}}
     for i in myList{i =-i;
@@ -1290,27 +1289,26 @@ order by item descending;"""
         Token(TokenType.RIGHT_BRACKET, (8, 48)),
         Token(TokenType.SEMICOLON, (8, 49)),
         Token(TokenType.RIGHT_CURLY_BRACKET, (8, 50)),
-        Token(TokenType.ELSE_KEYWORD, (8, 51)),
-        Token(TokenType.IF_KEYWORD, (8, 56)),
-        Token(TokenType.LEFT_BRACKET, (8, 59)),
-        Token(TokenType.IDENTIFIER, (8, 60), "typeOf"),
-        Token(TokenType.LEFT_BRACKET, (8, 66)),
-        Token(TokenType.IDENTIFIER, (8, 67), "a"),
-        Token(TokenType.RIGHT_BRACKET, (8, 68)),
-        Token(TokenType.NEQ_OPERATOR, (8, 69)),
-        Token(TokenType.STRING_LITERAL, (8, 71), "Int"),
-        Token(TokenType.RIGHT_BRACKET, (8, 76)),
-        Token(TokenType.LEFT_CURLY_BRACKET, (8, 77)),
-        Token(TokenType.RETURN_KEYWORD, (8, 78)),
-        Token(TokenType.LEFT_SQUARE_BRACKET, (8, 85)),
-        Token(TokenType.IDENTIFIER, (8, 86), "a"),
-        Token(TokenType.MUL_OPERATOR, (8, 87)),
-        Token(TokenType.IDENTIFIER, (8, 88), "b"),
-        Token(TokenType.DIV_OPERATOR, (8, 89)),
-        Token(TokenType.INT_LITERAL, (8, 90), 2),
-        Token(TokenType.RIGHT_SQUARE_BRACKET, (8, 91)),
-        Token(TokenType.SEMICOLON, (8, 92)),
-        Token(TokenType.RIGHT_CURLY_BRACKET, (8, 93)),
+        Token(TokenType.ELIF_KEYWORD, (8, 51)),
+        Token(TokenType.LEFT_BRACKET, (8, 56)),
+        Token(TokenType.IDENTIFIER, (8, 57), "typeOf"),
+        Token(TokenType.LEFT_BRACKET, (8, 63)),
+        Token(TokenType.IDENTIFIER, (8, 64), "a"),
+        Token(TokenType.RIGHT_BRACKET, (8, 65)),
+        Token(TokenType.NEQ_OPERATOR, (8, 66)),
+        Token(TokenType.STRING_LITERAL, (8, 68), "Int"),
+        Token(TokenType.RIGHT_BRACKET, (8, 73)),
+        Token(TokenType.LEFT_CURLY_BRACKET, (8, 74)),
+        Token(TokenType.RETURN_KEYWORD, (8, 75)),
+        Token(TokenType.LEFT_SQUARE_BRACKET, (8, 82)),
+        Token(TokenType.IDENTIFIER, (8, 83), "a"),
+        Token(TokenType.MUL_OPERATOR, (8, 84)),
+        Token(TokenType.IDENTIFIER, (8, 85), "b"),
+        Token(TokenType.DIV_OPERATOR, (8, 86)),
+        Token(TokenType.INT_LITERAL, (8, 87), 2),
+        Token(TokenType.RIGHT_SQUARE_BRACKET, (8, 88)),
+        Token(TokenType.SEMICOLON, (8, 89)),
+        Token(TokenType.RIGHT_CURLY_BRACKET, (8, 90)),
         Token(TokenType.ELSE_KEYWORD, (9, 13)),
         Token(TokenType.LEFT_CURLY_BRACKET, (9, 18)),
         Token(TokenType.RETURN_KEYWORD, (10, 13)),

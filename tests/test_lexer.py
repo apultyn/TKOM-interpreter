@@ -112,7 +112,7 @@ def test_block_comment_not_closed():
 
 def test_keywords():
     source = io.StringIO(
-        "if else function return while for from in select where order by descending True False or and"
+        "if else function return while for from in select where order by descending True False or and elif"
     )
     lexer = Lexer(source)
 
@@ -135,7 +135,8 @@ def test_keywords():
         Token(TokenType.FALSE_LITERAL, (1, 81)),
         Token(TokenType.OR_OPERATOR, (1, 87)),
         Token(TokenType.AND_OPERATOR, (1, 90)),
-        Token(TokenType.EOF, (1, 93)),
+        Token(TokenType.ELIF_KEYWORD, (1, 94)),
+        Token(TokenType.EOF, (1, 98)),
     ]
 
 
@@ -182,7 +183,7 @@ def test_string_not_closed():
     source = io.StringIO(r'"Hello there" "unclosed string')
     lexer = Lexer(source)
 
-    assert lexer.get_next_token().get_type() == TokenType.STRING_LITERAL
+    assert lexer.get_next_token().type == TokenType.STRING_LITERAL
     with pytest.raises(UnclosedException) as excinfo:
         lexer.get_next_token()
 

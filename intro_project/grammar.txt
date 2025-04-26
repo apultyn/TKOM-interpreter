@@ -1,25 +1,27 @@
 TKOM gramatyka
 
-program 		= { statement } ;
+program 		= { statement }, "EOF" ;
 
-statement 		= ( stmt_with_ident, ";" )
+statement 		= stmt_with_ident,
 					| if_statement
 					| while_loop
 					| for_loop
-					| ( return_statement, ";" )
+					| return_statement
 					| block ;
 
-stmt_with_ident 	= identifier, ( assignment | { access_suff | call_suff }, call_suff );
+stmt_with_ident 	= identifier, ( assignment | call_stmt ), ";" ;
+assignment 			= ( "=" | "+=" | "-=" ), expression ;
+call_stmt			= { access_suff | call_suff }, call_suff ;
+
 access_suff 		= ".", identifier ;
 call_suff			= "(", [ argument_list ], ")"
-assignment 			= ( "=" | "+=" | "-=" ), expression ;
 
 if_statement 		= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
-else_if 			= "else", "if", "(", expression, ")", block ;
+else_if 			= "elif", "(", expression, ")", block ;
 
 while_loop 			= "while", "(", expression, ")", block ;
 for_loop 			= "for", identifier, "in", expression, block ;
-return_statement	= "return", [ expression ] ;
+return_statement	= "return", [ expression ], ";" ;
 block 				= "{", { statement }, "}" ;
 
 expression		= logic_or ;

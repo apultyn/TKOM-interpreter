@@ -86,13 +86,13 @@ class NegationExpr(Expression):
 
 
 @dataclass
-class Member(Expression):
+class AccessExpr(Expression):
     source: Expression
     target: Identifier
 
 
 @dataclass
-class Call(Expression):
+class CallExpr(Expression):
     callee: Expression
     args: List[Expression]
 

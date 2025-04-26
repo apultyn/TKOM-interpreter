@@ -34,6 +34,7 @@ class TokenType(Enum):
     # Keywords
     IF_KEYWORD = auto()
     ELSE_KEYWORD = auto()
+    ELIF_KEYWORD = auto()
     FUNCTION_KEYWORD = auto()
     RETURN_KEYWORD = auto()
     WHILE_KEYWORD = auto()

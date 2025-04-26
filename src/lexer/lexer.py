@@ -13,6 +13,7 @@ from .lexer_config import LexerConfig
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
     "else": TokenType.ELSE_KEYWORD,
+    "elif": TokenType.ELIF_KEYWORD,
     "function": TokenType.FUNCTION_KEYWORD,
     "return": TokenType.RETURN_KEYWORD,
     "while": TokenType.WHILE_KEYWORD,
