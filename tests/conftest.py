@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from src.util.error_handler import ErrorHandler
 from src.lexer.lexer_config import LexerConfig
 from src.lexer.lexer import Lexer
+from src.parser.parser import Parser
 from .util import AbortExecution
 
 
@@ -26,5 +27,14 @@ def make_lexer(mocked_error_handler):
             if config
             else Lexer(source=source, error_handler=err)
         )
+
+    return _factory
+
+
+@pytest.fixture
+def make_parser(make_lexer, mocked_error_handler):
+    def _factory(text: str, *, err=mocked_error_handler):
+        lexer = make_lexer(text, err=err)
+        return Parser(lexer=lexer, error_handler=err)
 
     return _factory
