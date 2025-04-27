@@ -1,16 +1,16 @@
 from collections.abc import Callable
 
-from lexer import Lexer
+from src.lexer.lexer import Lexer
 from src.util.token_type import TokenType
 from src.util.error_handler import ErrorHandler
 from src.util.pyscript_exceptions import SyntaxException
 
-import parser_objects as po
-import parser_util as pu
+import src.parser.parser_objects as po
+import src.parser.parser_util as pu
 
 
 class Parser:
-    def __init__(self, lexer: Lexer, error_handler: ErrorHandler):
+    def __init__(self, *, lexer: Lexer, error_handler: ErrorHandler = ErrorHandler()):
         self.lexer = lexer
         self.current_token = None
         self.error_handler = error_handler
@@ -60,7 +60,7 @@ class Parser:
         return None
 
     def binary_operation_builder(
-        self, subrule: Callable[[], po.Expressio], *tokens: TokenType
+        self, subrule: Callable[[], po.Expression], *tokens: TokenType
     ):
         expr = subrule()
         while found_token := self.might_be_in(tokens):
@@ -120,7 +120,7 @@ class Parser:
         if not token:
             return None
 
-        identifier = po.Identifier(token)
+        identifier = po.Identifier(token.value)
         statement = self.must_be_created(
             self.parse_assignment(identifier) or self.parse_call_stmt(identifier),
             "Assignment or function call expected",
@@ -366,16 +366,14 @@ class Parser:
             TokenType.INT_LITERAL: po.SimpleTypeExpr(
                 pu.SimpleLiteralType.INT, token.value
             ),
-            TokenType.FLOAT_LITERAL: po.SimpleLiteralType(
+            TokenType.FLOAT_LITERAL: po.SimpleTypeExpr(
                 pu.SimpleLiteralType.FLOAT, token.value
             ),
-            TokenType.STRING_LITERAL: po.SimpleLiteralType(
+            TokenType.STRING_LITERAL: po.SimpleTypeExpr(
                 pu.SimpleLiteralType.STRING, token.value
             ),
-            TokenType.TRUE_LITERAL: po.SimpleLiteralType(
-                pu.SimpleLiteralType.BOOL, True
-            ),
-            TokenType.FALSE_LITERAL: po.SimpleLiteralType(
+            TokenType.TRUE_LITERAL: po.SimpleTypeExpr(pu.SimpleLiteralType.BOOL, True),
+            TokenType.FALSE_LITERAL: po.SimpleTypeExpr(
                 pu.SimpleLiteralType.BOOL, False
             ),
             TokenType.IDENTIFIER: po.Identifier(token.value),

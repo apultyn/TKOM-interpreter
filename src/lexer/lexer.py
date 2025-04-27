@@ -73,6 +73,7 @@ ESCAPING_SIGNS = {
 class Lexer:
     def __init__(
         self,
+        *,
         source: Source,
         error_handler: ErrorHandler = ErrorHandler(),
         config: LexerConfig = LexerConfig(),

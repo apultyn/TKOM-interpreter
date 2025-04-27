@@ -1,21 +1,15 @@
-import io
-
 from tests.util import get_token_list
-
-from src.lexer.lexer import Lexer
-
 from src.util.token_type import TokenType
 from src.util.my_token import Token
 
 
-def test_code_integer():
-    source = io.StringIO(
+def test_code_integer(make_lexer):
+    lexer = make_lexer(
         """{
     10;
     -50 +-29;
 }"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
 
@@ -34,14 +28,13 @@ def test_code_integer():
     ]
 
 
-def test_code_float():
-    source = io.StringIO(
+def test_code_float(make_lexer):
+    lexer = make_lexer(
         """{
     1.0;
     -15.38*2.0;
 }"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
 
@@ -59,14 +52,13 @@ def test_code_float():
     ]
 
 
-def test_string_code():
-    source = io.StringIO(
+def test_string_code(make_lexer):
+    lexer = make_lexer(
         """{
     "Hello World!";
     "Typing with quotes: \\"\\" and backslash: \\\\ there";
 }"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
 
@@ -85,14 +77,13 @@ def test_string_code():
     ]
 
 
-def test_bool_code():
-    source = io.StringIO(
+def test_bool_code(make_lexer):
+    lexer = make_lexer(
         """{
     True;
     False;
 }"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
 
@@ -107,8 +98,8 @@ def test_bool_code():
     ]
 
 
-def test_list_code():
-    source = io.StringIO(
+def test_list_code(make_lexer):
+    lexer = make_lexer(
         """{
     [];
     [1, "Hello", -10.5, ("key": 5),
@@ -117,7 +108,6 @@ def test_list_code():
     ];
 }"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     assert tokens == [
@@ -168,8 +158,8 @@ def test_list_code():
     ]
 
 
-def test_dict_code():
-    source = io.StringIO(
+def test_dict_code(make_lexer):
+    lexer = make_lexer(
         """
 {
     {};
@@ -179,10 +169,8 @@ def test_dict_code():
         ("one_more": [1, 5, "hello"]),
         ("last_one": {("key": "value")})
     };
-}
-"""
+}"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -235,8 +223,8 @@ def test_dict_code():
     ]
 
 
-def test_variable_code():
-    source = io.StringIO(
+def test_variable_code(make_lexer):
+    lexer = make_lexer(
         """
 {
     a = "Hello there";
@@ -247,7 +235,6 @@ def test_variable_code():
 }
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -292,13 +279,12 @@ def test_variable_code():
     ]
 
 
-def test_assign_minus_operator():
-    source = io.StringIO(
+def test_assign_minus_operator(make_lexer):
+    lexer = make_lexer(
         """
 a-=5  a-= 5 a -=5 a -= 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -320,13 +306,12 @@ a-=5  a-= 5 a -=5 a -= 5
     ]
 
 
-def test_assign_operator():
-    source = io.StringIO(
+def test_assign_operator(make_lexer):
+    lexer = make_lexer(
         """
 a=5  a= 5 a =5 a = 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -348,13 +333,12 @@ a=5  a= 5 a =5 a = 5
     ]
 
 
-def test_assign_plus_operator():
-    source = io.StringIO(
+def test_assign_plus_operator(make_lexer):
+    lexer = make_lexer(
         """
 a+=5  a+= 5 a +=5 a += 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -376,13 +360,12 @@ a+=5  a+= 5 a +=5 a += 5
     ]
 
 
-def test_or_operator():
-    source = io.StringIO(
+def test_or_operator(make_lexer):
+    lexer = make_lexer(
         """
 a or b (a)or(b)
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -402,13 +385,12 @@ a or b (a)or(b)
     ]
 
 
-def test_and_operator():
-    source = io.StringIO(
+def test_and_operator(make_lexer):
+    lexer = make_lexer(
         """
 a and b (a)and(b)
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -428,13 +410,12 @@ a and b (a)and(b)
     ]
 
 
-def test_neq_operator():
-    source = io.StringIO(
+def test_neq_operator(make_lexer):
+    lexer = make_lexer(
         """
 a!=5  a!= 5 a !=5 a != 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -456,13 +437,12 @@ a!=5  a!= 5 a !=5 a != 5
     ]
 
 
-def test_eq_operator():
-    source = io.StringIO(
+def test_eq_operator(make_lexer):
+    lexer = make_lexer(
         """
 a==5  a== 5 a ==5 a == 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -484,13 +464,12 @@ a==5  a== 5 a ==5 a == 5
     ]
 
 
-def test_leq_operator():
-    source = io.StringIO(
+def test_leq_operator(make_lexer):
+    lexer = make_lexer(
         """
 a<=5  a<= 5 a <=5 a <= 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -512,13 +491,12 @@ a<=5  a<= 5 a <=5 a <= 5
     ]
 
 
-def test_geq_operator():
-    source = io.StringIO(
+def test_geq_operator(make_lexer):
+    lexer = make_lexer(
         """
 a>=5  a>= 5 a >=5 a >= 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -540,13 +518,12 @@ a>=5  a>= 5 a >=5 a >= 5
     ]
 
 
-def test_less_operator():
-    source = io.StringIO(
+def test_less_operator(make_lexer):
+    lexer = make_lexer(
         """
 a<5  a< 5 a <5 a < 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -568,13 +545,12 @@ a<5  a< 5 a <5 a < 5
     ]
 
 
-def test_greater_operator():
-    source = io.StringIO(
+def test_greater_operator(make_lexer):
+    lexer = make_lexer(
         """
 a>5  a> 5 a >5 a > 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -596,13 +572,12 @@ a>5  a> 5 a >5 a > 5
     ]
 
 
-def test_plus_operator():
-    source = io.StringIO(
+def test_plus_operator(make_lexer):
+    lexer = make_lexer(
         """
 a+5  a+ 5 a +5 a + 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -624,13 +599,12 @@ a+5  a+ 5 a +5 a + 5
     ]
 
 
-def test_div_operator():
-    source = io.StringIO(
+def test_div_operator(make_lexer):
+    lexer = make_lexer(
         """
 a/5  a/ 5 a /5 a / 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -652,13 +626,12 @@ a/5  a/ 5 a /5 a / 5
     ]
 
 
-def test_mul_operator():
-    source = io.StringIO(
+def test_mul_operator(make_lexer):
+    lexer = make_lexer(
         """
 a*5  a* 5 a *5 a * 5
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -680,13 +653,12 @@ a*5  a* 5 a *5 a * 5
     ]
 
 
-def test_log_neg_operator():
-    source = io.StringIO(
+def test_log_neg_operator(make_lexer):
+    lexer = make_lexer(
         """
 !a !True ! a ! True
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -704,13 +676,12 @@ def test_log_neg_operator():
     ]
 
 
-def test_dot_operator():
-    source = io.StringIO(
+def test_dot_operator(make_lexer):
+    lexer = make_lexer(
         """
 a.copy()  [1, 2, 3] .get(). length() "string" . length()
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -745,13 +716,12 @@ a.copy()  [1, 2, 3] .get(). length() "string" . length()
     ]
 
 
-def test_minus_operator():
-    source = io.StringIO(
+def test_minus_operator(make_lexer):
+    lexer = make_lexer(
         """
 -5 -10.23 50 --- 10; -a.length()
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -777,8 +747,8 @@ def test_minus_operator():
     ]
 
 
-def test_if_statement():
-    source = io.StringIO(
+def test_if_statement(make_lexer):
+    lexer = make_lexer(
         """
 if(a < 4) {
     do_something();
@@ -789,7 +759,6 @@ if(a < 4) {
 }
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -830,8 +799,8 @@ if(a < 4) {
     ]
 
 
-def test_while_loop():
-    source = io.StringIO(
+def test_while_loop(make_lexer):
+    lexer = make_lexer(
         """
 a = 0;
 while(a < 10) {
@@ -840,7 +809,6 @@ while(a < 10) {
 }
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -870,17 +838,15 @@ while(a < 10) {
     ]
 
 
-def test_for_loop():
-    source = io.StringIO(
+def test_for_loop(make_lexer):
+    lexer = make_lexer(
         """
 my_dict = {("first": 1), ("second": 10)};
 for element in my_dict {
 print(element.key()); // "first" "second"
 }
-
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -922,8 +888,8 @@ print(element.key()); // "first" "second"
     ]
 
 
-def test_function_definition():
-    source = io.StringIO(
+def test_function_definition(make_lexer):
+    lexer = make_lexer(
         """
 my_func = function(arg1, arg2) {
     return arg1 + arg2;
@@ -931,7 +897,6 @@ my_func = function(arg1, arg2) {
 print(my_func(5, 10)); // 15
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -967,8 +932,8 @@ print(my_func(5, 10)); // 15
     ]
 
 
-def test_function_passing():
-    source = io.StringIO(
+def test_function_passing(make_lexer):
+    lexer = make_lexer(
         """
 passed_func = function(a, b) {
     return a + b;
@@ -978,10 +943,8 @@ another_function = function(func, a) {
 }
 print(another_function(passed_func, 10));
 // 15
-
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -1035,8 +998,8 @@ print(another_function(passed_func, 10));
     ]
 
 
-def test_line_comment():
-    source = io.StringIO(
+def test_line_comment(make_lexer):
+    lexer = make_lexer(
         """
 //My first comment //
 //Comment with /* block comment */
@@ -1044,7 +1007,6 @@ def test_line_comment():
 //Comment with 7.5 4.2; "string"
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -1058,8 +1020,8 @@ def test_line_comment():
     ]
 
 
-def test_block_comment():
-    source = io.StringIO(
+def test_block_comment(make_lexer):
+    lexer = make_lexer(
         """
 /*Random Block Comment */a=5;
 /*Block comment with line //*/b="hello";
@@ -1068,7 +1030,6 @@ Comment*/select;
 a = (arg1,/*Comment*/arg2);
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -1100,8 +1061,8 @@ a = (arg1,/*Comment*/arg2);
     ]
 
 
-def test_linq_queries():
-    source = io.StringIO(
+def test_linq_queries(make_lexer):
+    lexer = make_lexer(
         """
 my_dict = {
 ("Warszawa", 2000000),
@@ -1117,7 +1078,6 @@ order by city.key()descending;
 // small_cities = [["Warszawa", 2000], ["Szczecinek", 40]]
 """
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
     types = [t.type for t in tokens]
@@ -1198,8 +1158,8 @@ order by city.key()descending;
     ]
 
 
-def test_all_with_pos():
-    source = io.StringIO(
+def test_all_with_pos(make_lexer):
+    lexer = make_lexer(
         """/*komentarz blokowy*///komentarz liniowy
 
 function myFunc(a,b){
@@ -1227,7 +1187,6 @@ select item
 where item != 2
 order by item descending;"""
     )
-    lexer = Lexer(source)
 
     tokens = get_token_list(lexer)
 

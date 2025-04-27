@@ -12,6 +12,7 @@ def get_token_list(lexer):
     tokens.append(token)
     return tokens
 
+
 class AbortExecution(Exception):
     pass
 

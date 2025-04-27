@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class PyscriptException(Exception):
     error_type: str

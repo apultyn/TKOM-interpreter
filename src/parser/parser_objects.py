@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Any, Optional
 
-from parser_util import (
+from .parser_util import (
     ParserObject,
     AssignmentType,
     BinaryOperation,
