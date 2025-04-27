@@ -171,7 +171,7 @@ class Parser:
             return None
 
         ident_token = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
-        identifier = po.Identifier(ident_token)
+        identifier = po.Identifier(ident_token.value)
 
         return po.AccessExpr(source, identifier)
 
