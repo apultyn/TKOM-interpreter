@@ -203,7 +203,7 @@ class Parser:
         body = self.must_be_created(self.parse_block(), "Body expected")
 
         elif_statements = []
-        while elif_stmt := self.parse_elif():
+        while (elif_stmt := self.parse_elif()) is not None:
             elif_statements.append(elif_stmt)
 
         else_body = None
