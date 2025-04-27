@@ -159,10 +159,11 @@ class Parser:
         ) is not None:
             expr = new_expr
 
-        new_expr = self.must_be_created(
-            self.parse_call_suff(expr), "Function call expected"
-        )
-        return new_expr
+        if not isinstance(expr, po.CallExpr):
+            expr = self.must_be_created(
+                self.parse_call_suff(expr), "Function call expected"
+            )
+        return expr
 
     # access_suff = ".", identifier ;
     def parse_access_suff(self, source: po.Expression):
