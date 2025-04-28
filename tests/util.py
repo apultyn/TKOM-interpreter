@@ -21,4 +21,4 @@ def check_error_position(mocked_error_handler, exception, position):
     mocked_error_handler.handle_error.assert_called_once()
     exc = mocked_error_handler.handle_error.call_args.args[0]
     assert isinstance(exc, exception)
-    assert exc.position == position
+    assert exc.pos == position

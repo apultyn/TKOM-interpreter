@@ -15,6 +15,8 @@ from src.parser.parser_objects import (
     FunctionExpr,
     ReturnStmt,
     LinqExpr,
+    ItemExpr,
+    ListExpr
 )
 from src.parser.parser_util import (
     AssignmentType,
@@ -71,6 +73,71 @@ def test_ident_as_expression(make_parser):
         r_value=Identifier("b", pos=(1, 5)),
         pos=(1, 3),
     )
+
+def test_item_literal(make_parser):
+    src = """
+a = ("key": "value");
+b = (1: 10.0);
+"""
+    statements = make_parser(src).parse_program().statements
+    assert statements == [
+        AssignmentStmt(
+            l_value=Identifier("a", pos=(2, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=ItemExpr(
+                key=SimpleTypeExpr(SimpleLiteralType.STRING, "key", pos=(2, 6)),
+                value=SimpleTypeExpr(SimpleLiteralType.STRING, "value", pos=(2, 13)),
+                pos=(2, 5)
+            ),
+            pos=(2, 3),
+        ),
+        AssignmentStmt(
+            l_value=Identifier("b", pos=(3, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=ItemExpr(
+                key=SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(3, 6)),
+                value=SimpleTypeExpr(SimpleLiteralType.FLOAT, 10.0, pos=(3, 9)),
+                pos=(3, 5)
+            ),
+            pos=(3, 3),
+        ),
+    ]
+
+def test_list_literal(make_parser):
+    src="""
+a = [];
+b = [
+        1, "Hello", -10.5, ("key": 5),
+        ["hello", "from", "sublist"],
+        {
+            ("name": "dict),
+            ("value": 5)
+        }
+];"""
+    # statements = make_parser(src).parse_program().statements
+    # assert statements == [
+    #     AssignmentStmt(
+    #         l_value=Identifier("a", pos=(2, 1)),
+    #         assign_type=AssignmentType.NORMAL,
+    #         r_value=ListExpr(
+    #             elements=[],
+    #             pos=(2, 5)
+    #         ),
+    #         pos=(2, 3)
+    #     ),
+    #     AssignmentStmt(
+    #         l_value=Identifier("b", pos=(3, 1)),
+    #         assign_type=AssignmentType.NORMAL,
+    #         r_value=ListExpr(
+    #             elements=[
+    #                 SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(1, 9)),
+
+    #             ],
+    #             pos=(3, 5)
+    #         ),
+    #         pos=(3, 3)
+    #     )
+    # ]
 
 
 def test_call_statement(make_parser):

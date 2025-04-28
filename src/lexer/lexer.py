@@ -94,7 +94,7 @@ class Lexer:
 
         if not token:
             self.error_handler.handle_error(
-                TokenException("Unknown token", self.get_pos())
+                TokenException(msg="Unknown token", pos=self.get_pos())
             )
 
         return token
@@ -146,7 +146,7 @@ class Lexer:
                     return TokenType.BLOCK_COMMENT
             elif char == "EOF":
                 self.error_handler.handle_error(
-                    UnclosedException(f"Comment not closed", self.get_pos())
+                    UnclosedException(msg=f"Comment not closed", pos=self.get_pos())
                 )
             else:
                 char = self.get_next_char()
@@ -154,8 +154,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    f"Maximum comment length ({self.config.max_comment_length}) exceeded",
-                    self.get_prev_pos(),
+                    msg=f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    pos=self.get_prev_pos(),
                 )
             )
 
@@ -168,8 +168,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    f"Maximum comment length ({self.config.max_comment_length}) exceeded",
-                    self.get_pos(),
+                    msg=f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    pos=self.get_pos(),
                 )
             )
 
@@ -189,8 +189,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    f"Maximum identifier length ({self.config.max_identifier_length}) exceeded",
-                    self.get_prev_pos(),
+                    msg=f"Maximum identifier length ({self.config.max_identifier_length}) exceeded",
+                    pos=self.get_prev_pos(),
                 )
             )
 
@@ -228,7 +228,7 @@ class Lexer:
                 break
             elif char == "EOF":
                 self.error_handler.handle_error(
-                    UnclosedException("String literal unclosed", self.get_pos())
+                    UnclosedException(msg="String literal unclosed", pos=self.get_pos())
                 )
             else:
                 string_value.append(char)
@@ -238,8 +238,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    f"Maximum string literal length ({self.config.max_string_literal_length}) exceeded",
-                    self.get_prev_pos(),
+                    msg=f"Maximum string literal length ({self.config.max_string_literal_length}) exceeded",
+                    pos=self.get_prev_pos(),
                 )
             )
 
@@ -261,8 +261,8 @@ class Lexer:
             if next_char.isdigit():
                 self.error_handler.handle_error(
                     InvalidValueException(
-                        "Integer can't have anything after starting 0",
-                        self.get_prev_pos(),
+                        msg="Integer can't have anything after starting 0",
+                        pos=self.get_prev_pos(),
                     )
                 )
             elif next_char == ".":
@@ -291,7 +291,7 @@ class Lexer:
                 else:
                     self.error_handler.handle_error(
                         InvalidValueException(
-                            "Float can't have many decimal points", self.get_pos()
+                            msg="Float can't have many decimal points", pos=self.get_pos()
                         )
                     )
             else:
@@ -299,8 +299,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    f"Maximum int literal length ({self.config.max_num_literal_length}) exceeded",
-                    self.get_prev_pos(),
+                    msg=f"Maximum int literal length ({self.config.max_num_literal_length}) exceeded",
+                    pos=self.get_prev_pos(),
                 )
             )
 
@@ -308,13 +308,13 @@ class Lexer:
             if num_value[-1:] == ".":
                 self.error_handler.handle_error(
                     InvalidValueException(
-                        "Missing digits after decimal point", self.get_pos()
+                        msg="Missing digits after decimal point", pos=self.get_pos()
                     )
                 )
             if num_value[-2:] == "00":
                 self.error_handler.handle_error(
                     InvalidValueException(
-                        "Float can't have many zeroes at the end", self.get_prev_pos()
+                        msg="Float can't have many zeroes at the end", pos=self.get_prev_pos()
                     )
                 )
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))

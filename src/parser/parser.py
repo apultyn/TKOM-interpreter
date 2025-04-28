@@ -17,10 +17,7 @@ class Parser:
         self.current_token = self.get_next_token()
 
     def get_next_token(self):
-        try:
-            self.current_token = self.lexer.get_next_token()
-        except SyntaxException as e:
-            self.error_handler.handle_error(e)
+        self.current_token = self.lexer.get_next_token()
 
         while self.current_token.type in [
             TokenType.BLOCK_COMMENT,
@@ -33,7 +30,7 @@ class Parser:
         token = self.current_token
         if token.type != token_type:
             self.error_handler.handle_error(
-                SyntaxException(self.current_token.pos, msg)
+                SyntaxException(msg=msg, pos=self.current_token.pos)
             )
         self.get_next_token()
         return token
@@ -41,7 +38,7 @@ class Parser:
     def must_be_created(self, parser_object, msg):
         if not parser_object:
             self.error_handler.handle_error(
-                SyntaxException(self.current_token.pos, msg)
+                SyntaxException(msg=msg, pos=self.current_token.pos)
             )
         return parser_object
 
@@ -527,5 +524,7 @@ class Parser:
             return None
 
         value = self.must_be_created(self.parse_expression(), "Expression expected")
+
+        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
         return po.ItemExpr(first_expression, value, pos=left_bracket.pos)
