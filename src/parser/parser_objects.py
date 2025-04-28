@@ -6,7 +6,7 @@ from .parser_util import (
     AssignmentType,
     BinaryOperationType,
     NegationType,
-    SimpleLiteralType,
+    SimpleExprType,
 )
 
 
@@ -100,8 +100,8 @@ class CallExpr(Expression):
 
 
 @dataclass
-class SimpleTypeExpr(Expression):
-    value_type: SimpleLiteralType
+class SimpleExpr(Expression):
+    value_type: SimpleExprType
     value: Any
 
 

@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from src.util.token_type import TokenType
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(kw_only=True)
@@ -15,6 +15,9 @@ class AssignmentType(Enum):
     NORMAL = auto()
     PLUS = auto()
     MINUS = auto()
+
+    def to_json(self):
+        return self.name
 
 
 def match_assignment_type(token_type: TokenType):
@@ -41,6 +44,9 @@ class BinaryOperationType(Enum):
     MUL = auto()
     DIV = auto()
 
+    def to_json(self):
+        return self.name
+
 
 def match_binary_operation(token_type: TokenType):
     mapping = {
@@ -60,16 +66,22 @@ def match_binary_operation(token_type: TokenType):
     return mapping.get(token_type, None)
 
 
-class SimpleLiteralType(Enum):
+class SimpleExprType(Enum):
     INT = auto()
     FLOAT = auto()
     STRING = auto()
     BOOL = auto()
 
+    def to_json(self):
+        return self.name
+
 
 class NegationType(Enum):
     LOGIC = auto()
     ARITH = auto()
+
+    def to_json(self):
+        return self.name
 
 
 def match_negation_type(token_type: TokenType):

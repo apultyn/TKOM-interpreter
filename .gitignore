@@ -1,4 +1,6 @@
-intro_project/uwagi.txt
+src/parser/output
+src/parser/input
+tree.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

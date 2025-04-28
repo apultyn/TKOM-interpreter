@@ -60,14 +60,10 @@ class Parser:
         self, subrule: Callable[[], po.Expression], *tokens: TokenType
     ):
         expr = subrule()
-        pos = None
         while found_token := self.might_be_in(tokens):
-            if pos is None:
-                pos = found_token.pos
-
             right = subrule()
             expr = po.BinaryExpr(
-                expr, pu.match_binary_operation(found_token.type), right, pos=pos
+                expr, pu.match_binary_operation(found_token.type), right, pos=found_token.pos
             )
         return expr
 
@@ -296,22 +292,18 @@ class Parser:
             self.parse_logic_and, TokenType.OR_OPERATOR
         )
 
-    # logic_and = equality, { "and", equality } ;
+    # logic_and	= comparison, { "and", comparison } ;
     def parse_logic_and(self):
         return self.binary_operation_builder(
-            self.parse_equality, TokenType.AND_OPERATOR
+            self.parse_comparison, TokenType.AND_OPERATOR
         )
 
-    # equality = comparison, { ("==" | "!="), comparison } ;
-    def parse_equality(self):
-        return self.binary_operation_builder(
-            self.parse_comparison, TokenType.EQ_OPERATOR, TokenType.NEQ_OPERATOR
-        )
-
-    # comparison = additive, { (">" | ">=" | "<" | "<="), additive } ;
+    # comparison = additive, { ("==" | "!=" | ">" | ">=" | "<" | "<="), additive } ;
     def parse_comparison(self):
         return self.binary_operation_builder(
             self.parse_additive,
+            TokenType.EQ_OPERATOR,
+            TokenType.NEQ_OPERATOR,
             TokenType.GT_OPERATOR,
             TokenType.GEQ_OPERATOR,
             TokenType.LT_OPERATOR,
@@ -371,20 +363,20 @@ class Parser:
         token = self.current_token
 
         mapping = {
-            TokenType.INT_LITERAL: po.SimpleTypeExpr(
-                pu.SimpleLiteralType.INT, token.value, pos=token.pos
+            TokenType.INT_LITERAL: po.SimpleExpr(
+                pu.SimpleExprType.INT, token.value, pos=token.pos
             ),
-            TokenType.FLOAT_LITERAL: po.SimpleTypeExpr(
-                pu.SimpleLiteralType.FLOAT, token.value, pos=token.pos
+            TokenType.FLOAT_LITERAL: po.SimpleExpr(
+                pu.SimpleExprType.FLOAT, token.value, pos=token.pos
             ),
-            TokenType.STRING_LITERAL: po.SimpleTypeExpr(
-                pu.SimpleLiteralType.STRING, token.value, pos=token.pos
+            TokenType.STRING_LITERAL: po.SimpleExpr(
+                pu.SimpleExprType.STRING, token.value, pos=token.pos
             ),
-            TokenType.TRUE_LITERAL: po.SimpleTypeExpr(
-                pu.SimpleLiteralType.BOOL, True, pos=token.pos
+            TokenType.TRUE_LITERAL: po.SimpleExpr(
+                pu.SimpleExprType.BOOL, True, pos=token.pos
             ),
-            TokenType.FALSE_LITERAL: po.SimpleTypeExpr(
-                pu.SimpleLiteralType.BOOL, False, pos=token.pos
+            TokenType.FALSE_LITERAL: po.SimpleExpr(
+                pu.SimpleExprType.BOOL, False, pos=token.pos
             ),
             TokenType.IDENTIFIER: po.Identifier(token.value, pos=token.pos),
         }

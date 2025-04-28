@@ -1,5 +1,8 @@
 from src.util.token_type import TokenType
 
+from src.parser.parser_objects import Identifier, SimpleExpr
+from src.parser.parser_util import SimpleExprType
+
 
 def get_token_list(lexer):
     tokens = []
@@ -22,3 +25,11 @@ def check_error_position(mocked_error_handler, exception, position):
     exc = mocked_error_handler.handle_error.call_args.args[0]
     assert isinstance(exc, exception)
     assert exc.pos == position
+
+
+def ident(name, pos):
+    return Identifier(name, pos=pos)
+
+
+def integer(value, pos):
+    return SimpleExpr(SimpleExprType.INT, value, pos=pos)
