@@ -4,7 +4,7 @@ from enum import Enum
 
 from src.parser.parser import Parser
 from src.lexer.lexer import Lexer
-from src.util.source import Source
+from src.util.error_handler import ErrorHandler
 
 
 def enum_default(obj):
@@ -18,8 +18,10 @@ def main():
     args = arg_parser.parse_args()
 
     with open(args.input) as file_handle:
+        err = ErrorHandler()
         parser = Parser(
-            lexer=Lexer(source=file_handle)
+            lexer=Lexer(source=file_handle, error_handler=err),
+            error_handler=err
         )
 
         program = parser.parse_program()
