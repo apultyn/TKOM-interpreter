@@ -23,6 +23,7 @@ def main():
         )
 
         program = parser.parse_program()
+        program._name = args.input
         pathlib.Path("tree.json").write_text(
             json.dumps(dataclasses.asdict(program), indent=2, default=enum_default)
         )

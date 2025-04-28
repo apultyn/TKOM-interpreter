@@ -5,10 +5,11 @@ from dataclasses import dataclass, field
 
 @dataclass(kw_only=True)
 class ParserObject:
+    _name: str = field(init=False, repr=False)
     pos: tuple[int, int]
 
-    def accept(self, visitor):
-        return visitor.visit(self)
+    def __post_init__(self):
+        self._name = self.__class__.__name__
 
 
 class AssignmentType(Enum):
