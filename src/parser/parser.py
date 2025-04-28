@@ -515,7 +515,7 @@ class Parser:
         )
 
         return self.must_be_created(
-            self.parse_item_literal_tail(first_expression, left_bracket)
+            self.parse_item_literal_tail(first_expression, left_bracket), "':' expected"
         )
 
     # item_literal_tail = ":", expression, ")" ;

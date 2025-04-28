@@ -16,7 +16,8 @@ from src.parser.parser_objects import (
     ReturnStmt,
     LinqExpr,
     ItemExpr,
-    ListExpr
+    ListExpr,
+    DictExpr
 )
 from src.parser.parser_util import (
     AssignmentType,
@@ -107,37 +108,66 @@ def test_list_literal(make_parser):
     src="""
 a = [];
 b = [
-        1, "Hello", -10.5, ("key": 5),
+        1, "Hello", 10.5, ("key": 5),
         ["hello", "from", "sublist"],
         {
-            ("name": "dict),
+            ("name": "dict"),
             ("value": 5)
         }
 ];"""
-    # statements = make_parser(src).parse_program().statements
-    # assert statements == [
-    #     AssignmentStmt(
-    #         l_value=Identifier("a", pos=(2, 1)),
-    #         assign_type=AssignmentType.NORMAL,
-    #         r_value=ListExpr(
-    #             elements=[],
-    #             pos=(2, 5)
-    #         ),
-    #         pos=(2, 3)
-    #     ),
-    #     AssignmentStmt(
-    #         l_value=Identifier("b", pos=(3, 1)),
-    #         assign_type=AssignmentType.NORMAL,
-    #         r_value=ListExpr(
-    #             elements=[
-    #                 SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(1, 9)),
-
-    #             ],
-    #             pos=(3, 5)
-    #         ),
-    #         pos=(3, 3)
-    #     )
-    # ]
+    statements = make_parser(src).parse_program().statements
+    assert statements == [
+        AssignmentStmt(
+            l_value=Identifier("a", pos=(2, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=ListExpr(
+                elements=[],
+                pos=(2, 5)
+            ),
+            pos=(2, 3)
+        ),
+        AssignmentStmt(
+            l_value=Identifier("b", pos=(3, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=ListExpr(
+                elements=[
+                    SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(4, 9)),
+                    SimpleTypeExpr(SimpleLiteralType.STRING, "Hello", pos=(4, 12)),
+                    SimpleTypeExpr(SimpleLiteralType.FLOAT, 10.5, pos=(4, 21)),
+                    ItemExpr(
+                        key=SimpleTypeExpr(SimpleLiteralType.STRING, "key", pos=(4, 28)),
+                        value=SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(4, 35)),
+                        pos=(4, 27)
+                    ),
+                    ListExpr(
+                        elements=[
+                            SimpleTypeExpr(SimpleLiteralType.STRING, "hello", pos=(5, 10)),
+                            SimpleTypeExpr(SimpleLiteralType.STRING, "from", pos=(5, 19)),
+                            SimpleTypeExpr(SimpleLiteralType.STRING, "sublist", pos=(5, 27))
+                        ],
+                        pos=(5, 9)
+                    ),
+                    DictExpr(
+                        items=[
+                            ItemExpr(
+                                key=SimpleTypeExpr(SimpleLiteralType.STRING, "name", pos=(7, 14)),
+                                value=SimpleTypeExpr(SimpleLiteralType.STRING, "dict", pos=(7, 22)),
+                                pos=(7, 13)
+                            ),
+                            ItemExpr(
+                                key=SimpleTypeExpr(SimpleLiteralType.STRING, "value", pos=(8, 14)),
+                                value=SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(8, 23)),
+                                pos=(8, 13)
+                            ),
+                        ],
+                        pos=(6, 9)
+                    )
+                ],
+                pos=(3, 5)
+            ),
+            pos=(3, 3)
+        )
+    ]
 
 
 def test_call_statement(make_parser):
