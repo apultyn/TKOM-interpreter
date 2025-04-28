@@ -23,7 +23,7 @@ def match_assignment_type(token_type: TokenType):
     return mapping.get(token_type, None)
 
 
-class BinaryOperation(Enum):
+class BinaryOperationType(Enum):
     OR = auto()
     AND = auto()
     EQ = auto()
@@ -40,18 +40,18 @@ class BinaryOperation(Enum):
 
 def match_binary_operation(token_type: TokenType):
     mapping = {
-        TokenType.OR_OPERATOR: BinaryOperation.OR,
-        TokenType.AND_OPERATOR: BinaryOperation.AND,
-        TokenType.EQ_OPERATOR: BinaryOperation.EQ,
-        TokenType.NEQ_OPERATOR: BinaryOperation.NEQ,
-        TokenType.GT_OPERATOR: BinaryOperation.GT,
-        TokenType.GEQ_OPERATOR: BinaryOperation.GEQ,
-        TokenType.LT_OPERATOR: BinaryOperation.LT,
-        TokenType.LEQ_OPERATOR: BinaryOperation.LEQ,
-        TokenType.PLUS_OPERATOR: BinaryOperation.ADD,
-        TokenType.MINUS_OPERATOR: BinaryOperation.SUB,
-        TokenType.MUL_OPERATOR: BinaryOperation.MUL,
-        TokenType.DIV_OPERATOR: BinaryOperation.DIV,
+        TokenType.OR_OPERATOR: BinaryOperationType.OR,
+        TokenType.AND_OPERATOR: BinaryOperationType.AND,
+        TokenType.EQ_OPERATOR: BinaryOperationType.EQ,
+        TokenType.NEQ_OPERATOR: BinaryOperationType.NEQ,
+        TokenType.GT_OPERATOR: BinaryOperationType.GT,
+        TokenType.GEQ_OPERATOR: BinaryOperationType.GEQ,
+        TokenType.LT_OPERATOR: BinaryOperationType.LT,
+        TokenType.LEQ_OPERATOR: BinaryOperationType.LEQ,
+        TokenType.PLUS_OPERATOR: BinaryOperationType.ADD,
+        TokenType.MINUS_OPERATOR: BinaryOperationType.SUB,
+        TokenType.MUL_OPERATOR: BinaryOperationType.MUL,
+        TokenType.DIV_OPERATOR: BinaryOperationType.DIV,
     }
     return mapping.get(token_type, None)
 

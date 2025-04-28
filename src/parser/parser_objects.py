@@ -4,7 +4,7 @@ from typing import List, Any, Optional
 from .parser_util import (
     ParserObject,
     AssignmentType,
-    BinaryOperation,
+    BinaryOperationType,
     NegationType,
     SimpleLiteralType,
 )
@@ -77,7 +77,7 @@ class AssignmentStmt(Statement):
 @dataclass
 class BinaryExpr(Expression):
     l_value: Expression
-    operation: BinaryOperation
+    operation: BinaryOperationType
     r_value: Expression
 
 

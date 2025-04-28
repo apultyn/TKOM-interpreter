@@ -1,30 +1,48 @@
 import pytest
 
-import src.parser.parser_objects as po
-import src.parser.parser_util as pu
+from src.parser.parser_objects import (
+    AssignmentStmt,
+    Identifier,
+    SimpleTypeExpr,
+    CallExpr,
+    IfStmt,
+    BinaryExpr,
+    Block,
+    ElifStmt,
+    WhileStmt,
+    ForStmt,
+    AccessExpr,
+    FunctionExpr,
+    ReturnStmt,
+)
+from src.parser.parser_util import (
+    AssignmentType,
+    SimpleLiteralType,
+    BinaryOperationType,
+)
 
 
 @pytest.mark.parametrize(
     "src, assignment_type",
     [
-        ("a = 10;", pu.AssignmentType.NORMAL),
-        ("a += 10;", pu.AssignmentType.PLUS),
-        ("a -= 10;", pu.AssignmentType.MINUS),
+        ("a = 10;", AssignmentType.NORMAL),
+        ("a += 10;", AssignmentType.PLUS),
+        ("a -= 10;", AssignmentType.MINUS),
     ],
 )
 def test_assigmnents(make_parser, src, assignment_type):
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == po.AssignmentStmt(
-        po.Identifier("a"),
-        assignment_type,
-        po.SimpleTypeExpr(pu.SimpleLiteralType.INT, 10),
+    assert statement == AssignmentStmt(
+        l_value=Identifier("a"),
+        assign_type=assignment_type,
+        r_value=SimpleTypeExpr(SimpleLiteralType.INT, 10),
     )
 
 
 def test_call_statement(make_parser):
     src = "b();"
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == po.CallExpr(po.Identifier("b"), [{None}])
+    assert statement == CallExpr(callee=Identifier("b"), args=[])
 
 
 def test_if_statement(make_parser):
@@ -39,28 +57,24 @@ if (a < 4) {
 """
     statement = make_parser(src).parse_program().statements[0]
 
-    assert statement == po.IfStmt(
-        condition=po.BinaryExpr(
-            po.Identifier("a"),
-            pu.BinaryOperation.LT,
-            po.SimpleTypeExpr(pu.SimpleLiteralType.INT, 4),
+    assert statement == IfStmt(
+        condition=BinaryExpr(
+            l_value=Identifier("a"),
+            operation=BinaryOperationType.LT,
+            r_value=SimpleTypeExpr(SimpleLiteralType.INT, 4),
         ),
-        body=po.Block([po.CallExpr(po.Identifier("do_something"), [{None}])]),
+        body=Block([CallExpr(Identifier("do_something"), [])]),
         elif_statements=[
-            po.ElifStmt(
-                condition=po.BinaryExpr(
-                    po.Identifier("a"),
-                    pu.BinaryOperation.GT,
-                    po.SimpleTypeExpr(pu.SimpleLiteralType.INT, 4),
+            ElifStmt(
+                condition=BinaryExpr(
+                    Identifier("a"),
+                    BinaryOperationType.GT,
+                    SimpleTypeExpr(SimpleLiteralType.INT, 4),
                 ),
-                body=po.Block(
-                    [po.CallExpr(po.Identifier("do_something_else"), [{None}])]
-                ),
+                body=Block([CallExpr(Identifier("do_something_else"), [])]),
             )
         ],
-        else_body=po.Block(
-            [po.CallExpr(po.Identifier("do_something_differently"), [{None}])]
-        ),
+        else_body=Block([CallExpr(Identifier("do_something_differently"), [])]),
     )
 
 
@@ -74,19 +88,19 @@ while (a < 10) {
 
 """
     statement = make_parser(src).parse_program().statements[1]
-    assert statement == po.WhileStmt(
-        condition=po.BinaryExpr(
-            po.Identifier("a"),
-            pu.BinaryOperation.LT,
-            po.SimpleTypeExpr(pu.SimpleLiteralType.INT, 10),
+    assert statement == WhileStmt(
+        condition=BinaryExpr(
+            Identifier("a"),
+            BinaryOperationType.LT,
+            SimpleTypeExpr(SimpleLiteralType.INT, 10),
         ),
-        body=po.Block(
+        body=Block(
             [
-                po.CallExpr(po.Identifier("do_something_ten_times"), [{None}]),
-                po.AssignmentStmt(
-                    po.Identifier("a"),
-                    pu.AssignmentType.PLUS,
-                    po.SimpleTypeExpr(pu.SimpleLiteralType.INT, 1),
+                CallExpr(Identifier("do_something_ten_times"), []),
+                AssignmentStmt(
+                    Identifier("a"),
+                    AssignmentType.PLUS,
+                    SimpleTypeExpr(SimpleLiteralType.INT, 1),
                 ),
             ]
         ),
@@ -100,23 +114,50 @@ for element in my_dict {
 }
 """
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == po.ForStmt(
-        var=po.Identifier("element"),
-        source=po.Identifier("my_dict"),
-        body=po.Block(
+    assert statement == ForStmt(
+        var=Identifier("element"),
+        source=Identifier("my_dict"),
+        body=Block(
             [
-                po.CallExpr(
-                    callee=po.Identifier("print"),
+                CallExpr(
+                    callee=Identifier("print"),
                     args=[
-                        po.CallExpr(
-                            callee=po.AccessExpr(
-                                source=po.Identifier("element"),
-                                target=po.Identifier("key"),
+                        CallExpr(
+                            callee=AccessExpr(
+                                source=Identifier("element"),
+                                target=Identifier("key"),
                             ),
-                            args=[{None}],
+                            args=[],
                         )
                     ],
                 ),
             ]
+        ),
+    )
+
+
+def test_func_definition(make_parser):
+    src = """
+my_func = function(arg1, arg2) {
+    return arg1 + arg2;
+};
+"""
+    statement = make_parser(src).parse_program().statements[0]
+    assert statement == AssignmentStmt(
+        l_value=Identifier("my_func"),
+        assign_type=AssignmentType.NORMAL,
+        r_value=FunctionExpr(
+            params=[Identifier("arg1"), Identifier("arg2")],
+            body=Block(
+                [
+                    ReturnStmt(
+                        BinaryExpr(
+                            Identifier("arg1"),
+                            BinaryOperationType.ADD,
+                            Identifier("arg2"),
+                        )
+                    )
+                ]
+            ),
         ),
     )

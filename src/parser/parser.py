@@ -203,7 +203,7 @@ class Parser:
         body = self.must_be_created(self.parse_block(), "Body expected")
 
         elif_statements = []
-        while (elif_stmt := self.parse_elif()) is not None:
+        while elif_stmt := self.parse_elif():
             elif_statements.append(elif_stmt)
 
         else_body = None
@@ -341,11 +341,11 @@ class Parser:
 
     # postfix = primary, { call_suff | member_suff} ;
     def parse_postfix(self):
-        expr = self.must_be_created(self.parse_primary(), "Value expected")
+        expr = self.parse_primary()
+        if not expr:
+            return None
 
-        while (
-            new_expr := (self.parse_access_suff(expr) or self.parse_call_suff(expr))
-        ) is not None:
+        while new_expr := (self.parse_access_suff(expr) or self.parse_call_suff(expr)):
             expr = new_expr
 
         return expr
@@ -380,17 +380,17 @@ class Parser:
             TokenType.IDENTIFIER: po.Identifier(token.value),
         }
 
-        if (simple_type := mapping.get(token.type, None)) is not None:
+        if simple_type := mapping.get(token.type, None):
             self.get_next_token()
             return simple_type
 
-        return {
+        return (
             self.parse_list_literal()
             or self.parse_func_literal()
             or self.parse_dict_literal()
             or self.parse_linq_query()
             or self.parse_item_literal_or_parenthesis()
-        }
+        )
 
     # list_literal = "[", [ expression, { ",", expression } ] "]" ;
     def parse_list_literal(self):
@@ -424,13 +424,12 @@ class Parser:
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
 
         identifier_list = []
-
-        if first_identifier := self.might_be(TokenType.IDENTIFIER):
-            identifier_list.append(first_identifier)
+        if first_token := self.might_be(TokenType.IDENTIFIER):
+            identifier_list.append(po.Identifier(first_token.value))
 
             while self.might_be(TokenType.COMMA):
-                next_identifier = self.must_be(TokenType.IDENTIFIER)
-                identifier_list.append(next_identifier)
+                next_token = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
+                identifier_list.append(po.Identifier(next_token.value))
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
