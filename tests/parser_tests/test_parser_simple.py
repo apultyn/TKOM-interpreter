@@ -41,6 +41,38 @@ def test_assigmnents(make_parser, src, assignment_type, col):
     )
 
 
+@pytest.mark.parametrize(
+    "ident_name, type, value, value_text",
+    [
+        ("a", SimpleLiteralType.INT, 125, 125),
+        ("b", SimpleLiteralType.FLOAT, 0.25, 0.25),
+        ("c", SimpleLiteralType.STRING, "Hello there", '"Hello there"'),
+        ("d", SimpleLiteralType.BOOL, False, "False"),
+        ("e", SimpleLiteralType.BOOL, True, "True"),
+    ],
+)
+def test_simple_type_expressions(make_parser, ident_name, type, value, value_text):
+    src = f"{ident_name} = {value_text};"
+    statement = make_parser(src).parse_program().statements[0]
+    assert statement == AssignmentStmt(
+        l_value=Identifier(ident_name, pos=(1, 1)),
+        assign_type=AssignmentType.NORMAL,
+        r_value=SimpleTypeExpr(type, value, pos=(1, 5)),
+        pos=(1, 3),
+    )
+
+
+def test_ident_as_expression(make_parser):
+    src = "a = b;"
+    statement = make_parser(src).parse_program().statements[0]
+    assert statement == AssignmentStmt(
+        l_value=Identifier("a", pos=(1, 1)),
+        assign_type=AssignmentType.NORMAL,
+        r_value=Identifier("b", pos=(1, 5)),
+        pos=(1, 3),
+    )
+
+
 def test_call_statement(make_parser):
     src = "b();"
     statement = make_parser(src).parse_program().statements[0]
