@@ -17,7 +17,7 @@ from src.parser.parser_objects import (
     LinqExpr,
     ItemExpr,
     ListExpr,
-    DictExpr
+    DictExpr,
 )
 from src.parser.parser_util import (
     AssignmentType,
@@ -75,6 +75,7 @@ def test_ident_as_expression(make_parser):
         pos=(1, 3),
     )
 
+
 def test_item_literal(make_parser):
     src = """
 a = ("key": "value");
@@ -88,7 +89,7 @@ b = (1: 10.0);
             r_value=ItemExpr(
                 key=SimpleTypeExpr(SimpleLiteralType.STRING, "key", pos=(2, 6)),
                 value=SimpleTypeExpr(SimpleLiteralType.STRING, "value", pos=(2, 13)),
-                pos=(2, 5)
+                pos=(2, 5),
             ),
             pos=(2, 3),
         ),
@@ -98,14 +99,15 @@ b = (1: 10.0);
             r_value=ItemExpr(
                 key=SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(3, 6)),
                 value=SimpleTypeExpr(SimpleLiteralType.FLOAT, 10.0, pos=(3, 9)),
-                pos=(3, 5)
+                pos=(3, 5),
             ),
             pos=(3, 3),
         ),
     ]
 
+
 def test_list_literal(make_parser):
-    src="""
+    src = """
 a = [];
 b = [
         1, "Hello", 10.5, ("key": 5),
@@ -120,11 +122,8 @@ b = [
         AssignmentStmt(
             l_value=Identifier("a", pos=(2, 1)),
             assign_type=AssignmentType.NORMAL,
-            r_value=ListExpr(
-                elements=[],
-                pos=(2, 5)
-            ),
-            pos=(2, 3)
+            r_value=ListExpr(elements=[], pos=(2, 5)),
+            pos=(2, 3),
         ),
         AssignmentStmt(
             l_value=Identifier("b", pos=(3, 1)),
@@ -135,38 +134,137 @@ b = [
                     SimpleTypeExpr(SimpleLiteralType.STRING, "Hello", pos=(4, 12)),
                     SimpleTypeExpr(SimpleLiteralType.FLOAT, 10.5, pos=(4, 21)),
                     ItemExpr(
-                        key=SimpleTypeExpr(SimpleLiteralType.STRING, "key", pos=(4, 28)),
+                        key=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "key", pos=(4, 28)
+                        ),
                         value=SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(4, 35)),
-                        pos=(4, 27)
+                        pos=(4, 27),
                     ),
                     ListExpr(
                         elements=[
-                            SimpleTypeExpr(SimpleLiteralType.STRING, "hello", pos=(5, 10)),
-                            SimpleTypeExpr(SimpleLiteralType.STRING, "from", pos=(5, 19)),
-                            SimpleTypeExpr(SimpleLiteralType.STRING, "sublist", pos=(5, 27))
+                            SimpleTypeExpr(
+                                SimpleLiteralType.STRING, "hello", pos=(5, 10)
+                            ),
+                            SimpleTypeExpr(
+                                SimpleLiteralType.STRING, "from", pos=(5, 19)
+                            ),
+                            SimpleTypeExpr(
+                                SimpleLiteralType.STRING, "sublist", pos=(5, 27)
+                            ),
                         ],
-                        pos=(5, 9)
+                        pos=(5, 9),
                     ),
                     DictExpr(
                         items=[
                             ItemExpr(
-                                key=SimpleTypeExpr(SimpleLiteralType.STRING, "name", pos=(7, 14)),
-                                value=SimpleTypeExpr(SimpleLiteralType.STRING, "dict", pos=(7, 22)),
-                                pos=(7, 13)
+                                key=SimpleTypeExpr(
+                                    SimpleLiteralType.STRING, "name", pos=(7, 14)
+                                ),
+                                value=SimpleTypeExpr(
+                                    SimpleLiteralType.STRING, "dict", pos=(7, 22)
+                                ),
+                                pos=(7, 13),
                             ),
                             ItemExpr(
-                                key=SimpleTypeExpr(SimpleLiteralType.STRING, "value", pos=(8, 14)),
-                                value=SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(8, 23)),
-                                pos=(8, 13)
+                                key=SimpleTypeExpr(
+                                    SimpleLiteralType.STRING, "value", pos=(8, 14)
+                                ),
+                                value=SimpleTypeExpr(
+                                    SimpleLiteralType.INT, 5, pos=(8, 23)
+                                ),
+                                pos=(8, 13),
                             ),
                         ],
-                        pos=(6, 9)
-                    )
+                        pos=(6, 9),
+                    ),
                 ],
-                pos=(3, 5)
+                pos=(3, 5),
             ),
-            pos=(3, 3)
-        )
+            pos=(3, 3),
+        ),
+    ]
+
+
+def test_dict_literal(make_parser):
+    src = """
+a = {};
+b = {
+    ("first_key": 5),
+    ("another_key": "value"),
+    ("one_more": [1, 5, "hello"]),
+    ("last_one": {("key": "value")})
+};
+"""
+    statements = make_parser(src).parse_program().statements
+    assert statements == [
+        AssignmentStmt(
+            l_value=Identifier("a", pos=(2, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=DictExpr(items=[], pos=(2, 5)),
+            pos=(2, 3),
+        ),
+        AssignmentStmt(
+            l_value=Identifier("b", pos=(3, 1)),
+            assign_type=AssignmentType.NORMAL,
+            r_value=DictExpr(
+                items=[
+                    ItemExpr(
+                        key=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "first_key", pos=(4, 6)
+                        ),
+                        value=SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(4, 19)),
+                        pos=(4, 5),
+                    ),
+                    ItemExpr(
+                        key=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "another_key", pos=(5, 6)
+                        ),
+                        value=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "value", pos=(5, 21)
+                        ),
+                        pos=(5, 5),
+                    ),
+                    ItemExpr(
+                        key=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "one_more", pos=(6, 6)
+                        ),
+                        value=ListExpr(
+                            elements=[
+                                SimpleTypeExpr(SimpleLiteralType.INT, 1, pos=(6, 19)),
+                                SimpleTypeExpr(SimpleLiteralType.INT, 5, pos=(6, 22)),
+                                SimpleTypeExpr(
+                                    SimpleLiteralType.STRING, "hello", pos=(6, 25)
+                                ),
+                            ],
+                            pos=(6, 18),
+                        ),
+                        pos=(6, 5),
+                    ),
+                    ItemExpr(
+                        key=SimpleTypeExpr(
+                            SimpleLiteralType.STRING, "last_one", pos=(7, 6)
+                        ),
+                        value=DictExpr(
+                            items=[
+                                ItemExpr(
+                                    key=SimpleTypeExpr(
+                                        SimpleLiteralType.STRING, "key", pos=(7, 20)
+                                    ),
+                                    value=SimpleTypeExpr(
+                                        SimpleLiteralType.STRING, "value", pos=(7, 27)
+                                    ),
+                                    pos=(7, 19),
+                                )
+                            ],
+                            pos=(7, 18),
+                        ),
+                        pos=(7, 5),
+                    ),
+                ],
+                pos=(3, 5),
+            ),
+            pos=(3, 3),
+        ),
     ]
 
 

@@ -291,7 +291,8 @@ class Lexer:
                 else:
                     self.error_handler.handle_error(
                         InvalidValueException(
-                            msg="Float can't have many decimal points", pos=self.get_pos()
+                            msg="Float can't have many decimal points",
+                            pos=self.get_pos(),
                         )
                     )
             else:
@@ -314,7 +315,8 @@ class Lexer:
             if num_value[-2:] == "00":
                 self.error_handler.handle_error(
                     InvalidValueException(
-                        msg="Float can't have many zeroes at the end", pos=self.get_prev_pos()
+                        msg="Float can't have many zeroes at the end",
+                        pos=self.get_prev_pos(),
                     )
                 )
             return Token(TokenType.FLOAT_LITERAL, start_pos, float(num_value))
