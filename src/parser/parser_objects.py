@@ -31,7 +31,7 @@ class Block(Statement):
 
 
 @dataclass
-class Program:
+class Program(ParserObject):
     statements: List[Statement]
 
 

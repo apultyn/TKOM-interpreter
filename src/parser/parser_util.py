@@ -1,8 +1,12 @@
 from enum import Enum, auto
 from src.util.token_type import TokenType
+from dataclasses import dataclass
 
 
+@dataclass(kw_only=True)
 class ParserObject:
+    pos: tuple[int, int]
+
     def accept(self, visitor):
         return visitor.visit(self)
 
