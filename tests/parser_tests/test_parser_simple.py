@@ -14,6 +14,7 @@ from src.parser.parser_objects import (
     AccessExpr,
     FunctionExpr,
     ReturnStmt,
+    LinqExpr,
 )
 from src.parser.parser_util import (
     AssignmentType,
@@ -159,5 +160,57 @@ my_func = function(arg1, arg2) {
                     )
                 ]
             ),
+        ),
+    )
+
+
+def test_linq_query(make_parser):
+    src = """
+small_cities = from city in my_dict
+    select city.key(), city.value() / 1000
+    where city.value() < 5000000
+    order by city.key() descending;
+
+"""
+    statement = make_parser(src).parse_program().statements[0]
+    assert statement == AssignmentStmt(
+        l_value=Identifier("small_cities"),
+        assign_type=AssignmentType.NORMAL,
+        r_value=LinqExpr(
+            var=Identifier("city"),
+            source=Identifier("my_dict"),
+            selects=[
+                CallExpr(
+                    callee=AccessExpr(
+                        source=Identifier("city"), target=Identifier("key")
+                    ),
+                    args=[],
+                ),
+                BinaryExpr(
+                    l_value=CallExpr(
+                        callee=AccessExpr(
+                            source=Identifier("city"), target=Identifier("value")
+                        ),
+                        args=[],
+                    ),
+                    operation=BinaryOperationType.DIV,
+                    r_value=SimpleTypeExpr(SimpleLiteralType.INT, 1000),
+                ),
+            ],
+            where=BinaryExpr(
+                l_value=CallExpr(
+                    callee=AccessExpr(
+                        source=Identifier("city"), target=Identifier("value")
+                    ),
+                    args=[],
+                ),
+                operation=BinaryOperationType.LT,
+                r_value=SimpleTypeExpr(SimpleLiteralType.INT, 5000000),
+            ),
+            order_by=CallExpr(
+                callee=AccessExpr(source=Identifier("city"), target=Identifier("key")),
+                args=[],
+            ),
+            descending=True,
         ),
     )

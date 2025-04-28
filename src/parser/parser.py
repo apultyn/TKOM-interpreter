@@ -445,7 +445,10 @@ class Parser:
         if not self.might_be(TokenType.FROM_KEYWORD):
             return None
 
-        var = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
+        # var
+        identifier_token = self.must_be(TokenType.IDENTIFIER, "Identifier expected")
+        var = po.Identifier(identifier_token.value)
+
         self.must_be(TokenType.IN_KEYWORD, "'in' keyword expected")
         source = self.must_be_created(self.parse_expression(), "Expression expected")
         self.must_be(TokenType.SELECT_KEYWORD, "'select' keyword expected")
