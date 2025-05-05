@@ -1,7 +1,7 @@
 import pytest
 
-from src.parser.parser_objects import Identifier, BinaryExpr
-from src.parser.parser_util import BinaryOperationType
+from src.parser.parser_objects import Identifier, BinaryExpr, NegationExpr
+from src.parser.parser_util import BinaryOperationType, NegationType
 
 from tests.util import ident, integer
 
@@ -100,4 +100,27 @@ def test_comparison_equal(make_parser):
         operation=BinaryOperationType.EQ,
         r_value=integer(7, (1, 33)),
         pos=(1, 30),
+    )
+
+
+def test_unary_sequence(make_parser):
+    src = "a = -!-!a;"
+    expr = make_parser(src).parse_program().statements[0].r_value
+
+    assert expr == NegationExpr(
+        neg_type=NegationType.ARITH,
+        value=NegationExpr(
+            neg_type=NegationType.LOGIC,
+            value=NegationExpr(
+                neg_type=NegationType.ARITH,
+                value=NegationExpr(
+                    neg_type=NegationType.LOGIC,
+                    value=ident("a", (1, 9)),
+                    pos=(1, 8)
+                ),
+                pos=(1, 7)
+            ),
+            pos=(1, 6)
+        ),
+        pos=(1, 5)
     )

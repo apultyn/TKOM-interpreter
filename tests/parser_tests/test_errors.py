@@ -188,3 +188,18 @@ if (a==10) {
     check_error_position(
         mocked_error_handler, SyntaxException, (4, 16), msg="')' expected"
     )
+
+
+def test_elif_no_body(mocked_error_handler, make_parser):
+    src = """
+if (a==10) {
+    return 1;
+} elif (a == 5)"""
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error_position(
+        mocked_error_handler, SyntaxException, (4, 16), msg="Body expected"
+    )
