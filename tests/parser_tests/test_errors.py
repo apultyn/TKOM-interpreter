@@ -307,3 +307,37 @@ def test_for_no_body(mocked_error_handler, make_parser):
     check_error(
         mocked_error_handler, SyntaxException, (1, 14), msg="Body expected"
     )
+
+def test_return_no_semicolon(mocked_error_handler, make_parser):
+    src = "return"  # curly brackets are dictionary here
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 7), msg="';' expected"
+    )
+
+
+def test_block_wrong_statement(mocked_error_handler, make_parser):
+    src = "{5}"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 2), msg="'}' or statement expected"
+    )
+
+def test_block_no_right_bracket(mocked_error_handler, make_parser):
+    src = "{a=10;"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 7), msg="'}' or statement expected"
+    )

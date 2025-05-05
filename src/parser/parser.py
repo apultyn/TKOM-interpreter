@@ -277,7 +277,7 @@ class Parser:
         while statement := self.parse_statement():
             statements.append(statement)
 
-        self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' expected")
+        self.must_be(TokenType.RIGHT_CURLY_BRACKET, "'}' or statement expected")
 
         return po.Block(statements, pos=left_curly.pos)
 
