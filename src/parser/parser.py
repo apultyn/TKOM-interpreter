@@ -399,7 +399,7 @@ class Parser:
 
         elements = self.parse_list(self.parse_expression, TokenType.COMMA, "Expression")
 
-        self.must_be(TokenType.RIGHT_SQUARE_BRACKET, "']' expected")
+        self.must_be(TokenType.RIGHT_SQUARE_BRACKET, "']' or expression expected")
 
         return po.ListExpr(elements, pos=left_square.pos)
 

@@ -341,3 +341,47 @@ def test_block_no_right_bracket(mocked_error_handler, make_parser):
     check_error(
         mocked_error_handler, SyntaxException, (1, 7), msg="'}' or statement expected"
     )
+
+def test_list_wrong_elem(mocked_error_handler, make_parser):
+    src = "a = [;]"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 6), msg="']' or expression expected"
+    )
+
+def test_list_no_commas(mocked_error_handler, make_parser):
+    src = "a = [5 10 15]"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 8), msg="']' or expression expected"
+    )
+
+def test_list_nothing_after_comma(mocked_error_handler, make_parser):
+    src = "a = [5,10,]"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 11), msg="Expression expected"
+    )
+
+def test_list_no_right_bracket(mocked_error_handler, make_parser):
+    src = "a = [5, 10, 15"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 15), msg="']' or expression expected"
+    )
