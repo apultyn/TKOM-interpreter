@@ -1,6 +1,6 @@
 import pytest
 
-from tests.util import get_token_list, AbortExecution, check_error_position
+from tests.util import get_token_list, AbortExecution, check_error
 
 from src.lexer.lexer_config import LexerConfig
 from src.util.my_token import Token
@@ -28,7 +28,7 @@ def test_unknown_char(make_lexer, mocked_error_handler):
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
 
-    check_error_position(mocked_error_handler, TokenException, (1, 14))
+    check_error(mocked_error_handler, TokenException, (1, 14))
 
 
 def test_build_simple_and_operators(make_lexer):
@@ -75,7 +75,7 @@ def test_too_long_block_comments(make_lexer, mocked_error_handler):
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
 
-    check_error_position(mocked_error_handler, LengthException, (1, 27))
+    check_error(mocked_error_handler, LengthException, (1, 27))
 
 
 def test_too_long_line_comments(make_lexer, mocked_error_handler):
@@ -87,14 +87,14 @@ def test_too_long_line_comments(make_lexer, mocked_error_handler):
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
 
-    check_error_position(mocked_error_handler, LengthException, (3, 8))
+    check_error(mocked_error_handler, LengthException, (3, 8))
 
 
 def test_block_comment_not_closed(make_lexer, mocked_error_handler):
     lexer = make_lexer("/*Comment not closed*", err=mocked_error_handler)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, UnclosedException, (1, 22))
+    check_error(mocked_error_handler, UnclosedException, (1, 22))
 
 
 def test_keywords(make_lexer):
@@ -150,7 +150,7 @@ def test_too_long_identifiers(make_lexer, mocked_error_handler):
     assert lexer.get_next_token() == Token(TokenType.DESCENDING_KEYWORD, (1, 6))
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, LengthException, (1, 27))
+    check_error(mocked_error_handler, LengthException, (1, 27))
 
 
 # ───────────────────────── Stringi ─────────────────────────────────────
@@ -169,7 +169,7 @@ def test_string_not_closed(make_lexer, mocked_error_handler):
     assert lexer.get_next_token().type == TokenType.STRING_LITERAL
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, UnclosedException, (1, 31))
+    check_error(mocked_error_handler, UnclosedException, (1, 31))
 
 
 def test_too_long_strings(make_lexer, mocked_error_handler):
@@ -186,7 +186,7 @@ def test_too_long_strings(make_lexer, mocked_error_handler):
     )
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, LengthException, (1, 35))
+    check_error(mocked_error_handler, LengthException, (1, 35))
 
 
 def test_escaping_strings(make_lexer):
@@ -221,7 +221,7 @@ def test_int_something_after_0(make_lexer, mocked_error_handler):
     assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, InvalidValueException, (1, 7))
+    check_error(mocked_error_handler, InvalidValueException, (1, 7))
 
 
 def test_too_long_int(make_lexer, mocked_error_handler):
@@ -232,7 +232,7 @@ def test_too_long_int(make_lexer, mocked_error_handler):
     assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 6), 12345)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, LengthException, (1, 17))
+    check_error(mocked_error_handler, LengthException, (1, 17))
 
 
 # ───────────────────────── Liczby zmiennoprzecinkowe ───────────────────
@@ -256,21 +256,21 @@ def test_float_nothing_after_dot(make_lexer, mocked_error_handler):
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, InvalidValueException, (1, 7))
+    check_error(mocked_error_handler, InvalidValueException, (1, 7))
 
 
 def test_float_2_zeroes(make_lexer, mocked_error_handler):
     lexer = make_lexer("0.00 0.15", err=mocked_error_handler)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, InvalidValueException, (1, 4))
+    check_error(mocked_error_handler, InvalidValueException, (1, 4))
 
 
 def test_float_more_zeroes(make_lexer, mocked_error_handler):
     lexer = make_lexer("0.000000 123", err=mocked_error_handler)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, InvalidValueException, (1, 8))
+    check_error(mocked_error_handler, InvalidValueException, (1, 8))
 
 
 def test_too_long_floats(make_lexer, mocked_error_handler):
@@ -281,11 +281,11 @@ def test_too_long_floats(make_lexer, mocked_error_handler):
     assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 6), 123.5)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, LengthException, (1, 17))
+    check_error(mocked_error_handler, LengthException, (1, 17))
 
 
 def test_2_dotted_floats(make_lexer, mocked_error_handler):
     lexer = make_lexer("127.0.0.1", err=mocked_error_handler)
     with pytest.raises(AbortExecution):
         lexer.get_next_token()
-    check_error_position(mocked_error_handler, InvalidValueException, (1, 6))
+    check_error(mocked_error_handler, InvalidValueException, (1, 6))

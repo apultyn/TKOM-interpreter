@@ -1,6 +1,6 @@
 import pytest
 
-from ..util import AbortExecution, check_error_position
+from ..util import AbortExecution, check_error
 from src.util.pyscript_exceptions import SyntaxException
 
 
@@ -11,7 +11,7 @@ def test_program_not_statement(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 1), msg="Statement expected"
     )
 
@@ -23,7 +23,7 @@ def test_stmt_with_ident_not_created(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler,
         SyntaxException,
         (1, 2),
@@ -38,7 +38,7 @@ def test_stmt_with_ident_no_semicolon(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 6), msg="';' expected"
     )
 
@@ -50,7 +50,7 @@ def test_assignment_no_expr(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 4), msg="Expression expected"
     )
 
@@ -62,7 +62,7 @@ def test_access_no_ident(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 10), msg="Identifier expected"
     )
 
@@ -74,7 +74,7 @@ def test_call_no_right_bracket(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 18), msg="')' expected"
     )
 
@@ -90,7 +90,7 @@ if a==10 {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (2, 4), msg="'(' expected"
     )
 
@@ -106,7 +106,7 @@ if () {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (2, 5), msg="Expression expected"
     )
 
@@ -122,7 +122,7 @@ if (a {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (2, 7), msg="')' expected"
     )
 
@@ -134,7 +134,7 @@ def test_if_no_block(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (1, 11), msg="Body expected"
     )
 
@@ -151,7 +151,7 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (4, 8), msg="'(' expected"
     )
 
@@ -168,7 +168,7 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (4, 9), msg="Expression expected"
     )
 
@@ -185,7 +185,7 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (4, 16), msg="')' expected"
     )
 
@@ -200,6 +200,110 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error_position(
+    check_error(
         mocked_error_handler, SyntaxException, (4, 16), msg="Body expected"
+    )
+
+def test_while_no_left_bracket(mocked_error_handler, make_parser):
+    src = """
+while {
+    print("hi");
+}
+"""
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (2, 7), msg="'(' expected"
+    )
+
+
+def test_while_no_condition(mocked_error_handler, make_parser):
+    src = """
+while (){
+    print("hi");
+}
+"""
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (2, 8), msg="Expression expected"
+    )
+
+def test_while_no_right_bracket(mocked_error_handler, make_parser):
+    src = """
+while (a==10 {
+    print("hi");
+}
+"""
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (2, 14), msg="')' expected"
+    )
+
+
+def test_while_no_body(mocked_error_handler, make_parser):
+    src = "while (a==10);"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 14), msg="Body expected"
+    )
+
+
+def test_for_no_ident(mocked_error_handler, make_parser):
+    src = "for 5+5"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 5), msg="Identifier expected"
+    )
+
+def test_for_no_in(mocked_error_handler, make_parser):
+    src = "for var {}"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 9), msg="'in' keyword expected"
+    )
+
+
+def test_for_no_expression(mocked_error_handler, make_parser):
+    src = "for var in ;"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 12), msg="Expression expected"
+    )
+
+def test_for_no_body(mocked_error_handler, make_parser):
+    src = "for var in {};"  # curly brackets are dictionary here
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 14), msg="Body expected"
     )
