@@ -20,11 +20,13 @@ class AbortExecution(Exception):
     pass
 
 
-def check_error_position(mocked_error_handler, exception, position):
+def check_error_position(mocked_error_handler, exception, position, *, msg=None):
     mocked_error_handler.handle_error.assert_called_once()
     exc = mocked_error_handler.handle_error.call_args.args[0]
     assert isinstance(exc, exception)
     assert exc.pos == position
+    if msg:
+        assert exc.msg == msg
 
 
 def ident(name, pos):

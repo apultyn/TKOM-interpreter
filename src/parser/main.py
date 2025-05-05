@@ -12,21 +12,22 @@ def enum_default(obj):
         return obj.to_json()
     raise TypeError
 
+
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--input")
+    arg_parser.add_argument("-i", "--input", required=True)
+    arg_parser.add_argument("-o", "--output", required=True)
     args = arg_parser.parse_args()
 
     with open(args.input) as file_handle:
         err = ErrorHandler()
         parser = Parser(
-            lexer=Lexer(source=file_handle, error_handler=err),
-            error_handler=err
+            lexer=Lexer(source=file_handle, error_handler=err), error_handler=err
         )
 
         program = parser.parse_program()
-        program._name = args.input
-        pathlib.Path("tree.json").write_text(
+        program._name = args.i
+        pathlib.Path(args.o).write_text(
             json.dumps(dataclasses.asdict(program), indent=2, default=enum_default)
         )
 

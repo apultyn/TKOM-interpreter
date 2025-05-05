@@ -63,7 +63,10 @@ class Parser:
         while found_token := self.might_be_in(tokens):
             right = subrule()
             expr = po.BinaryExpr(
-                expr, pu.match_binary_operation(found_token.type), right, pos=found_token.pos
+                expr,
+                pu.match_binary_operation(found_token.type),
+                right,
+                pos=found_token.pos,
             )
         return expr
 
@@ -159,9 +162,7 @@ class Parser:
             expr = new_expr
 
         if not isinstance(expr, po.CallExpr):
-            expr = self.must_be_created(
-                self.parse_call_suff(expr), "Function call expected"
-            )
+            return None
         return expr
 
     # access_suff = ".", identifier ;
@@ -193,9 +194,7 @@ class Parser:
             return None
 
         self.must_be(TokenType.LEFT_BRACKET, "'(' expected")
-        condition = self.must_be_created(
-            self.parse_expression(), "Expression exprected"
-        )
+        condition = self.must_be_created(self.parse_expression(), "Expression expected")
 
         self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
