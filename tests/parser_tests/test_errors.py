@@ -496,3 +496,131 @@ def test_func_no_right_bracket_empty(mocked_error_handler, make_parser):
     check_error(
         mocked_error_handler, SyntaxException, (1, 14), msg="')' or identifier expected"
     )
+
+
+def test_linq_no_var(mocked_error_handler, make_parser):
+    src = "a = from 5+5"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 10), msg="Identifier expected"
+    )
+
+
+def test_linq_no_in(mocked_error_handler, make_parser):
+    src = "a = from var select"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 14), msg="'in' keyword expected"
+    )
+
+
+def test_linq_no_source(mocked_error_handler, make_parser):
+    src = "a = from var in ; select"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 17), msg="Expression expected"
+    )
+
+
+def test_linq_no_select(mocked_error_handler, make_parser):
+    src = "a = from var in list;"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 21), msg="'select' keyword expected"
+    )
+
+
+def test_linq_no_selects(mocked_error_handler, make_parser):
+    src = "a = from var in list select where"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 29), msg="Expression expected"
+    )
+
+
+def test_linq_no_comma_between_selects(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key() var.value() "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (1, 39), msg="',' expected")
+
+
+def test_linq_wrong_after_comma(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key(),; "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 39), msg="Expression expected"
+    )
+
+
+def test_linq_where_no_expr(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key() where ; "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 45), msg="Expression expected"
+    )
+
+
+def test_linq_order_no_by(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key() order ; "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 45), msg="'by' keyword expected"
+    )
+
+
+def test_linq_order_by_no_expr(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key() order by ; "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 48), msg="Expression expected"
+    )
+
+
+def test_linq_descending_no_order(mocked_error_handler, make_parser):
+    src = "a = from var in list select var.key() descending; "
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (1, 39), msg="';' expected")

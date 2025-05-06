@@ -492,6 +492,10 @@ class Parser:
                 self.must_be_created(self.parse_expression(), "Expression expected")
             )
 
+        error_pos = self.current_token.pos
+        if self.parse_expression():
+            self.error_handler.handle_error(SyntaxException("',' expected", error_pos))
+
         where = None
         if self.might_be(TokenType.WHERE_KEYWORD):
             where = self.must_be_created(self.parse_expression(), "Expression expected")
