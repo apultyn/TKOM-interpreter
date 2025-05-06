@@ -114,13 +114,11 @@ def test_unary_sequence(make_parser):
             value=NegationExpr(
                 neg_type=NegationType.ARITH,
                 value=NegationExpr(
-                    neg_type=NegationType.LOGIC,
-                    value=ident("a", (1, 9)),
-                    pos=(1, 8)
+                    neg_type=NegationType.LOGIC, value=ident("a", (1, 9)), pos=(1, 8)
                 ),
-                pos=(1, 7)
+                pos=(1, 7),
             ),
-            pos=(1, 6)
+            pos=(1, 6),
         ),
-        pos=(1, 5)
+        pos=(1, 5),
     )
