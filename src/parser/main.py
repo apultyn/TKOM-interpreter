@@ -6,6 +6,8 @@ from src.parser.parser import Parser
 from src.lexer.lexer import Lexer
 from src.util.error_handler import ErrorHandler
 
+# from src.parser.parser_objects import PrintVisitor
+
 
 def enum_default(obj):
     if isinstance(obj, Enum):
@@ -26,6 +28,11 @@ def main():
         )
 
         program = parser.parse_program()
+
+        # # Print
+        # printer = PrintVisitor()
+        # program.accept(printer)
+
         program._name = args.input
         pathlib.Path(args.output).write_text(
             json.dumps(dataclasses.asdict(program), indent=2, default=enum_default)
