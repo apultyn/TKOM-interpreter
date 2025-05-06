@@ -91,9 +91,7 @@ class Parser:
             error_pos = self.current_token.pos
             if element_function() is not None:
                 self.error_handler.handle_error(
-                    SyntaxException(
-                        f"'{separator_name}' expected", error_pos
-                    )
+                    SyntaxException(f"'{separator_name}' expected", error_pos)
                 )
         return items
 
@@ -456,7 +454,18 @@ class Parser:
                     po.Identifier(next_token.value, pos=next_token.pos)
                 )
 
-        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
+            error_pos = self.current_token.pos
+            if self.might_be(TokenType.IDENTIFIER):
+                self.error_handler.handle_error(
+                    SyntaxException("',' expected", error_pos)
+                )
+
+        error_msg = None
+        if len(identifier_list) == 0:
+            error_msg = "')' or identifier expected"
+        else:
+            error_msg = "')' or ',' expected"
+        self.must_be(TokenType.RIGHT_BRACKET, error_msg)
 
         body = self.must_be_created(self.parse_block(), "Body expected")
 

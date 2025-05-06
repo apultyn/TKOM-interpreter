@@ -366,6 +366,7 @@ def test_list_no_right_bracket(mocked_error_handler, make_parser):
         mocked_error_handler, SyntaxException, (1, 15), msg="']' or ',' expected"
     )
 
+
 def test_list_no_right_bracket_empty(mocked_error_handler, make_parser):
     src = "a = ["
     parser = make_parser(src, err=mocked_error_handler)
@@ -423,6 +424,7 @@ def test_dict_no_right_bracket(mocked_error_handler, make_parser):
         mocked_error_handler, SyntaxException, (1, 27), msg="'}' or ',' expected"
     )
 
+
 def test_dict_no_right_bracket_empty(mocked_error_handler, make_parser):
     src = "a = {"
     parser = make_parser(src, err=mocked_error_handler)
@@ -431,5 +433,66 @@ def test_dict_no_right_bracket_empty(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 6), msg="'}' or item literal expected"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 6),
+        msg="'}' or item literal expected",
+    )
+
+
+def test_func_wrong_elem(mocked_error_handler, make_parser):
+    src = "a = function(arg1 5)"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 19), msg="')' or ',' expected"
+    )
+
+
+def test_func_no_commas(mocked_error_handler, make_parser):
+    src = "a = function(arg1 arg2)"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (1, 19), msg="',' expected")
+
+
+def test_func_nothing_after_comma(mocked_error_handler, make_parser):
+    src = "a = function(arg1,)"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 19), msg="Identifier expected"
+    )
+
+
+def test_func_no_right_bracket(mocked_error_handler, make_parser):
+    src = "a = function(arg1, arg2"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 24), msg="')' or ',' expected"
+    )
+
+
+def test_func_no_right_bracket_empty(mocked_error_handler, make_parser):
+    src = "a = function("
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 14), msg="')' or identifier expected"
     )
