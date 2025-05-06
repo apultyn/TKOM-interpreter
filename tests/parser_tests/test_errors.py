@@ -70,7 +70,9 @@ def test_call_no_right_bracket(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 18), msg="')' expected")
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 18), msg="')' or ',' expected"
+    )
 
 
 def test_if_no_left_bracket(mocked_error_handler, make_parser):
@@ -624,3 +626,47 @@ def test_linq_descending_no_order(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(mocked_error_handler, SyntaxException, (1, 39), msg="';' expected")
+
+
+def test_no_expr_after_bracket(mocked_error_handler, make_parser):
+    src = "a = (;)"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 6), msg="Expression expected"
+    )
+
+
+def test_no_right_bracket(mocked_error_handler, make_parser):
+    src = "a = (5<5 ;"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (1, 10), msg="')' expected")
+
+
+def test_item_no_value(mocked_error_handler, make_parser):
+    src = "a = (5<5:;) ;"
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 10), msg="Expression expected"
+    )
+
+
+def test_item_no_right_bracket(mocked_error_handler, make_parser):
+    src = r'a = (5<5:"hello"'
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (1, 17), msg="')' expected")

@@ -26,8 +26,8 @@ def main():
         )
 
         program = parser.parse_program()
-        program._name = args.i
-        pathlib.Path(args.o).write_text(
+        program._name = args.input
+        pathlib.Path(args.output).write_text(
             json.dumps(dataclasses.asdict(program), indent=2, default=enum_default)
         )
 

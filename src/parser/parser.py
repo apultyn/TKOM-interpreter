@@ -76,6 +76,8 @@ class Parser:
         element_name: str,
         separator: TokenType,
         separator_name: str,
+        close_token: TokenType,
+        close_token_name: str,
     ):
         items = []
         first_item = element_function()
@@ -84,7 +86,7 @@ class Parser:
 
             while self.might_be(separator):
                 next_item = self.must_be_created(
-                    element_function(), f"{element_name} expected"
+                    element_function(), f"{element_name.capitalize()} expected"
                 )
                 items.append(next_item)
 
@@ -93,6 +95,12 @@ class Parser:
                 self.error_handler.handle_error(
                     SyntaxException(f"'{separator_name}' expected", error_pos)
                 )
+
+        second_expected = element_name if len(items) == 0 else f"'{separator_name}'"
+        error_msg = f"'{close_token_name}' or {second_expected} expected"
+
+        self.must_be(close_token, error_msg)
+
         return items
 
     # program = { statement }, "EOF" ;
@@ -188,10 +196,13 @@ class Parser:
             return None
 
         arguments = self.parse_list(
-            self.parse_expression, "Expression", TokenType.COMMA, ","
+            self.parse_expression,
+            "Expression",
+            TokenType.COMMA,
+            ",",
+            TokenType.RIGHT_BRACKET,
+            ")",
         )
-
-        self.must_be(TokenType.RIGHT_BRACKET, "')' expected")
 
         return po.CallExpr(source, arguments, pos=left_bracket.pos)
 
@@ -405,15 +416,13 @@ class Parser:
             return None
 
         elements = self.parse_list(
-            self.parse_expression, "Expression", TokenType.COMMA, ","
+            self.parse_expression,
+            "expression",
+            TokenType.COMMA,
+            ",",
+            TokenType.RIGHT_SQUARE_BRACKET,
+            "]",
         )
-
-        error_msg = None
-        if len(elements) == 0:
-            error_msg = "']' or expression expected"
-        else:
-            error_msg = "']' or ',' expected"
-        self.must_be(TokenType.RIGHT_SQUARE_BRACKET, error_msg)
 
         return po.ListExpr(elements, pos=left_square.pos)
 
@@ -423,15 +432,13 @@ class Parser:
             return None
 
         items = self.parse_list(
-            self.parse_item_literal, "Item literal", TokenType.COMMA, ","
+            self.parse_item_literal,
+            "item literal",
+            TokenType.COMMA,
+            ",",
+            TokenType.RIGHT_CURLY_BRACKET,
+            "}",
         )
-
-        error_msg = None
-        if len(items) == 0:
-            error_msg = "'}' or item literal expected"
-        else:
-            error_msg = "'}' or ',' expected"
-        self.must_be(TokenType.RIGHT_CURLY_BRACKET, error_msg)
 
         return po.DictExpr(items, pos=left_curly.pos)
 
