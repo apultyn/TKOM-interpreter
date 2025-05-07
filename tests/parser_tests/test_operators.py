@@ -1,6 +1,12 @@
 import pytest
 
-from src.parser.parser_objects import Identifier, BinaryExpr, NegationExpr
+from src.parser.parser_objects import (
+    Identifier,
+    BinaryExpr,
+    NegationExpr,
+    CallExpr,
+    AccessExpr,
+)
 from src.parser.parser_util import BinaryOperationType, NegationType
 
 from tests.util import ident, integer
@@ -50,7 +56,7 @@ def test_and_over_or(make_parser):
     )
 
 
-def test_neq_over_and(make_parser):
+def test_comp_over_and(make_parser):
     src = "a = 5 and 2 != 3;"
     expr = make_parser(src).parse_program().statements[0].r_value
 
@@ -100,6 +106,78 @@ def test_comparison_equal(make_parser):
         operation=BinaryOperationType.EQ,
         r_value=integer(7, (1, 33)),
         pos=(1, 30),
+    )
+
+
+def test_addv_over_comp(make_parser):
+    src = "a = 5 > 2 + 2;"
+    expr = make_parser(src).parse_program().statements[0].r_value
+
+    assert expr == BinaryExpr(
+        l_value=integer(5, (1, 5)),
+        operation=BinaryOperationType.GT,
+        r_value=BinaryExpr(
+            l_value=integer(2, (1, 9)),
+            operation=BinaryOperationType.ADD,
+            r_value=integer(2, (1, 13)),
+            pos=(1, 11),
+        ),
+        pos=(1, 7),
+    )
+
+
+def test_mul_over_addv(make_parser):
+    src = "a = 5 + 2 / 2;"
+    expr = make_parser(src).parse_program().statements[0].r_value
+
+    assert expr == BinaryExpr(
+        l_value=integer(5, (1, 5)),
+        operation=BinaryOperationType.ADD,
+        r_value=BinaryExpr(
+            l_value=integer(2, (1, 9)),
+            operation=BinaryOperationType.DIV,
+            r_value=integer(2, (1, 13)),
+            pos=(1, 11),
+        ),
+        pos=(1, 7),
+    )
+
+
+def test_unary_over_mul(make_parser):
+    src = "a = 10 * -5;"
+    expr = make_parser(src).parse_program().statements[0].r_value
+
+    assert expr == BinaryExpr(
+        l_value=integer(10, (1, 5)),
+        operation=BinaryOperationType.MUL,
+        r_value=NegationExpr(
+            neg_type=NegationType.ARITH, value=integer(5, (1, 11)), pos=(1, 10)
+        ),
+        pos=(1, 8),
+    )
+
+
+def test_postfix_over_unary(make_parser):
+    src = """
+a = -calc();
+b = !obj.field;
+"""
+    statements = make_parser(src).parse_program().statements
+    expr1 = statements[0].r_value
+    expr2 = statements[1].r_value
+
+    assert expr1 == NegationExpr(
+        neg_type=NegationType.ARITH,
+        value=CallExpr(callee=ident("calc", (2, 6)), args=[], pos=(2, 10)),
+        pos=(2, 5),
+    )
+
+    assert expr2 == NegationExpr(
+        neg_type=NegationType.LOGIC,
+        value=AccessExpr(
+            source=ident("obj", (3, 6)), target=ident("field", (3, 10)), pos=(3, 9)
+        ),
+        pos=(3, 5),
     )
 
 

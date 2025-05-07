@@ -8,6 +8,7 @@ from .parser_util import (
     SimpleExprType,
 )
 
+
 @dataclass(kw_only=True)
 class ParserObject:
     _name: str = field(init=False, repr=False)
