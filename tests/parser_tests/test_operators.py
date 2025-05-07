@@ -6,6 +6,7 @@ from src.parser.parser_objects import (
     NegationExpr,
     CallExpr,
     AccessExpr,
+    BracketsExpr,
 )
 from src.parser.parser_util import BinaryOperationType, NegationType
 
@@ -178,6 +179,25 @@ b = !obj.field;
             source=ident("obj", (3, 6)), target=ident("field", (3, 10)), pos=(3, 9)
         ),
         pos=(3, 5),
+    )
+
+
+def test_parenthesis_over_postifx(make_parser):
+    src = "a = (2 + 2)(arg1);"
+    expr = make_parser(src).parse_program().statements[0].r_value
+
+    assert expr == CallExpr(
+        callee=BracketsExpr(
+            value=BinaryExpr(
+                l_value=integer(2, (1, 6)),
+                operation=BinaryOperationType.ADD,
+                r_value=integer(2, (1, 10)),
+                pos=(1, 8),
+            ),
+            pos=(1, 5),
+        ),
+        args=[ident("arg1", (1, 13))],
+        pos=(1, 12),
     )
 
 
