@@ -224,7 +224,7 @@ class Parser:
 
         else_body = None
         if self.might_be(TokenType.ELSE_KEYWORD):
-            else_body = self.parse_block()
+            else_body = self.must_be_created(self.parse_block(), "Body expected")
 
         return po.IfStmt(
             condition, body, elif_statements, else_body, pos=if_keyword.pos

@@ -189,6 +189,19 @@ if (a==10) {
     check_error(mocked_error_handler, SyntaxException, (4, 16), msg="Body expected")
 
 
+def test_else_no_block(mocked_error_handler, make_parser):
+    src = """
+if (a>b) {}
+else;
+"""
+    parser = make_parser(src, err=mocked_error_handler)
+
+    with pytest.raises(AbortExecution):
+        parser.parse_program()
+
+    check_error(mocked_error_handler, SyntaxException, (3, 5), msg="Body expected")
+
+
 def test_while_no_left_bracket(mocked_error_handler, make_parser):
     src = """
 while {
