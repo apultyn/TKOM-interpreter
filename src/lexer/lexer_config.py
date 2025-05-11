@@ -18,9 +18,3 @@ class LexerConfig:
             or self.max_num_literal_length < 0
         ):
             raise ValueError("Lengths can't be smaller than 0")
-
-    @staticmethod
-    def from_json(path: str) -> "LexerConfig":
-        with open(path, "r") as file_handle:
-            data = json.load(file_handle)
-        return LexerConfig(**data)
