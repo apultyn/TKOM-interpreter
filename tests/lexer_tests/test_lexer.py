@@ -1,0 +1,291 @@
+import pytest
+
+from tests.util import get_token_list, AbortExecution, check_error
+
+from src.lexer.lexer_config import LexerConfig
+from src.util.my_token import Token
+from src.util.token_type import TokenType
+from src.util.pyscript_exceptions import (
+    LengthException,
+    UnclosedException,
+    InvalidValueException,
+    TokenException,
+)
+
+
+def test_empty_input(make_lexer):
+    lexer = make_lexer("")
+
+    assert get_token_list(lexer) == [Token(TokenType.EOF, (1, 1))]
+
+
+def test_unknown_char(make_lexer, mocked_error_handler):
+    lexer = make_lexer("hello_there; &address")
+
+    lexer.get_next_token()
+    lexer.get_next_token()
+
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+
+    check_error(mocked_error_handler, TokenException, (1, 14))
+
+
+def test_build_simple_and_operators(make_lexer):
+    lexer = make_lexer(".,:;*(){}[]!=!-=-/*He/*l*lo*///Hel/**/llo\r\n+=+ ===\t>=><=<")
+    tokens = get_token_list(lexer)
+
+    assert tokens == [
+        Token(TokenType.DOT_OPERATOR, (1, 1)),
+        Token(TokenType.COMMA, (1, 2)),
+        Token(TokenType.COLON, (1, 3)),
+        Token(TokenType.SEMICOLON, (1, 4)),
+        Token(TokenType.MUL_OPERATOR, (1, 5)),
+        Token(TokenType.LEFT_BRACKET, (1, 6)),
+        Token(TokenType.RIGHT_BRACKET, (1, 7)),
+        Token(TokenType.LEFT_CURLY_BRACKET, (1, 8)),
+        Token(TokenType.RIGHT_CURLY_BRACKET, (1, 9)),
+        Token(TokenType.LEFT_SQUARE_BRACKET, (1, 10)),
+        Token(TokenType.RIGHT_SQUARE_BRACKET, (1, 11)),
+        Token(TokenType.NEQ_OPERATOR, (1, 12)),
+        Token(TokenType.LOGIC_NEG_OPERATOR, (1, 14)),
+        Token(TokenType.ASSIGN_MINUS_OPERATOR, (1, 15)),
+        Token(TokenType.MINUS_OPERATOR, (1, 17)),
+        Token(TokenType.BLOCK_COMMENT, (1, 18)),
+        Token(TokenType.LINE_COMMENT, (1, 30)),
+        Token(TokenType.ASSIGN_PLUS_OPERATOR, (2, 1)),
+        Token(TokenType.PLUS_OPERATOR, (2, 3)),
+        Token(TokenType.EQ_OPERATOR, (2, 5)),
+        Token(TokenType.ASSIGN_OPERATOR, (2, 7)),
+        Token(TokenType.GEQ_OPERATOR, (2, 9)),
+        Token(TokenType.GT_OPERATOR, (2, 11)),
+        Token(TokenType.LEQ_OPERATOR, (2, 12)),
+        Token(TokenType.LT_OPERATOR, (2, 14)),
+        Token(TokenType.EOF, (2, 15)),
+    ]
+
+
+def test_too_long_block_comments(make_lexer, mocked_error_handler):
+    config = LexerConfig(max_comment_length=5)
+    lexer = make_lexer("/*Shor*/ /*Exact*/ /*TooLong*/", config=config)
+
+    assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 1))
+    assert lexer.get_next_token() == Token(TokenType.BLOCK_COMMENT, (1, 10))
+
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+
+    check_error(mocked_error_handler, LengthException, (1, 27))
+
+
+def test_too_long_line_comments(make_lexer, mocked_error_handler):
+    config = LexerConfig(max_comment_length=5)
+    lexer = make_lexer("//Shor\n//Exact\n//TooLon", config=config)
+
+    assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (1, 1))
+    assert lexer.get_next_token() == Token(TokenType.LINE_COMMENT, (2, 1))
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+
+    check_error(mocked_error_handler, LengthException, (3, 8))
+
+
+def test_block_comment_not_closed(make_lexer, mocked_error_handler):
+    lexer = make_lexer("/*Comment not closed*", err=mocked_error_handler)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, UnclosedException, (1, 22))
+
+
+def test_keywords(make_lexer):
+    text = (
+        "if else function return while for from in select where order by "
+        "descending True False or and elif"
+    )
+    lexer = make_lexer(text)
+
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.IF_KEYWORD, (1, 1)),
+        Token(TokenType.ELSE_KEYWORD, (1, 4)),
+        Token(TokenType.FUNCTION_KEYWORD, (1, 9)),
+        Token(TokenType.RETURN_KEYWORD, (1, 18)),
+        Token(TokenType.WHILE_KEYWORD, (1, 25)),
+        Token(TokenType.FOR_KEYWORD, (1, 31)),
+        Token(TokenType.FROM_KEYWORD, (1, 35)),
+        Token(TokenType.IN_KEYWORD, (1, 40)),
+        Token(TokenType.SELECT_KEYWORD, (1, 43)),
+        Token(TokenType.WHERE_KEYWORD, (1, 50)),
+        Token(TokenType.ORDER_KEYWORD, (1, 56)),
+        Token(TokenType.BY_KEYWORD, (1, 62)),
+        Token(TokenType.DESCENDING_KEYWORD, (1, 65)),
+        Token(TokenType.TRUE_LITERAL, (1, 76)),
+        Token(TokenType.FALSE_LITERAL, (1, 81)),
+        Token(TokenType.OR_OPERATOR, (1, 87)),
+        Token(TokenType.AND_OPERATOR, (1, 90)),
+        Token(TokenType.ELIF_KEYWORD, (1, 94)),
+        Token(TokenType.EOF, (1, 98)),
+    ]
+
+
+# ───────────────────────── Identyfikatory ──────────────────────────────
+def test_identifiers(make_lexer):
+    lexer = make_lexer("Hello there val1d_1d3nt1f13r")
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.IDENTIFIER, (1, 1), "Hello"),
+        Token(TokenType.IDENTIFIER, (1, 7), "there"),
+        Token(TokenType.IDENTIFIER, (1, 13), "val1d_1d3nt1f13r"),
+        Token(TokenType.EOF, (1, 29)),
+    ]
+
+
+def test_too_long_identifiers(make_lexer, mocked_error_handler):
+    cfg = LexerConfig(max_identifier_length=10)
+    lexer = make_lexer(
+        "good descending toolongidentifier", config=cfg, err=mocked_error_handler
+    )
+
+    assert lexer.get_next_token() == Token(TokenType.IDENTIFIER, (1, 1), "good")
+    assert lexer.get_next_token() == Token(TokenType.DESCENDING_KEYWORD, (1, 6))
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, LengthException, (1, 27))
+
+
+# ───────────────────────── Stringi ─────────────────────────────────────
+def test_string_literal(make_lexer):
+    lexer = make_lexer(r'"Hello there""another string"')
+    tokens = get_token_list(lexer)
+    assert tokens == [
+        Token(TokenType.STRING_LITERAL, (1, 1), "Hello there"),
+        Token(TokenType.STRING_LITERAL, (1, 14), "another string"),
+        Token(TokenType.EOF, (1, 30)),
+    ]
+
+
+def test_string_not_closed(make_lexer, mocked_error_handler):
+    lexer = make_lexer(r'"Hello there" "unclosed string', err=mocked_error_handler)
+    assert lexer.get_next_token().type == TokenType.STRING_LITERAL
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, UnclosedException, (1, 31))
+
+
+def test_too_long_strings(make_lexer, mocked_error_handler):
+    cfg = LexerConfig(max_string_literal_length=10)
+    lexer = make_lexer(
+        r'"Goodstr" "Atlimitstr" "Too long string"',
+        config=cfg,
+        err=mocked_error_handler,
+    )
+
+    assert lexer.get_next_token() == Token(TokenType.STRING_LITERAL, (1, 1), "Goodstr")
+    assert lexer.get_next_token() == Token(
+        TokenType.STRING_LITERAL, (1, 11), "Atlimitstr"
+    )
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, LengthException, (1, 35))
+
+
+def test_escaping_strings(make_lexer):
+    text = (
+        r'"Hello with \"escaping\" chars" "Another \"escaping\"" '
+        r'"Escaping at the end\"";'
+    )
+    tokens = get_token_list(make_lexer(text))
+    assert tokens == [
+        Token(TokenType.STRING_LITERAL, (1, 1), r'Hello with "escaping" chars'),
+        Token(TokenType.STRING_LITERAL, (1, 33), r'Another "escaping"'),
+        Token(TokenType.STRING_LITERAL, (1, 56), r'Escaping at the end"'),
+        Token(TokenType.SEMICOLON, (1, 79)),
+        Token(TokenType.EOF, (1, 80)),
+    ]
+
+
+# ───────────────────────── Liczby całkowite ────────────────────────────
+def test_int_literal(make_lexer):
+    tokens = get_token_list(make_lexer("12345 0 14000 25"))
+    assert tokens == [
+        Token(TokenType.INT_LITERAL, (1, 1), 12345),
+        Token(TokenType.INT_LITERAL, (1, 7), 0),
+        Token(TokenType.INT_LITERAL, (1, 9), 14000),
+        Token(TokenType.INT_LITERAL, (1, 15), 25),
+        Token(TokenType.EOF, (1, 17)),
+    ]
+
+
+def test_int_something_after_0(make_lexer, mocked_error_handler):
+    lexer = make_lexer("12345 025 123", err=mocked_error_handler)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 12345)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, InvalidValueException, (1, 7))
+
+
+def test_too_long_int(make_lexer, mocked_error_handler):
+    cfg = LexerConfig(max_num_literal_length=5)
+    lexer = make_lexer("1234 12345 123456", config=cfg, err=mocked_error_handler)
+
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 1), 1234)
+    assert lexer.get_next_token() == Token(TokenType.INT_LITERAL, (1, 6), 12345)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, LengthException, (1, 17))
+
+
+# ───────────────────────── Liczby zmiennoprzecinkowe ───────────────────
+def test_float_literal(make_lexer):
+    text = "1.0 2.45 5.43215 5123154.0 0.0 0.91 1.5"
+    tokens = get_token_list(make_lexer(text))
+    assert tokens == [
+        Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 5), 2.45),
+        Token(TokenType.FLOAT_LITERAL, (1, 10), 5.43215),
+        Token(TokenType.FLOAT_LITERAL, (1, 18), 5123154.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 28), 0.0),
+        Token(TokenType.FLOAT_LITERAL, (1, 32), 0.91),
+        Token(TokenType.FLOAT_LITERAL, (1, 37), 1.5),
+        Token(TokenType.EOF, (1, 40)),
+    ]
+
+
+def test_float_nothing_after_dot(make_lexer, mocked_error_handler):
+    lexer = make_lexer("1.0 0. 54.1", err=mocked_error_handler)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 1.0)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, InvalidValueException, (1, 7))
+
+
+def test_float_2_zeroes(make_lexer, mocked_error_handler):
+    lexer = make_lexer("0.00 0.15", err=mocked_error_handler)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, InvalidValueException, (1, 4))
+
+
+def test_float_more_zeroes(make_lexer, mocked_error_handler):
+    lexer = make_lexer("0.000000 123", err=mocked_error_handler)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, InvalidValueException, (1, 8))
+
+
+def test_too_long_floats(make_lexer, mocked_error_handler):
+    cfg = LexerConfig(max_num_literal_length=5)
+    lexer = make_lexer("12.0 123.5 1234.56", config=cfg, err=mocked_error_handler)
+
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 1), 12.0)
+    assert lexer.get_next_token() == Token(TokenType.FLOAT_LITERAL, (1, 6), 123.5)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, LengthException, (1, 17))
+
+
+def test_2_dotted_floats(make_lexer, mocked_error_handler):
+    lexer = make_lexer("127.0.0.1", err=mocked_error_handler)
+    with pytest.raises(AbortExecution):
+        lexer.get_next_token()
+    check_error(mocked_error_handler, InvalidValueException, (1, 6))

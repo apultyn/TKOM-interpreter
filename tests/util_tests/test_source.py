@@ -1,8 +1,8 @@
 import io
 import pytest
 
-from src.source import Source
-from src.pyscript_exceptions import NewLineException
+from src.util.source import Source
+from src.util.pyscript_exceptions import NewLineException
 
 
 def test_get_next_char():

@@ -1,69 +1,74 @@
 TKOM gramatyka
 
-program 		= { statement } ;
-statement 		= ( assigment, ";" )
-				| ( expression, ";" )
-				| func_definition
-				| if_statement
-				| while_loop
-				| for_loop
-				| return_statement
-				| block ;
+program 		= { statement }, "EOF" ;
 
-assigment 		= identifier, ( "=" | "+=" | "-=" ), expression ;
-func_definition = identifier, "=", "function", "(", identifier_list, ")", block ;
-if_statement 	= "if", "(", expression, ")", block, { else_if }, [ "else", block ] ;
-else_if 		= "else", "if", "(", expression, ")", block ;
+statement 		= stmt_with_ident,
+					| if_statement
+					| while_loop
+					| for_loop
+					| return_statement
+					| block ;
 
-while_loop 		= "while", "(", expression, ")", block ;
-for_loop 		= "for", identifier, "in", expression, block ;
-return_statement= "return", [ expression ] ";" ;
-block 			= "{", { statement }, "}" ;
+stmt_with_ident 	= identifier, ( assignment | call_stmt ), ";" ;
+assignment 			= ( "=" | "+=" | "-=" ), expression ;
+call_stmt			= { access_suff | call_suff }, call_suff ;
+
+access_suff 		= ".", identifier ;
+call_suff			= "(", [ expression, { ",", expression } ], ")"
+
+if_statement 		= "if", "(", expression, ")", block, { elif }, [ "else", block ] ;
+elif 				= "elif", "(", expression, ")", block ;
+
+while_loop 			= "while", "(", expression, ")", block ;
+for_loop 			= "for", identifier, "in", expression, block ;
+return_statement	= "return", [ expression ], ";" ;
+block 				= "{", { statement }, "}" ;
 
 expression		= logic_or ;
 logic_or		= logic_and, { "or", logic_and } ;
-logic_and		= equality, { "and", equality } ;
-equality		= comparison, { ("==" | "!="), comparison } ;
-comparison		= additive, { (">" | ">=" | "<" | "<="), additive } ;
+logic_and		= comparison, { "and", comparison } ;
+comparison		= additive, { ("==" | "!=" | ">" | ">=" | "<" | "<="), additive } ;
 additive		= multiplicative, { ("+" | "-"), multiplicative } ;
 multiplicative	= unary, { ( "*" | "/" ), unary } ;
-unary			= ("!" | "-"), unary | postfix ;
-postfix			= primary, { ( ".", identifier ) | ( "(", argument_list, ")" ) } ;
+unary			= { ("!" | "-") }, postfix ;
+postfix			= primary, { call_suff | member_suff} ;
 
 primary			= integer
-				| float
-				| string
-				| "True" | "False"
-				| identifier
-				| list_literal
-				| dict_literal
-				| linq_query
-				| ( "(", expression, ")" ) ;
+					| float
+					| string
+					| "True" | "False"
+					| identifier
+					| list_literal
+					| dict_literal
+					| func_literal
+					| linq_query
+					| item_literal_or_parenthesis
 
-integer 		= "0" | ( digit-positive , { digit } ) ;
-float			= integer, ".", integer ;
-string			= '"', { unicode_symbol }, '"' ;
-identifier		= letter, { alphanumeric } ;
-identifier_list = identifier, { ",", identifier } ;
-argument_list	= [ expression, { ",", expression } ] ;
-list_literal	= "[", [ expression { ",", expression } ] "]" ;
-dict_literal	= "{", [ item_literal, { item_literal } ], "}" ;
-item_literal	= "(", expression, ":", expression, ")" ;
+list_literal	= "[", [ expression, { ",", expression } ] "]" ;
+dict_literal	= "{", [ item_literal, { ",", item_literal } ], "}" ;
+func_literal    = "function", "(", identifier, { ",", identifier }, ")", block ;
 
 linq_query		= "from", identifier, "in", expression,
 					"select", expression, { ",", expression }
 					[ "where", expression ],
 					[ "order", "by", expression, [ "descending" ] ] ;
 
+item_literal_or_parenthesis = "(", expression, ( item_literal_tail | ")" ) ;
+item_literal 				= "(", expression, item_literal_tail ;
+item_literal_tail 			= ":", expression, ")" ;
+
+
+integer 		= "0" | ( digit-positive , { digit } ) ;
+float			= integer, ".", integer ;
+string			= '"', { unicode_symbol }, '"' ;
+identifier		= letter, { alphanumeric } ;
+
 unicode_symbol 	= { *symbole UNICODE* } ;
 letter			= { *litery* } ;
 alphanumeric	= letter | digit | "_" ;
 
-
-
 comment-endline = "//", { unicode_symbol }, "\n";
 comment-inline 	= "/*", { unicode_symbol }, "*/";
-
 
 digit-positive 	= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 digit 			= "0" | digit-positive;
