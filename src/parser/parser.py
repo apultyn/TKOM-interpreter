@@ -30,7 +30,7 @@ class Parser:
         token = self.current_token
         if token.type != token_type:
             self.error_handler.handle_error(
-                SyntaxException(msg=msg, pos=self.current_token.pos)
+                SyntaxException(msg=msg, pos=self.current_token.pos, token_got=token.type)
             )
         self.get_next_token()
         return token
@@ -62,10 +62,10 @@ class Parser:
         expr = subrule()
         while found_token := self.might_be_in(tokens):
             right = subrule()
-            expr = po.BinaryExpr(
-                expr,
-                pu.match_binary_operation(found_token.type),
-                right,
+            OperationClass = pu.match_binary_operation(found_token.type)
+            expr = OperationClass(
+                l_value=expr,
+                r_value=right,
                 pos=found_token.pos,
             )
         return expr
@@ -147,25 +147,29 @@ class Parser:
 
     # assignment = ( "=" | "+=" | "-=" ),  expression ;
     def parse_assignment(self, identifier: po.Identifier):
-        assign_token = self.might_be_in(
-            (
-                TokenType.ASSIGN_OPERATOR,
-                TokenType.ASSIGN_PLUS_OPERATOR,
-                TokenType.ASSIGN_MINUS_OPERATOR,
+        if not (
+            assign_token := self.might_be_in(
+                (
+                    TokenType.ASSIGN_OPERATOR,
+                    TokenType.ASSIGN_PLUS_OPERATOR,
+                    TokenType.ASSIGN_MINUS_OPERATOR,
+                )
             )
-        )
-
-        if not assign_token:
+        ):
             return None
-        assignment_type = pu.match_assignment_type(assign_token.type)
+
+        assign_dict = {
+            TokenType.ASSIGN_OPERATOR: po.NormalAssignmentStmt,
+            TokenType.ASSIGN_MINUS_OPERATOR: po.MinusAssignmentStmt,
+            TokenType.ASSIGN_PLUS_OPERATOR: po.PlusAssignmentStmt,
+        }
+        AssignClass = assign_dict.get(assign_token.type)
 
         expression = self.must_be_created(
             self.parse_expression(), "Expression expected"
         )
 
-        return po.AssignmentStmt(
-            identifier, assignment_type, expression, pos=assign_token.pos
-        )
+        return AssignClass(l_value=identifier, r_value=expression, pos=assign_token.pos)
 
     # call_stmt = { access_suff | call_suff }, call_suff ;
     def parse_call_stmt(self, first_ident: po.Expression):
@@ -350,9 +354,8 @@ class Parser:
         expr = self.parse_postfix()
 
         for token in reversed(prefixes):
-            expr = po.NegationExpr(
-                pu.match_negation_type(token.type), expr, pos=token.pos
-            )
+            NegationClass = pu.match_negation_type(token.type)
+            expr = NegationClass(expr, pos=token.pos)
         return expr
 
     # postfix = primary, { call_suff | member_suff} ;
@@ -379,26 +382,7 @@ class Parser:
     def parse_primary(self):
         token = self.current_token
 
-        mapping = {
-            TokenType.INT_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.INT, token.value, pos=token.pos
-            ),
-            TokenType.FLOAT_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.FLOAT, token.value, pos=token.pos
-            ),
-            TokenType.STRING_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.STRING, token.value, pos=token.pos
-            ),
-            TokenType.TRUE_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.BOOL, True, pos=token.pos
-            ),
-            TokenType.FALSE_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.BOOL, False, pos=token.pos
-            ),
-            TokenType.IDENTIFIER: po.Identifier(token.value, pos=token.pos),
-        }
-
-        if simple_type := mapping.get(token.type, None):
+        if simple_type := pu.match_simple_expr(token):
             self.get_next_token()
             return simple_type
 

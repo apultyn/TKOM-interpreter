@@ -1,7 +1,6 @@
 from src.util.token_type import TokenType
 
-from src.parser.parser_objects import Identifier, SimpleExpr
-from src.parser.parser_util import SimpleExprType
+from src.parser.parser_objects import Identifier, SimpleExpr, IntExpr
 
 
 def get_token_list(lexer):
@@ -34,4 +33,4 @@ def ident(name, pos):
 
 
 def integer(value, pos):
-    return SimpleExpr(SimpleExprType.INT, value, pos=pos)
+    return IntExpr(value, pos=pos)
