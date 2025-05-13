@@ -1,13 +1,6 @@
 from dataclasses import dataclass, field, fields
 from typing import List, Any, Optional
 
-from .parser_util import (
-    AssignmentType,
-    BinaryOperationType,
-    NegationType,
-    SimpleExprType,
-)
-
 
 @dataclass(kw_only=True)
 class ParserObject:
@@ -24,11 +17,6 @@ class Statement(ParserObject):
 
 class Expression(ParserObject):
     pass
-
-
-@dataclass
-class Identifier(Expression):
-    name: str
 
 
 @dataclass
@@ -63,7 +51,7 @@ class WhileStmt(Statement):
 
 @dataclass
 class ForStmt(Statement):
-    var: Identifier
+    var: "Identifier"
     source: Expression
     body: Block
 
@@ -75,7 +63,7 @@ class ReturnStmt(Statement):
 
 @dataclass
 class AssignmentStmt(Statement):
-    l_value: Identifier
+    l_value: "Identifier"
     r_value: Expression
 
 
@@ -94,20 +82,74 @@ class MinusAssignmentStmt(AssignmentStmt):
 @dataclass
 class BinaryExpr(Expression):
     l_value: Expression
-    operation: BinaryOperationType
     r_value: Expression
+
+
+class OrExpr(BinaryExpr):
+    pass
+
+
+class AndExpr(BinaryExpr):
+    pass
+
+
+class EqExpr(BinaryExpr):
+    pass
+
+
+class NeqExpr(BinaryExpr):
+    pass
+
+
+class GtExpr(BinaryExpr):
+    pass
+
+
+class GeqExpr(BinaryExpr):
+    pass
+
+
+class LtExpr(BinaryExpr):
+    pass
+
+
+class LeqExpr(BinaryExpr):
+    pass
+
+
+class AddExpr(BinaryExpr):
+    pass
+
+
+class SubExpr(BinaryExpr):
+    pass
+
+
+class MulExpr(BinaryExpr):
+    pass
+
+
+class DivExpr(BinaryExpr):
+    pass
 
 
 @dataclass
 class NegationExpr(Expression):
-    neg_type: NegationType
     value: Expression
+
+
+class LogicNegExpr(NegationExpr):
+    pass
+
+
+class ArithNegExpr(NegationExpr):
+    pass
 
 
 @dataclass
 class AccessExpr(Expression):
     source: Expression
-    target: Identifier
+    target: "Identifier"
 
 
 @dataclass
@@ -118,8 +160,32 @@ class CallExpr(Expression):
 
 @dataclass
 class SimpleExpr(Expression):
-    value_type: SimpleExprType
     value: Any
+
+
+@dataclass
+class IntExpr(SimpleExpr):
+    value: int
+
+
+@dataclass
+class FloatExpr(SimpleExpr):
+    value: float
+
+
+@dataclass
+class StringExpr(SimpleExpr):
+    value: str
+
+
+@dataclass
+class Identifier(SimpleExpr):
+    value: str
+
+
+@dataclass
+class BoolExpr(SimpleExpr):
+    value: bool
 
 
 @dataclass

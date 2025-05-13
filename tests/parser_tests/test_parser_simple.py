@@ -1,5 +1,6 @@
 import pytest
 
+from tests.util import integer, ident
 from src.parser.parser_objects import (
     NormalAssignmentStmt,
     MinusAssignmentStmt,
@@ -8,7 +9,6 @@ from src.parser.parser_objects import (
     SimpleExpr,
     CallExpr,
     IfStmt,
-    BinaryExpr,
     Block,
     ElifStmt,
     WhileStmt,
@@ -20,10 +20,14 @@ from src.parser.parser_objects import (
     ItemExpr,
     ListExpr,
     DictExpr,
-)
-from src.parser.parser_util import (
-    SimpleExprType,
-    BinaryOperationType,
+    LtExpr,
+    GtExpr,
+    AddExpr,
+    DivExpr,
+    IntExpr,
+    FloatExpr,
+    StringExpr,
+    BoolExpr,
 )
 
 
@@ -39,27 +43,27 @@ def test_assigmnents(make_parser, src, AssignmentClass, col):
     statement = make_parser(src).parse_program().statements[0]
     assert statement == AssignmentClass(
         l_value=Identifier("a", pos=(1, 1)),
-        r_value=SimpleExpr(SimpleExprType.INT, 10, pos=(1, col)),
+        r_value=IntExpr(10, pos=(1, col)),
         pos=(1, 3),
     )
 
 
 @pytest.mark.parametrize(
-    "ident_name, type, value, value_text",
+    "ident_name, ExprClass, value, value_text",
     [
-        ("a", SimpleExprType.INT, 125, 125),
-        ("b", SimpleExprType.FLOAT, 0.25, 0.25),
-        ("c", SimpleExprType.STRING, "Hello there", '"Hello there"'),
-        ("d", SimpleExprType.BOOL, False, "False"),
-        ("e", SimpleExprType.BOOL, True, "True"),
+        ("a", IntExpr, 125, 125),
+        ("b", FloatExpr, 0.25, 0.25),
+        ("c", StringExpr, "Hello there", '"Hello there"'),
+        ("d", BoolExpr, False, "False"),
+        ("e", BoolExpr, True, "True"),
     ],
 )
-def test_simple_type_expressions(make_parser, ident_name, type, value, value_text):
+def test_simple_type_expressions(make_parser, ident_name, ExprClass, value, value_text):
     src = f"{ident_name} = {value_text};"
     statement = make_parser(src).parse_program().statements[0]
     assert statement == NormalAssignmentStmt(
         l_value=Identifier(ident_name, pos=(1, 1)),
-        r_value=SimpleExpr(type, value, pos=(1, 5)),
+        r_value=ExprClass(value, pos=(1, 5)),
         pos=(1, 3),
     )
 
@@ -92,7 +96,7 @@ a.b.c(5);
                 target=Identifier("c", pos=(3, 5)),
                 pos=(3, 4),
             ),
-            args=[SimpleExpr(SimpleExprType.INT, 5, pos=(3, 7))],
+            args=[IntExpr(5, pos=(3, 7))],
             pos=(3, 6),
         ),
     ]
@@ -108,8 +112,8 @@ b = (1: 10.0);
         NormalAssignmentStmt(
             l_value=Identifier("a", pos=(2, 1)),
             r_value=ItemExpr(
-                key=SimpleExpr(SimpleExprType.STRING, "key", pos=(2, 6)),
-                value=SimpleExpr(SimpleExprType.STRING, "value", pos=(2, 13)),
+                key=StringExpr("key", pos=(2, 6)),
+                value=StringExpr("value", pos=(2, 13)),
                 pos=(2, 5),
             ),
             pos=(2, 3),
@@ -117,8 +121,8 @@ b = (1: 10.0);
         NormalAssignmentStmt(
             l_value=Identifier("b", pos=(3, 1)),
             r_value=ItemExpr(
-                key=SimpleExpr(SimpleExprType.INT, 1, pos=(3, 6)),
-                value=SimpleExpr(SimpleExprType.FLOAT, 10.0, pos=(3, 9)),
+                key=IntExpr(1, pos=(3, 6)),
+                value=FloatExpr(10.0, pos=(3, 9)),
                 pos=(3, 5),
             ),
             pos=(3, 3),
@@ -148,38 +152,32 @@ b = [
             l_value=Identifier("b", pos=(3, 1)),
             r_value=ListExpr(
                 elements=[
-                    SimpleExpr(SimpleExprType.INT, 1, pos=(4, 9)),
-                    SimpleExpr(SimpleExprType.STRING, "Hello", pos=(4, 12)),
-                    SimpleExpr(SimpleExprType.FLOAT, 10.5, pos=(4, 21)),
+                    IntExpr(1, pos=(4, 9)),
+                    StringExpr("Hello", pos=(4, 12)),
+                    FloatExpr(10.5, pos=(4, 21)),
                     ItemExpr(
-                        key=SimpleExpr(SimpleExprType.STRING, "key", pos=(4, 28)),
-                        value=SimpleExpr(SimpleExprType.INT, 5, pos=(4, 35)),
+                        key=StringExpr("key", pos=(4, 28)),
+                        value=IntExpr(5, pos=(4, 35)),
                         pos=(4, 27),
                     ),
                     ListExpr(
                         elements=[
-                            SimpleExpr(SimpleExprType.STRING, "hello", pos=(5, 10)),
-                            SimpleExpr(SimpleExprType.STRING, "from", pos=(5, 19)),
-                            SimpleExpr(SimpleExprType.STRING, "sublist", pos=(5, 27)),
+                            StringExpr("hello", pos=(5, 10)),
+                            StringExpr("from", pos=(5, 19)),
+                            StringExpr("sublist", pos=(5, 27)),
                         ],
                         pos=(5, 9),
                     ),
                     DictExpr(
                         items=[
                             ItemExpr(
-                                key=SimpleExpr(
-                                    SimpleExprType.STRING, "name", pos=(7, 14)
-                                ),
-                                value=SimpleExpr(
-                                    SimpleExprType.STRING, "dict", pos=(7, 22)
-                                ),
+                                key=StringExpr("name", pos=(7, 14)),
+                                value=StringExpr("dict", pos=(7, 22)),
                                 pos=(7, 13),
                             ),
                             ItemExpr(
-                                key=SimpleExpr(
-                                    SimpleExprType.STRING, "value", pos=(8, 14)
-                                ),
-                                value=SimpleExpr(SimpleExprType.INT, 5, pos=(8, 23)),
+                                key=StringExpr("value", pos=(8, 14)),
+                                value=IntExpr(5, pos=(8, 23)),
                                 pos=(8, 13),
                             ),
                         ],
@@ -215,40 +213,34 @@ b = {
             r_value=DictExpr(
                 items=[
                     ItemExpr(
-                        key=SimpleExpr(SimpleExprType.STRING, "first_key", pos=(4, 6)),
-                        value=SimpleExpr(SimpleExprType.INT, 5, pos=(4, 19)),
+                        key=StringExpr("first_key", pos=(4, 6)),
+                        value=IntExpr(5, pos=(4, 19)),
                         pos=(4, 5),
                     ),
                     ItemExpr(
-                        key=SimpleExpr(
-                            SimpleExprType.STRING, "another_key", pos=(5, 6)
-                        ),
-                        value=SimpleExpr(SimpleExprType.STRING, "value", pos=(5, 21)),
+                        key=StringExpr("another_key", pos=(5, 6)),
+                        value=StringExpr("value", pos=(5, 21)),
                         pos=(5, 5),
                     ),
                     ItemExpr(
-                        key=SimpleExpr(SimpleExprType.STRING, "one_more", pos=(6, 6)),
+                        key=StringExpr("one_more", pos=(6, 6)),
                         value=ListExpr(
                             elements=[
-                                SimpleExpr(SimpleExprType.INT, 1, pos=(6, 19)),
-                                SimpleExpr(SimpleExprType.INT, 5, pos=(6, 22)),
-                                SimpleExpr(SimpleExprType.STRING, "hello", pos=(6, 25)),
+                                IntExpr(1, pos=(6, 19)),
+                                IntExpr(5, pos=(6, 22)),
+                                StringExpr("hello", pos=(6, 25)),
                             ],
                             pos=(6, 18),
                         ),
                         pos=(6, 5),
                     ),
                     ItemExpr(
-                        key=SimpleExpr(SimpleExprType.STRING, "last_one", pos=(7, 6)),
+                        key=StringExpr("last_one", pos=(7, 6)),
                         value=DictExpr(
                             items=[
                                 ItemExpr(
-                                    key=SimpleExpr(
-                                        SimpleExprType.STRING, "key", pos=(7, 20)
-                                    ),
-                                    value=SimpleExpr(
-                                        SimpleExprType.STRING, "value", pos=(7, 27)
-                                    ),
+                                    key=StringExpr("key", pos=(7, 20)),
+                                    value=StringExpr("value", pos=(7, 27)),
                                     pos=(7, 19),
                                 )
                             ],
@@ -277,10 +269,9 @@ if (a < 4) {
     statement = make_parser(src).parse_program().statements[0]
 
     assert statement == IfStmt(
-        condition=BinaryExpr(
+        condition=LtExpr(
             l_value=Identifier("a", pos=(2, 5)),
-            operation=BinaryOperationType.LT,
-            r_value=SimpleExpr(SimpleExprType.INT, 4, pos=(2, 9)),
+            r_value=IntExpr(4, pos=(2, 9)),
             pos=(2, 7),
         ),
         body=Block(
@@ -289,10 +280,9 @@ if (a < 4) {
         ),
         elif_statements=[
             ElifStmt(
-                condition=BinaryExpr(
+                condition=GtExpr(
                     Identifier("a", pos=(4, 9)),
-                    BinaryOperationType.GT,
-                    SimpleExpr(SimpleExprType.INT, 4, pos=(4, 13)),
+                    IntExpr(4, pos=(4, 13)),
                     pos=(4, 11),
                 ),
                 body=Block(
@@ -329,10 +319,9 @@ while (a < 10) {
 """
     statement = make_parser(src).parse_program().statements[1]
     assert statement == WhileStmt(
-        condition=BinaryExpr(
+        condition=LtExpr(
             Identifier("a", pos=(3, 8)),
-            BinaryOperationType.LT,
-            SimpleExpr(SimpleExprType.INT, 10, pos=(3, 12)),
+            IntExpr(10, pos=(3, 12)),
             pos=(3, 10),
         ),
         body=Block(
@@ -342,7 +331,7 @@ while (a < 10) {
                 ),
                 PlusAssignmentStmt(
                     Identifier("a", pos=(5, 5)),
-                    SimpleExpr(SimpleExprType.INT, 1, pos=(5, 10)),
+                    IntExpr(1, pos=(5, 10)),
                     pos=(5, 7),
                 ),
             ],
@@ -400,9 +389,8 @@ my_func = function(arg1, arg2) {
             body=Block(
                 [
                     ReturnStmt(
-                        BinaryExpr(
+                        AddExpr(
                             Identifier("arg1", pos=(3, 12)),
-                            BinaryOperationType.ADD,
                             Identifier("arg2", pos=(3, 19)),
                             pos=(3, 17),
                         ),
@@ -441,7 +429,7 @@ small_cities = from city in my_dict
                     args=[],
                     pos=(3, 20),
                 ),
-                BinaryExpr(
+                DivExpr(
                     l_value=CallExpr(
                         callee=AccessExpr(
                             source=Identifier("city", pos=(3, 24)),
@@ -451,12 +439,11 @@ small_cities = from city in my_dict
                         args=[],
                         pos=(3, 34),
                     ),
-                    operation=BinaryOperationType.DIV,
-                    r_value=SimpleExpr(SimpleExprType.INT, 1000, pos=(3, 39)),
+                    r_value=IntExpr(1000, pos=(3, 39)),
                     pos=(3, 37),
                 ),
             ],
-            where=BinaryExpr(
+            where=LtExpr(
                 l_value=CallExpr(
                     callee=AccessExpr(
                         source=Identifier("city", pos=(4, 11)),
@@ -466,8 +453,7 @@ small_cities = from city in my_dict
                     args=[],
                     pos=(4, 21),
                 ),
-                operation=BinaryOperationType.LT,
-                r_value=SimpleExpr(SimpleExprType.INT, 5000000, pos=(4, 26)),
+                r_value=IntExpr(5000000, pos=(4, 26)),
                 pos=(4, 24),
             ),
             order_by=CallExpr(

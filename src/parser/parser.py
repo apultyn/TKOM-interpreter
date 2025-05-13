@@ -62,10 +62,10 @@ class Parser:
         expr = subrule()
         while found_token := self.might_be_in(tokens):
             right = subrule()
-            expr = po.BinaryExpr(
-                expr,
-                pu.match_binary_operation(found_token.type),
-                right,
+            OperationClass = pu.match_binary_operation(found_token.type)
+            expr = OperationClass(
+                l_value=expr,
+                r_value=right,
                 pos=found_token.pos,
             )
         return expr
@@ -354,9 +354,8 @@ class Parser:
         expr = self.parse_postfix()
 
         for token in reversed(prefixes):
-            expr = po.NegationExpr(
-                pu.match_negation_type(token.type), expr, pos=token.pos
-            )
+            NegationClass = pu.match_negation_type(token.type)
+            expr = NegationClass(expr, pos=token.pos)
         return expr
 
     # postfix = primary, { call_suff | member_suff} ;
@@ -383,26 +382,7 @@ class Parser:
     def parse_primary(self):
         token = self.current_token
 
-        mapping = {
-            TokenType.INT_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.INT, token.value, pos=token.pos
-            ),
-            TokenType.FLOAT_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.FLOAT, token.value, pos=token.pos
-            ),
-            TokenType.STRING_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.STRING, token.value, pos=token.pos
-            ),
-            TokenType.TRUE_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.BOOL, True, pos=token.pos
-            ),
-            TokenType.FALSE_LITERAL: po.SimpleExpr(
-                pu.SimpleExprType.BOOL, False, pos=token.pos
-            ),
-            TokenType.IDENTIFIER: po.Identifier(token.value, pos=token.pos),
-        }
-
-        if simple_type := mapping.get(token.type, None):
+        if simple_type := pu.match_simple_expr(token):
             self.get_next_token()
             return simple_type
 
