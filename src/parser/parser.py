@@ -147,25 +147,29 @@ class Parser:
 
     # assignment = ( "=" | "+=" | "-=" ),  expression ;
     def parse_assignment(self, identifier: po.Identifier):
-        assign_token = self.might_be_in(
-            (
-                TokenType.ASSIGN_OPERATOR,
-                TokenType.ASSIGN_PLUS_OPERATOR,
-                TokenType.ASSIGN_MINUS_OPERATOR,
+        if not (
+            assign_token := self.might_be_in(
+                (
+                    TokenType.ASSIGN_OPERATOR,
+                    TokenType.ASSIGN_PLUS_OPERATOR,
+                    TokenType.ASSIGN_MINUS_OPERATOR,
+                )
             )
-        )
-
-        if not assign_token:
+        ):
             return None
-        assignment_type = pu.match_assignment_type(assign_token.type)
+
+        assign_dict = {
+            TokenType.ASSIGN_OPERATOR: po.NormalAssignmentStmt,
+            TokenType.ASSIGN_MINUS_OPERATOR: po.MinusAssignmentStmt,
+            TokenType.ASSIGN_PLUS_OPERATOR: po.PlusAssignmentStmt,
+        }
+        AssignClass = assign_dict.get(assign_token.type)
 
         expression = self.must_be_created(
             self.parse_expression(), "Expression expected"
         )
 
-        return po.AssignmentStmt(
-            identifier, assignment_type, expression, pos=assign_token.pos
-        )
+        return AssignClass(l_value=identifier, r_value=expression, pos=assign_token.pos)
 
     # call_stmt = { access_suff | call_suff }, call_suff ;
     def parse_call_stmt(self, first_ident: po.Expression):

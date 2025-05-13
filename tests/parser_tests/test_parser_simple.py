@@ -1,7 +1,9 @@
 import pytest
 
 from src.parser.parser_objects import (
-    AssignmentStmt,
+    NormalAssignmentStmt,
+    MinusAssignmentStmt,
+    PlusAssignmentStmt,
     Identifier,
     SimpleExpr,
     CallExpr,
@@ -20,25 +22,23 @@ from src.parser.parser_objects import (
     DictExpr,
 )
 from src.parser.parser_util import (
-    AssignmentType,
     SimpleExprType,
     BinaryOperationType,
 )
 
 
 @pytest.mark.parametrize(
-    "src, assignment_type, col",
+    "src, AssignmentClass, col",
     [
-        ("a = 10;", AssignmentType.NORMAL, 5),
-        ("a += 10;", AssignmentType.PLUS, 6),
-        ("a -= 10;", AssignmentType.MINUS, 6),
+        ("a = 10;", NormalAssignmentStmt, 5),
+        ("a += 10;", PlusAssignmentStmt, 6),
+        ("a -= 10;", MinusAssignmentStmt, 6),
     ],
 )
-def test_assigmnents(make_parser, src, assignment_type, col):
+def test_assigmnents(make_parser, src, AssignmentClass, col):
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == AssignmentStmt(
+    assert statement == AssignmentClass(
         l_value=Identifier("a", pos=(1, 1)),
-        assign_type=assignment_type,
         r_value=SimpleExpr(SimpleExprType.INT, 10, pos=(1, col)),
         pos=(1, 3),
     )
@@ -57,9 +57,8 @@ def test_assigmnents(make_parser, src, assignment_type, col):
 def test_simple_type_expressions(make_parser, ident_name, type, value, value_text):
     src = f"{ident_name} = {value_text};"
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == AssignmentStmt(
+    assert statement == NormalAssignmentStmt(
         l_value=Identifier(ident_name, pos=(1, 1)),
-        assign_type=AssignmentType.NORMAL,
         r_value=SimpleExpr(type, value, pos=(1, 5)),
         pos=(1, 3),
     )
@@ -68,9 +67,8 @@ def test_simple_type_expressions(make_parser, ident_name, type, value, value_tex
 def test_ident_as_expression(make_parser):
     src = "a = b;"
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == AssignmentStmt(
+    assert statement == NormalAssignmentStmt(
         l_value=Identifier("a", pos=(1, 1)),
-        assign_type=AssignmentType.NORMAL,
         r_value=Identifier("b", pos=(1, 5)),
         pos=(1, 3),
     )
@@ -107,9 +105,8 @@ b = (1: 10.0);
 """
     statements = make_parser(src).parse_program().statements
     assert statements == [
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("a", pos=(2, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=ItemExpr(
                 key=SimpleExpr(SimpleExprType.STRING, "key", pos=(2, 6)),
                 value=SimpleExpr(SimpleExprType.STRING, "value", pos=(2, 13)),
@@ -117,9 +114,8 @@ b = (1: 10.0);
             ),
             pos=(2, 3),
         ),
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("b", pos=(3, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=ItemExpr(
                 key=SimpleExpr(SimpleExprType.INT, 1, pos=(3, 6)),
                 value=SimpleExpr(SimpleExprType.FLOAT, 10.0, pos=(3, 9)),
@@ -143,15 +139,13 @@ b = [
 ];"""
     statements = make_parser(src).parse_program().statements
     assert statements == [
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("a", pos=(2, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=ListExpr(elements=[], pos=(2, 5)),
             pos=(2, 3),
         ),
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("b", pos=(3, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=ListExpr(
                 elements=[
                     SimpleExpr(SimpleExprType.INT, 1, pos=(4, 9)),
@@ -211,15 +205,13 @@ b = {
 """
     statements = make_parser(src).parse_program().statements
     assert statements == [
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("a", pos=(2, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=DictExpr(items=[], pos=(2, 5)),
             pos=(2, 3),
         ),
-        AssignmentStmt(
+        NormalAssignmentStmt(
             l_value=Identifier("b", pos=(3, 1)),
-            assign_type=AssignmentType.NORMAL,
             r_value=DictExpr(
                 items=[
                     ItemExpr(
@@ -348,9 +340,8 @@ while (a < 10) {
                 CallExpr(
                     Identifier("do_something_ten_times", pos=(4, 5)), [], pos=(4, 27)
                 ),
-                AssignmentStmt(
+                PlusAssignmentStmt(
                     Identifier("a", pos=(5, 5)),
-                    AssignmentType.PLUS,
                     SimpleExpr(SimpleExprType.INT, 1, pos=(5, 10)),
                     pos=(5, 7),
                 ),
@@ -402,9 +393,8 @@ my_func = function(arg1, arg2) {
 };
 """
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == AssignmentStmt(
+    assert statement == NormalAssignmentStmt(
         l_value=Identifier("my_func", pos=(2, 1)),
-        assign_type=AssignmentType.NORMAL,
         r_value=FunctionExpr(
             params=[Identifier("arg1", pos=(2, 20)), Identifier("arg2", pos=(2, 26))],
             body=Block(
@@ -436,9 +426,8 @@ small_cities = from city in my_dict
 
 """
     statement = make_parser(src).parse_program().statements[0]
-    assert statement == AssignmentStmt(
+    assert statement == NormalAssignmentStmt(
         l_value=Identifier("small_cities", pos=(2, 1)),
-        assign_type=AssignmentType.NORMAL,
         r_value=LinqExpr(
             var=Identifier("city", pos=(2, 21)),
             source=Identifier("my_dict", pos=(2, 29)),

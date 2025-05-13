@@ -76,8 +76,19 @@ class ReturnStmt(Statement):
 @dataclass
 class AssignmentStmt(Statement):
     l_value: Identifier
-    assign_type: AssignmentType
     r_value: Expression
+
+
+class NormalAssignmentStmt(AssignmentStmt):
+    pass
+
+
+class PlusAssignmentStmt(AssignmentStmt):
+    pass
+
+
+class MinusAssignmentStmt(AssignmentStmt):
+    pass
 
 
 @dataclass
