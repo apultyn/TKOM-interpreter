@@ -20,3 +20,11 @@ pytest --cov-report term-missing --cov
 ```bash
 pytest <plik>::<nazwa_funkcji> --trace
 ```
+- install `psc` command:
+```bash
+pip install -e .
+```
+- uninstall `psc` command:
+```bash
+pip uninstall pyscript-compiler -y
+```
