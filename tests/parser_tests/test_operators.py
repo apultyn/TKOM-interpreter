@@ -160,7 +160,7 @@ b = !obj.field;
     expr2 = statements[1].r_value
 
     assert expr1 == ArithNegExpr(
-        value=CallExpr(callee=Identifier("calc", (2, 6)), args=[], pos=(2, 10)),
+        value=CallExpr(callee=Identifier("calc", pos=(2, 6)), args=[], pos=(2, 10)),
         pos=(2, 5),
     )
 
@@ -187,7 +187,7 @@ def test_parenthesis_over_postifx(make_parser):
             ),
             pos=(1, 5),
         ),
-        args=[Identifier("arg1", (1, 13))],
+        args=[Identifier("arg1", pos=(1, 13))],
         pos=(1, 12),
     )
 
