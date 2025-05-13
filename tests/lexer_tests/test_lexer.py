@@ -2,7 +2,7 @@ import pytest
 
 from tests.util import get_token_list, AbortExecution, check_error
 
-from src.lexer.lexer_config import LexerConfig
+from src.util.configs import LexerConfig
 from src.util.my_token import Token
 from src.util.token_type import TokenType
 from src.util.pyscript_exceptions import (

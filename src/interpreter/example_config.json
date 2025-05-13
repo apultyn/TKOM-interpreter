@@ -1,0 +1,11 @@
+{
+    "lexer": {
+        "max_comment_length": 10000,
+        "max_identifier_length": 1000,
+        "max_string_literal_length": 10000,
+        "max_num_literal_length": 100
+    },
+    "interpreter": {
+        "recursion_depth": 1000
+    }
+}

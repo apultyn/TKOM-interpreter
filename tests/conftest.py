@@ -3,7 +3,7 @@ import io
 from unittest.mock import MagicMock
 
 from src.util.error_handler import ErrorHandler
-from src.lexer.lexer_config import LexerConfig
+from src.util.configs import LexerConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
 from .util import AbortExecution
