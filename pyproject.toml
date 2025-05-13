@@ -6,11 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "pyscript-compiler"
 version = "1.0.0"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [tool.setuptools.packages.find]
-where=["src"]
+include = ["src*"]
 
 [project.scripts]
-psc = "interpreter.main:main"
+psc = "src.interpreter.main:main"
