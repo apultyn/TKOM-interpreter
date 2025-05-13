@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from src.util.token_type import TokenType
+
 
 @dataclass(kw_only=True)
 class PyscriptException(Exception):
@@ -37,5 +39,7 @@ class TokenException(PyscriptException):
 
 
 class SyntaxException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
+    def __init__(self, msg: str, pos: tuple[int, int], token_got: TokenType = None):
+        if token_got:
+            msg = f"{msg}, got '{token_got}'"
         super().__init__(error_type="SYNTAX", msg=msg, pos=pos)

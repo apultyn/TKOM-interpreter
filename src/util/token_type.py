@@ -60,3 +60,6 @@ class TokenType(Enum):
     COMMA = auto()
     COLON = auto()
     EOF = auto()
+
+    def __str__(self) -> str:
+        return self.name
