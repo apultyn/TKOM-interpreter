@@ -5,7 +5,15 @@ import src.parser.parser_objects as po
 from src.util.pyscript_exceptions import PyscriptException, RuntimeException
 from src.util.configs import InterpreterConfig
 from src.util.error_handler import ErrorHandler
-from .interpreter_objects import Env, Value, Additive, Subtractive, Multiplicative, IntValue, FloatValue
+from .interpreter_objects import (
+    Env,
+    Value,
+    Additive,
+    Subtractive,
+    Multiplicative,
+    IntValue,
+    FloatValue,
+)
 
 
 class Interpreter:
@@ -61,11 +69,10 @@ class Interpreter:
         if not isinstance(left, Additive):
             raise RuntimeException(
                 f"Add operation is not supported for type {left.__class__}",
-                pos=node.pos
+                pos=node.pos,
             )
 
         return left + right
-
 
     @eval.register
     def _(self, node: po.SubExpr, env: Env):
@@ -77,7 +84,7 @@ class Interpreter:
         if not isinstance(left, Subtractive):
             raise RuntimeException(
                 f"Sub operation is not supported for type {left.__class__}",
-                pos=node.pos
+                pos=node.pos,
             )
 
         return left - right
@@ -92,11 +99,10 @@ class Interpreter:
         if not isinstance(left, Multiplicative):
             raise RuntimeException(
                 f"Mul operation is not supported for type {left.__class__}",
-                pos=node.pos
+                pos=node.pos,
             )
 
         return left * right
-
 
     # @eval.register
     # def _(self, node: po.DivExpr, env: Env):
@@ -115,5 +121,3 @@ class Interpreter:
     #         f"Div operation is not supported for type {left.__class__}",
     #         pos=node.pos
     #     )
-
-

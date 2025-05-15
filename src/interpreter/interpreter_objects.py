@@ -55,11 +55,13 @@ class Additive(Protocol):
     def __add__(self: Self, other: Self) -> Self:
         pass
 
+
 @runtime_checkable
 class Subtractive(Protocol):
     @abstractmethod
     def __sub__(self: Self, other: Self) -> Self:
         pass
+
 
 @runtime_checkable
 class Multiplicative(Protocol):
