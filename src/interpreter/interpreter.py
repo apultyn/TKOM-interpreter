@@ -64,12 +64,22 @@ class Interpreter:
         left = self.eval(node.l_value, env)
         right = self.eval(node.r_value, env)
 
-        Value.typecheck(left, right, node)
+        try:
+            Value.typecheck(left, right, "add")
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    msg=exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
         if not isinstance(left, Additive):
-            raise RuntimeException(
-                f"Add operation is not supported for type {left.__class__}",
-                pos=node.pos,
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Add operation is not supported for type {left.__class__}",
+                    pos=node.pos,
+                )
             )
 
         return left + right
@@ -79,12 +89,22 @@ class Interpreter:
         left = self.eval(node.l_value, env)
         right = self.eval(node.r_value, env)
 
-        Value.typecheck(left, right, node)
+        try:
+            Value.typecheck(left, right, "sub")
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    msg=exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
         if not isinstance(left, Subtractive):
-            raise RuntimeException(
-                f"Sub operation is not supported for type {left.__class__}",
-                pos=node.pos,
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Sub operation is not supported for type {left.__class__}",
+                    pos=node.pos,
+                )
             )
 
         return left - right
@@ -94,12 +114,22 @@ class Interpreter:
         left = self.eval(node.l_value, env)
         right = self.eval(node.r_value, env)
 
-        Value.typecheck(left, right, node)
+        try:
+            Value.typecheck(left, right, "mul")
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    msg=exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
         if not isinstance(left, Multiplicative):
-            raise RuntimeException(
-                f"Mul operation is not supported for type {left.__class__}",
-                pos=node.pos,
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Mul operation is not supported for type {left.__class__}",
+                    pos=node.pos,
+                )
             )
 
         return left * right
@@ -109,24 +139,35 @@ class Interpreter:
         left = self.eval(node.l_value)
         right = self.eval(node.r_value)
 
-        Value.typecheck(left, right, node)
+        try:
+            Value.typecheck(left, right, "div")
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    msg=exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
         if isinstance(left, IntValue):
             try:
                 return left // right
             except ZeroDivisionError:
-                raise RuntimeException(
-                    "Division by zero is not allowed", pos=node.pos
+                self._error_handler.handle_error(
+                    RuntimeException("Division by zero is not allowed", pos=node.pos)
                 )
 
         if isinstance(left, FloatValue):
             try:
                 return left / right
             except ZeroDivisionError:
-                raise RuntimeException(
-                    "Division by zero is not allowed", pos=node.pos
+                self._error_handler.handle_error(
+                    RuntimeException("Division by zero is not allowed", pos=node.pos)
                 )
 
-        raise RuntimeException(
-            f"Div operation is not supported for type {left.__class__}", pos=node.pos
+        self._error_handler.handle_error(
+            RuntimeException(
+                f"Div operation is not supported for type {left.__class__}",
+                pos=node.pos,
+            )
         )

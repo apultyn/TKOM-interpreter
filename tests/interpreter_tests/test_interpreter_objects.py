@@ -5,6 +5,7 @@ from src.interpreter.interpreter_objects import (
     FloatValue,
     StringValue,
     BoolValue,
+    ListValue,
 )
 from src.parser.parser_objects import CallExpr, Identifier
 from src.util.pyscript_exceptions import RuntimeException
@@ -125,3 +126,29 @@ def test_bool():
 
     assert obj_true.truthy() and not obj_false.truthy()
     assert obj_true.type_of() == StringValue("Bool")
+
+
+def test_list():
+    obj = ListValue([IntValue(1), IntValue(2), IntValue(3)])
+    obj2 = ListValue([IntValue(1), IntValue(2), IntValue(3)])
+
+    assert obj == obj2
+    assert obj.length() == IntValue(3)
+    assert obj.truthy()
+
+    assert obj + obj2 == ListValue(
+        [IntValue(1), IntValue(2), IntValue(3), IntValue(1), IntValue(2), IntValue(3)]
+    )
+    assert obj.type_of() == StringValue("List")
+    assert obj.get(0) == IntValue(1)
+
+    obj.set(0, IntValue(5))
+    assert obj == ListValue([IntValue(5), IntValue(2), IntValue(3)])
+
+    obj.remove(1)
+    assert obj == ListValue([IntValue(5), IntValue(3)])
+
+    with pytest.raises(IndexError):
+        obj.get(2)
+    with pytest.raises(IndexError):
+        obj.set(2, IntValue(10))

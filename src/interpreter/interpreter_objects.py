@@ -41,11 +41,10 @@ class Value(ABC):
         pass
 
     @staticmethod
-    def typecheck(lhs: "Value", rhs: "Value", node: po.ParserObject):
+    def typecheck(lhs: "Value", rhs: "Value", operation: str):
         if lhs.__class__ is not rhs.__class__:
-            raise RuntimeException(
-                f"Type missmatch in operation {node._name} - got {lhs.__class__.__qualname__} and {rhs.__class__.__qualname__}",
-                pos=node.pos,
+            raise TypeError(
+                f"Type missmatch in '{operation}' operation - got {lhs.__class__.__qualname__} and {rhs.__class__.__qualname__}"
             )
 
 
@@ -190,10 +189,35 @@ class Collection(Value):
     def truthy(self):
         return len(self.elements) > 0
 
+    def length(self) -> IntValue:
+        return IntValue(len(self.elements))
 
-@dataclass
-class List(Collection):
-    pass
+
+@dataclass(order=False)
+class ListValue(Collection, Additive):
+    def __add__(self, other: "ListValue"):
+        return ListValue(self.elements + other.elements)
+
+    def type_of(self) -> "StringValue":
+        return StringValue("List")
+
+    def get(self, index: int) -> Value:
+        if index < 0 or index >= self.length().value:
+            raise IndexError(f"Index {index} out of range")
+        return self.elements[index]
+
+    def add(self, value: Value):
+        self.elements.append(value)
+
+    def set(self, index: int, value: Value):
+        if index < 0 or index >= self.length().value:
+            raise IndexError(f"Index {index} out of range")
+        self.elements[index] = value
+
+    def remove(self, index: int):
+        if index < 0 or index >= self.length().value:
+            raise IndexError(f"Index {index} out of range")
+        self.elements.pop(index)
 
 
 @dataclass
