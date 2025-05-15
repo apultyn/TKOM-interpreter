@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from abc import ABC
+from abc import ABC, abstractmethod
+from typing import Protocol, runtime_checkable, TypeVar
 
 import src.parser.parser_objects as po
 from src.util.pyscript_exceptions import RuntimeException
@@ -30,32 +31,64 @@ class Env:
     def define(self, name: str, val: "Value"):
         self.symbols[name] = Cell(val)
 
+
 class Value(ABC):
     def truthy(self) -> bool:
         return True
 
     @staticmethod
-    def typecheck(lhs: "Value", rhs: "Value", operation: po.ParserObject):
-        if lhs.__class__ != rhs.__class__:
+    def typecheck(lhs: "Value", rhs: "Value", node: po.ParserObject):
+        if lhs.__class__ is not rhs.__class__:
             raise RuntimeException(
-                f"Type missmatch in operation {operation._name} - got {lhs.__class__.__qualname__} and {rhs.__class__.__qualname__}",
-                pos=operation.pos,
+                f"Type missmatch in operation {node._name} - got {lhs.__class__.__qualname__} and {rhs.__class__.__qualname__}",
+                pos=node.pos,
             )
 
 
+T = TypeVar("T", bound="Additive")
+
+
+@runtime_checkable
+class Additive(Protocol):
+    @abstractmethod
+    def __add__(self: T, other: T) -> T:
+        pass
+
+
 @dataclass(frozen=True, order=True)
-class IntValue(Value):
+class IntValue(Additive):
     value: int
 
     def truthy(self) -> bool:
         return self.value != 0
 
-    def add(self, other: "IntValue"):
+    def to_string(self) -> "StringValue":
+        return StringValue(str(self.value))
+
+    def to_float(self) -> "FloatValue":
+        return FloatValue(float(self.value))
+
+    def type_of(self) -> "StringValue":
+        return StringValue("Int")
+
+    def __add__(self, other: "IntValue") -> "IntValue":
         return IntValue(self.value + other.value)
+
+    def __sub__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value - other.value)
+
+    def __mul__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value * other.value)
+
+    def __floordiv__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value // other.value)
+
+    def __str__(self) -> str:
+        return f"{self.value}"
 
 
 @dataclass(frozen=True, order=True)
-class FloatValue(Value):
+class FloatValue(Additive):
     value: float
 
     def truthy(self):
@@ -77,17 +110,17 @@ class StringValue(Value):
 
 
 @dataclass
-class ItemValue(Value):
-    key: Value
-    value: Value
-
-
-@dataclass
 class BoolValue(Value):
     value: bool
 
     def truthy(self):
         return self.value
+
+
+@dataclass
+class ItemValue(Value):
+    key: Value
+    value: Value
 
 
 @dataclass

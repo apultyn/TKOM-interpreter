@@ -2,10 +2,10 @@ from functools import singledispatchmethod
 
 import parser.parser_objects as po
 
-from util.pyscript_exceptions import PyscriptException
+from util.pyscript_exceptions import PyscriptException, RuntimeException
 from util.configs import InterpreterConfig
 from util.error_handler import ErrorHandler
-from .interpreter_objects import Env, Value
+from .interpreter_objects import Env, Value, Additive
 
 
 class Interpreter:
@@ -53,8 +53,22 @@ class Interpreter:
 
     @eval.register
     def _(self, node: po.AddExpr, env: Env):
+        left = self.eval(node.l_value, env)
+        right = self.eval(node.r_value, env)
+
+        Value.typecheck(left, right, node)
+
+        if not isinstance(left, Additive):
+            raise RuntimeException(
+                f"Add operation is not supported for type {left.__class__}"
+            )
+
+        return left + right
+
+
+    @eval.register
+    def _(self, node: po.DivExpr, env: Env):
         left = self.eval(node.l_value)
         right = self.eval(node.r_value)
 
         Value.typecheck(left, right, node)
-        return left + right
