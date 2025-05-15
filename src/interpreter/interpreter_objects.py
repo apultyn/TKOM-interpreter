@@ -243,7 +243,7 @@ class DictValue(Collection):
     order_func: "FuncValue" = None
 
     def add_new(self, key: Value, value: Value):
-        if self.contains(key):
+        if self.contains(key).value:
             raise KeyError(f"Key {key} already exists in the dictionary")
         for i, item in enumerate(self.elements):
             if self.order_func(key, item.get_key()) < 0:
@@ -261,11 +261,11 @@ class DictValue(Collection):
                 return
         raise KeyError(f"Key {key} not found in the dictionary")
 
-    def contains(self, key: Value) -> bool:
+    def contains(self, key: Value) -> BoolValue:
         for item in self.elements:
             if item.get_key() == key:
-                return True
-        return False
+                return BoolValue(True)
+        return BoolValue(False)
 
     def get(self, key: Value) -> Value:
         for item in self.elements:

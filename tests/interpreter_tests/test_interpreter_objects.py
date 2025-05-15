@@ -236,8 +236,8 @@ def test_dict_no_sort():
         obj.remove(IntValue(1))
 
     # Contains
-    assert obj.contains(StringValue("general"))
-    assert not obj.contains(StringValue("General"))
+    assert obj.contains(StringValue("general")) == BoolValue(True)
+    assert obj.contains(StringValue("General")) == BoolValue(False)
 
     # Get
     assert obj.get(BoolValue(True)) == ItemValue(BoolValue(True), StringValue("yes"))
