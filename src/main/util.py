@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 from src.util.source import Source
 
+
 @contextmanager
 def open_source(path: Optional[Path]):
     if path is not None:

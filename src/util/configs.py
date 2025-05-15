@@ -20,9 +20,11 @@ class LexerConfig:
         ):
             raise ValueError("Lengths can't be smaller than 0")
 
+
 @dataclass
 class InterpreterConfig:
     recursion_depth: int = 1000
+
 
 @dataclass
 class AppConfig:
@@ -36,5 +38,5 @@ class AppConfig:
 
         return AppConfig(
             lexer_config=LexerConfig(**raw.get("lexer", {})),
-            interpreter_config=InterpreterConfig(**raw.get("interpreter", {}))
+            interpreter_config=InterpreterConfig(**raw.get("interpreter", {})),
         )

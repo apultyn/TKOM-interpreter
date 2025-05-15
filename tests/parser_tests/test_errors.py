@@ -36,7 +36,9 @@ def test_stmt_with_ident_no_semicolon(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 6), msg="';' expected, got 'EOF'")
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 6), msg="';' expected, got 'EOF'"
+    )
 
 
 def test_assignment_no_expr(mocked_error_handler, make_parser):
@@ -59,7 +61,10 @@ def test_access_no_ident(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 10), msg="Identifier expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 10),
+        msg="Identifier expected, got 'INT_LITERAL'",
     )
 
 
@@ -71,7 +76,10 @@ def test_call_no_right_bracket(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 18), msg="')' or ',' expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 18),
+        msg="')' or ',' expected, got 'EOF'",
     )
 
 
@@ -86,7 +94,12 @@ if a==10 {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (2, 4), msg="'(' expected, got 'IDENTIFIER'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (2, 4),
+        msg="'(' expected, got 'IDENTIFIER'",
+    )
 
 
 def test_if_no_expr(mocked_error_handler, make_parser):
@@ -116,7 +129,12 @@ if (a {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (2, 7), msg="')' expected, got 'LEFT_CURLY_BRACKET'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (2, 7),
+        msg="')' expected, got 'LEFT_CURLY_BRACKET'",
+    )
 
 
 def test_if_no_block(mocked_error_handler, make_parser):
@@ -141,7 +159,12 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (4, 8), msg="'(' expected, got 'LEFT_CURLY_BRACKET'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (4, 8),
+        msg="'(' expected, got 'LEFT_CURLY_BRACKET'",
+    )
 
 
 def test_elif_no_expr(mocked_error_handler, make_parser):
@@ -173,7 +196,12 @@ if (a==10) {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (4, 16), msg="')' expected, got 'LEFT_CURLY_BRACKET'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (4, 16),
+        msg="')' expected, got 'LEFT_CURLY_BRACKET'",
+    )
 
 
 def test_elif_no_body(mocked_error_handler, make_parser):
@@ -213,7 +241,12 @@ while {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (2, 7), msg="'(' expected, got 'LEFT_CURLY_BRACKET'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (2, 7),
+        msg="'(' expected, got 'LEFT_CURLY_BRACKET'",
+    )
 
 
 def test_while_no_condition(mocked_error_handler, make_parser):
@@ -243,7 +276,12 @@ while (a==10 {
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (2, 14), msg="')' expected, got 'LEFT_CURLY_BRACKET'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (2, 14),
+        msg="')' expected, got 'LEFT_CURLY_BRACKET'",
+    )
 
 
 def test_while_no_body(mocked_error_handler, make_parser):
@@ -264,7 +302,10 @@ def test_for_no_ident(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 5), msg="Identifier expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 5),
+        msg="Identifier expected, got 'INT_LITERAL'",
     )
 
 
@@ -276,7 +317,10 @@ def test_for_no_in(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 9), msg="'in' keyword expected, got 'LEFT_CURLY_BRACKET'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 9),
+        msg="'in' keyword expected, got 'LEFT_CURLY_BRACKET'",
     )
 
 
@@ -309,7 +353,9 @@ def test_return_no_semicolon(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 7), msg="';' expected, got 'EOF'")
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 7), msg="';' expected, got 'EOF'"
+    )
 
 
 def test_block_wrong_statement(mocked_error_handler, make_parser):
@@ -320,7 +366,10 @@ def test_block_wrong_statement(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 2), msg="'}' or statement expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 2),
+        msg="'}' or statement expected, got 'INT_LITERAL'",
     )
 
 
@@ -332,7 +381,10 @@ def test_block_no_right_bracket(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 7), msg="'}' or statement expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 7),
+        msg="'}' or statement expected, got 'EOF'",
     )
 
 
@@ -344,7 +396,10 @@ def test_list_wrong_elem(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 9), msg="']' or ',' expected, got 'SEMICOLON'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 9),
+        msg="']' or ',' expected, got 'SEMICOLON'",
     )
 
 
@@ -378,7 +433,10 @@ def test_list_no_right_bracket(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 15), msg="']' or ',' expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 15),
+        msg="']' or ',' expected, got 'EOF'",
     )
 
 
@@ -390,7 +448,10 @@ def test_list_no_right_bracket_empty(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 6), msg="']' or expression expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 6),
+        msg="']' or expression expected, got 'EOF'",
     )
 
 
@@ -402,7 +463,10 @@ def test_dict_wrong_elem(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 12), msg="'}' or ',' expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 12),
+        msg="'}' or ',' expected, got 'INT_LITERAL'",
     )
 
 
@@ -436,7 +500,10 @@ def test_dict_no_right_bracket(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 27), msg="'}' or ',' expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 27),
+        msg="'}' or ',' expected, got 'EOF'",
     )
 
 
@@ -463,7 +530,10 @@ def test_func_wrong_elem(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 19), msg="')' or ',' expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 19),
+        msg="')' or ',' expected, got 'INT_LITERAL'",
     )
 
 
@@ -485,7 +555,10 @@ def test_func_nothing_after_comma(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 19), msg="Identifier expected, got 'RIGHT_BRACKET'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 19),
+        msg="Identifier expected, got 'RIGHT_BRACKET'",
     )
 
 
@@ -497,7 +570,10 @@ def test_func_no_right_bracket(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 24), msg="')' or ',' expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 24),
+        msg="')' or ',' expected, got 'EOF'",
     )
 
 
@@ -509,7 +585,10 @@ def test_func_no_right_bracket_empty(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 14), msg="')' or identifier expected, got 'EOF'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 14),
+        msg="')' or identifier expected, got 'EOF'",
     )
 
 
@@ -521,7 +600,10 @@ def test_linq_no_var(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 10), msg="Identifier expected, got 'INT_LITERAL'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 10),
+        msg="Identifier expected, got 'INT_LITERAL'",
     )
 
 
@@ -533,7 +615,10 @@ def test_linq_no_in(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 14), msg="'in' keyword expected, got 'SELECT_KEYWORD'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 14),
+        msg="'in' keyword expected, got 'SELECT_KEYWORD'",
     )
 
 
@@ -557,7 +642,10 @@ def test_linq_no_select(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 21), msg="'select' keyword expected, got 'SEMICOLON'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 21),
+        msg="'select' keyword expected, got 'SEMICOLON'",
     )
 
 
@@ -615,7 +703,10 @@ def test_linq_order_no_by(mocked_error_handler, make_parser):
         parser.parse_program()
 
     check_error(
-        mocked_error_handler, SyntaxException, (1, 45), msg="'by' keyword expected, got 'SEMICOLON'"
+        mocked_error_handler,
+        SyntaxException,
+        (1, 45),
+        msg="'by' keyword expected, got 'SEMICOLON'",
     )
 
 
@@ -638,7 +729,12 @@ def test_linq_descending_no_order(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 39), msg="';' expected, got 'DESCENDING_KEYWORD'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (1, 39),
+        msg="';' expected, got 'DESCENDING_KEYWORD'",
+    )
 
 
 def test_no_expr_after_bracket(mocked_error_handler, make_parser):
@@ -660,7 +756,12 @@ def test_no_right_bracket(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 10), msg="')' expected, got 'SEMICOLON'")
+    check_error(
+        mocked_error_handler,
+        SyntaxException,
+        (1, 10),
+        msg="')' expected, got 'SEMICOLON'",
+    )
 
 
 def test_item_no_value(mocked_error_handler, make_parser):
@@ -682,4 +783,6 @@ def test_item_no_right_bracket(mocked_error_handler, make_parser):
     with pytest.raises(AbortExecution):
         parser.parse_program()
 
-    check_error(mocked_error_handler, SyntaxException, (1, 17), msg="')' expected, got 'EOF'")
+    check_error(
+        mocked_error_handler, SyntaxException, (1, 17), msg="')' expected, got 'EOF'"
+    )

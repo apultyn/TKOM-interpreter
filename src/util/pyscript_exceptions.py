@@ -43,3 +43,8 @@ class SyntaxException(PyscriptException):
         if token_got:
             msg = f"{msg}, got '{token_got}'"
         super().__init__(error_type="SYNTAX", msg=msg, pos=pos)
+
+
+class RuntimeException(PyscriptException):
+    def __init__(self, msg: str, pos: tuple[int, int]):
+        super().__init__(error_type="RUNTIME", msg=msg, pos=pos)
