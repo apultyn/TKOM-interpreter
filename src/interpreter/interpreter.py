@@ -5,7 +5,7 @@ import parser.parser_objects as po
 from util.pyscript_exceptions import PyscriptException
 from util.configs import InterpreterConfig
 from util.error_handler import ErrorHandler
-from .interpreter_objects import Env
+from .interpreter_objects import Env, Value
 
 
 class Interpreter:
@@ -19,11 +19,11 @@ class Interpreter:
         self.global_env = Env()
 
     @singledispatchmethod
-    def eval(self, node: po.ParserObject, env):
+    def eval(self, node: po.ParserObject, env: Env):
         raise NotImplementedError(type(node))
 
     @eval.register
-    def _(self, node: po.Program, env):
+    def _(self, node: po.Program, env: Env):
         try:
             for stmt in node.statements:
                 self.eval(stmt, env)
@@ -31,7 +31,7 @@ class Interpreter:
             self._error_handler.handle_error(exc)
 
     @eval.register
-    def _(self, node: po.IfStmt, env):
+    def _(self, node: po.IfStmt, env: Env):
         if self.eval(node.condition, env).truthy():
             self.eval(node.body, Env(env))
             return
@@ -42,3 +42,19 @@ class Interpreter:
         if node.else_body:
             self.eval(node.else_body, Env(env))
 
+    @eval.register
+    def _(self, node: po.WhileStmt, env: Env):
+        while self.eval(node.condition, env).truthy():
+            self.eval(node.body, Env(env))
+
+    @eval.register
+    def _(self, node: po.ForStmt, env: Env):
+        source = self.eval(node.source)
+
+    @eval.register
+    def _(self, node: po.AddExpr, env: Env):
+        left = self.eval(node.l_value)
+        right = self.eval(node.r_value)
+
+        Value.typecheck(left, right, node)
+        return left + right
