@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable, Self
 
@@ -164,6 +164,9 @@ class StringValue(Value, Additive):
     def __add__(self, other: "StringValue"):
         return StringValue(self.value + other.value)
 
+    def __str__(self) -> str:
+        return f"'{self.value}'"
+
 
 @dataclass
 class BoolValue(Value):
@@ -175,16 +178,31 @@ class BoolValue(Value):
     def type_of(self) -> "StringValue":
         return StringValue("Bool")
 
+    def __str__(self) -> str:
+        return f"{self.value}"
+
 
 @dataclass
 class ItemValue(Value):
     key: Value
     value: Value
 
+    def get_key(self) -> Value:
+        return self.key
+
+    def get_value(self) -> Value:
+        return self.value
+
+    def type_of(self):
+        return StringValue("Item")
+
+    def __str__(self) -> str:
+        return f"({self.key}: {self.value})"
+
 
 @dataclass
 class Collection(Value):
-    elements: list[Value]
+    elements: list[Value] = field(default_factory=list)
 
     def truthy(self):
         return len(self.elements) > 0
@@ -221,9 +239,42 @@ class ListValue(Collection, Additive):
 
 
 @dataclass
-class Dict(Collection):
-    order_func: "FuncValue"
-    elements: list[ItemValue]
+class DictValue(Collection):
+    order_func: "FuncValue" = None
+
+    def add_new(self, key: Value, value: Value):
+        if self.contains(key):
+            raise KeyError(f"Key {key} already exists in the dictionary")
+        for i, item in enumerate(self.elements):
+            if self.order_func(key, item.get_key()) < 0:
+                self.elements.insert(i, ItemValue(key, value))
+                return
+        self.elements.append(ItemValue(key, value))
+
+    def add(self, item: ItemValue):
+        self.add_new(item.get_key(), item.get_value())
+
+    def remove(self, key: Value):
+        for i, item in enumerate(self.elements):
+            if item.get_key() == key:
+                self.elements.pop(i)
+                return
+        raise KeyError(f"Key {key} not found in the dictionary")
+
+    def contains(self, key: Value) -> bool:
+        for item in self.elements:
+            if item.get_key() == key:
+                return True
+        return False
+
+    def get(self, key: Value) -> Value:
+        for item in self.elements:
+            if item.get_key() == key:
+                return item
+        raise KeyError(f"Key {key} not found in the dictionary")
+
+    def type_of(self) -> "StringValue":
+        return StringValue("Dict")
 
 
 @dataclass

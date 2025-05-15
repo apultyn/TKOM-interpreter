@@ -1,11 +1,14 @@
 import pytest
 
+from tests.interpreter_tests.util import default_sort
 from src.interpreter.interpreter_objects import (
     IntValue,
     FloatValue,
     StringValue,
     BoolValue,
     ListValue,
+    ItemValue,
+    DictValue,
 )
 from src.parser.parser_objects import CallExpr, Identifier
 from src.util.pyscript_exceptions import RuntimeException
@@ -91,6 +94,7 @@ def test_string():
 
     obj2 = StringValue("Ale")
 
+    assert obj + obj2 == StringValue("My stringAle")
     assert obj > obj2
     assert obj >= obj2
     assert not obj == obj2
@@ -152,3 +156,91 @@ def test_list():
         obj.get(2)
     with pytest.raises(IndexError):
         obj.set(2, IntValue(10))
+
+
+def test_item():
+    obj = ItemValue(IntValue(1), StringValue("one"))
+
+    assert obj == ItemValue(IntValue(1), StringValue("one"))
+    assert obj.get_key() == IntValue(1)
+    assert obj.get_value() == StringValue("one")
+    assert obj.type_of() == StringValue("Item")
+
+
+def test_dict_no_sort():
+    obj = DictValue(
+        [
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(IntValue("hello"), StringValue("there")),
+        ],
+        order_func=default_sort,
+    )
+
+    assert obj == DictValue(
+        [
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(IntValue("hello"), StringValue("there")),
+        ],
+        order_func=default_sort,
+    )
+
+    assert obj.length() == IntValue(3)
+    assert obj.truthy()
+    assert obj.type_of() == StringValue("Dict")
+
+    # Adding
+    obj.add_new(StringValue("general"), StringValue("kenobi"))
+    assert obj == DictValue(
+        [
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("general"), StringValue("kenobi")),
+        ],
+        order_func=default_sort,
+    )
+
+    obj.add(ItemValue(BoolValue(True), StringValue("yes")))
+    assert obj == DictValue(
+        [
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("general"), StringValue("kenobi")),
+            ItemValue(BoolValue(True), StringValue("yes")),
+        ],
+        order_func=default_sort,
+    )
+
+    with pytest.raises(KeyError):
+        obj.add_new(IntValue(1), StringValue("duplicate"))
+
+    with pytest.raises(KeyError):
+        obj.add(ItemValue(BoolValue(True), StringValue("duplicate")))
+
+    # Removing
+    obj.remove(IntValue(1))
+    assert obj == DictValue(
+        [
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("general"), StringValue("kenobi")),
+            ItemValue(BoolValue(True), StringValue("yes")),
+        ],
+        order_func=default_sort,
+    )
+
+    with pytest.raises(KeyError):
+        obj.remove(IntValue(1))
+
+    # Contains
+    assert obj.contains(StringValue("general"))
+    assert not obj.contains(StringValue("General"))
+
+    # Get
+    assert obj.get(BoolValue(True)) == ItemValue(BoolValue(True), StringValue("yes"))
+
+    with pytest.raises(KeyError):
+        obj.get(IntValue(1))
