@@ -1,6 +1,11 @@
 import pytest
 
-from src.interpreter.interpreter_objects import IntValue, FloatValue, StringValue
+from src.interpreter.interpreter_objects import (
+    IntValue,
+    FloatValue,
+    StringValue,
+    BoolValue,
+)
 from src.parser.parser_objects import CallExpr, Identifier
 from src.util.pyscript_exceptions import RuntimeException
 
@@ -23,6 +28,13 @@ def test_int():
     assert obj * obj2 == IntValue(-35)
     assert obj // obj2 == IntValue(-1)
 
+    assert obj > obj2
+    assert obj >= obj2
+    assert not obj == obj2
+    assert obj != obj2
+    assert not obj < obj2
+    assert not obj <= obj2
+
 
 def test_float():
     obj = FloatValue(3.4)
@@ -42,6 +54,30 @@ def test_float():
     assert obj * obj2 == FloatValue(-3.06)
     assert obj / obj2 == FloatValue(-3.7777777777777777)
 
+    assert obj > obj2
+    assert obj >= obj2
+    assert not obj == obj2
+    assert obj != obj2
+    assert not obj < obj2
+    assert not obj <= obj2
+
+
+def test_zero_division():
+    int1 = IntValue(5)
+    int2 = IntValue(0)
+
+    float1 = FloatValue(5.0)
+    float2 = FloatValue(0.0)
+
+    assert int2 // int1 == IntValue(0)
+    assert float2 / float1 == FloatValue(0.0)
+
+    with pytest.raises(ZeroDivisionError):
+        int1 // int2
+
+    with pytest.raises(ZeroDivisionError):
+        float1 / float2
+
 
 def test_string():
     obj = StringValue("My string")
@@ -51,6 +87,15 @@ def test_string():
     assert obj.truthy()
 
     assert not StringValue("").truthy()
+
+    obj2 = StringValue("Ale")
+
+    assert obj > obj2
+    assert obj >= obj2
+    assert not obj == obj2
+    assert obj != obj2
+    assert not obj < obj2
+    assert not obj <= obj2
 
 
 def test_string_casting():
@@ -72,3 +117,11 @@ def test_string_casting():
     exc = excinfo.value
     assert exc.pos == (1, 5)
     assert exc.msg == "Cannot cast 'Hello' to Float"
+
+
+def test_bool():
+    obj_true = BoolValue(True)
+    obj_false = BoolValue(False)
+
+    assert obj_true.truthy() and not obj_false.truthy()
+    assert obj_true.type_of() == StringValue("Bool")

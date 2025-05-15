@@ -96,6 +96,8 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
         return IntValue(self.value * other.value)
 
     def __floordiv__(self, other: "IntValue") -> "IntValue":
+        if other.value == 0:
+            raise ZeroDivisionError
         return IntValue(self.value // other.value)
 
     def __str__(self) -> str:
@@ -128,6 +130,8 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
         return FloatValue(self.value * other.value)
 
     def __truediv__(self, other: "FloatValue") -> "FloatValue":
+        if other.value == 0.0:
+            raise ZeroDivisionError
         return FloatValue(self.value / other.value)
 
     def __str__(self) -> str:
@@ -168,6 +172,9 @@ class BoolValue(Value):
 
     def truthy(self):
         return self.value
+
+    def type_of(self) -> "StringValue":
+        return StringValue("Bool")
 
 
 @dataclass

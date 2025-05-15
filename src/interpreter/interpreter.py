@@ -104,20 +104,29 @@ class Interpreter:
 
         return left * right
 
-    # @eval.register
-    # def _(self, node: po.DivExpr, env: Env):
-    #     left = self.eval(node.l_value)
-    #     right = self.eval(node.r_value)
+    @eval.register
+    def _(self, node: po.DivExpr, env: Env):
+        left = self.eval(node.l_value)
+        right = self.eval(node.r_value)
 
-    #     Value.typecheck(left, right, node)
+        Value.typecheck(left, right, node)
 
-    #     if isinstance(left, IntValue):
-    #         pass
+        if isinstance(left, IntValue):
+            try:
+                return left // right
+            except ZeroDivisionError:
+                raise RuntimeException(
+                    "Division by zero is not allowed", pos=node.pos
+                )
 
-    #     if isinstance(left, FloatValue):
-    #         pass
+        if isinstance(left, FloatValue):
+            try:
+                return left / right
+            except ZeroDivisionError:
+                raise RuntimeException(
+                    "Division by zero is not allowed", pos=node.pos
+                )
 
-    #     raise RuntimeException(
-    #         f"Div operation is not supported for type {left.__class__}",
-    #         pos=node.pos
-    #     )
+        raise RuntimeException(
+            f"Div operation is not supported for type {left.__class__}", pos=node.pos
+        )
