@@ -6,6 +6,7 @@ from src.util.error_handler import ErrorHandler
 from src.util.configs import LexerConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
+from src.interpreter.interpreter import Interpreter
 from .util import AbortExecution
 
 
@@ -38,3 +39,8 @@ def make_parser(make_lexer, mocked_error_handler):
         return Parser(lexer=lexer, error_handler=err)
 
     return _factory
+
+
+@pytest.fixture
+def make_interpreter(mocked_error_handler):
+    return Interpreter(mocked_error_handler)

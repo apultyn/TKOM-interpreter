@@ -1,11 +1,11 @@
 from functools import singledispatchmethod
 
-import parser.parser_objects as po
+import src.parser.parser_objects as po
 
-from util.pyscript_exceptions import PyscriptException, RuntimeException
-from util.configs import InterpreterConfig
-from util.error_handler import ErrorHandler
-from .interpreter_objects import Env, Value, Additive
+from src.util.pyscript_exceptions import PyscriptException, RuntimeException
+from src.util.configs import InterpreterConfig
+from src.util.error_handler import ErrorHandler
+from .interpreter_objects import Env, Value, Additive, Subtractive, Multiplicative, IntValue, FloatValue
 
 
 class Interpreter:
@@ -60,15 +60,60 @@ class Interpreter:
 
         if not isinstance(left, Additive):
             raise RuntimeException(
-                f"Add operation is not supported for type {left.__class__}"
+                f"Add operation is not supported for type {left.__class__}",
+                pos=node.pos
             )
 
         return left + right
 
 
     @eval.register
-    def _(self, node: po.DivExpr, env: Env):
-        left = self.eval(node.l_value)
-        right = self.eval(node.r_value)
+    def _(self, node: po.SubExpr, env: Env):
+        left = self.eval(node.l_value, env)
+        right = self.eval(node.r_value, env)
 
         Value.typecheck(left, right, node)
+
+        if not isinstance(left, Subtractive):
+            raise RuntimeException(
+                f"Sub operation is not supported for type {left.__class__}",
+                pos=node.pos
+            )
+
+        return left - right
+
+    @eval.register
+    def _(self, node: po.MulExpr, env: Env):
+        left = self.eval(node.l_value, env)
+        right = self.eval(node.r_value, env)
+
+        Value.typecheck(left, right, node)
+
+        if not isinstance(left, Multiplicative):
+            raise RuntimeException(
+                f"Mul operation is not supported for type {left.__class__}",
+                pos=node.pos
+            )
+
+        return left * right
+
+
+    # @eval.register
+    # def _(self, node: po.DivExpr, env: Env):
+    #     left = self.eval(node.l_value)
+    #     right = self.eval(node.r_value)
+
+    #     Value.typecheck(left, right, node)
+
+    #     if isinstance(left, IntValue):
+    #         pass
+
+    #     if isinstance(left, FloatValue):
+    #         pass
+
+    #     raise RuntimeException(
+    #         f"Div operation is not supported for type {left.__class__}",
+    #         pos=node.pos
+    #     )
+
+
