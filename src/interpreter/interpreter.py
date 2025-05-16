@@ -1,6 +1,7 @@
 from functools import singledispatchmethod
 
 import src.parser.parser_objects as po
+from src.interpreter.util import get_typeof
 
 from src.util.pyscript_exceptions import RuntimeException
 from src.util.configs import InterpreterConfig
@@ -22,7 +23,10 @@ from .interpreter_objects import (
     BuiltInFunc
 )
 
-GLOBAL_ENV = Env()
+GLOBAL_ENV = Env(None, {
+    "print": BuiltInFunc([Value], print),
+    "typeOf": BuiltInFunc([Value], get_typeof)
+})
 
 
 class Interpreter:
@@ -399,6 +403,10 @@ class Interpreter:
 
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
+        except Exception as exc:
+            self._error_handler.handle_error(
+                RuntimeException(msg = exc.args[0], pos=node.pos)
+            )
 
         self._error_handler.handle_error(
             RuntimeException(f"Object {callee.__class__.__qualname__} is not callable", pos=node.pos)
