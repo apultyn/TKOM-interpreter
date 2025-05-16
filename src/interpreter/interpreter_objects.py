@@ -340,7 +340,7 @@ class DictValue(Collection, Additive):
             raise KeyError(f"{key.__class__.__qualname__} can't be an item key")
 
         for i, item in enumerate(self.elements):
-            if self.order_func(key, item.get_key()) < 0:
+            if self.order_func(key, item.get_key()) < IntValue(0):
                 self.elements.insert(i, ItemValue(key, value))
                 return
         self.elements.append(ItemValue(key, value))

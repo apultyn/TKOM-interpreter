@@ -20,7 +20,8 @@ from .interpreter_objects import (
     ItemValue,
     DictValue,
     FuncValue,
-    BuiltInFunc
+    BuiltInFunc,
+    Collection
 )
 
 GLOBAL_ENV = Env(None, {
@@ -477,7 +478,76 @@ class Interpreter:
     # Linq expr
     @eval.register
     def _(self, node: po.LinqExpr, env: Env):
-        pass
+        var = node.var.value
+        source = self.eval(node.source, env)
+
+        if not isinstance(source, Collection):
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Source should be a collection, got {source.__class__.__qualname__}",
+                    pos=node.source.pos
+                )
+            )
+
+        new_env = Env(env)
+        new_env.define(var, None)
+
+        return_list = []
+
+        for element in source:
+            new_env.set(var, element)
+
+            # where
+            if node.where:
+                condition = self.eval(node.where, new_env)
+
+                if not isinstance(condition, BoolValue):
+                    self._error_handler.handle_error(
+                        f"'where' condition should be a BoolValue, got {condition.__class__.__qualname__}",
+                        pos=node.where.pos
+                    )
+
+                if not condition.value:
+                    continue
+
+            # selects
+            selects = [self.eval(sel, new_env) for sel in node.selects]
+
+            # order by
+            order_key = None
+            if node.order_by:
+                order_key = self.eval(node.order_by, new_env)
+
+                try:
+                    inserted = False
+                    # descending
+                    if node.descending:
+                        for i, item in enumerate(return_list):
+                            if order_key > item[1]:
+                                return_list.insert(i, (selects, order_key))
+                                inserted = True
+                                break
+                    else:
+                        for i, item in enumerate(return_list):
+                            if order_key < item[i]:
+                                return_list.insert(i, (selects, order_key))
+                                inserted = True
+                                break
+                    if not inserted:
+                        return_list.append((selects, order_key))
+
+                except TypeError:
+                    self._error_handler.handle_error(
+                        RuntimeException(
+                            f"Comparing not supported on type {order_key.__class__.__qualname__}",
+                            pos=node.order_by.pos
+                        )
+                    )
+            else:
+                return_list.append((selects, order_key))
+
+        return ListValue([item[0] for item in return_list])
+
 
     # Brackets expr
     @eval.register

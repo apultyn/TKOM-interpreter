@@ -1,4 +1,4 @@
-from interpreter_objects import Value
+from src.interpreter.interpreter_objects import Value
 
 def get_typeof(value: Value):
     try:
