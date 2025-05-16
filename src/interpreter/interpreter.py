@@ -14,6 +14,10 @@ from .interpreter_objects import (
     IntValue,
     FloatValue,
     BoolValue,
+    StringValue,
+    ListValue,
+    ItemValue,
+    DictValue,
 )
 
 
@@ -45,14 +49,17 @@ class Interpreter:
     def eval(self, node: po.ParserObject, env: Env):
         raise NotImplementedError(type(node))
 
+    # Block
+    @eval.register
+    def _(self, node: po.Block, env: Env):
+        for stmt in node.statements:
+            self.eval(stmt, env)
+
     # Program
     @eval.register
     def _(self, node: po.Program, env: Env):
-        try:
-            for stmt in node.statements:
-                self.eval(stmt, env)
-        except PyscriptException as exc:
-            self._error_handler.handle_error(exc)
+        for stmt in node.statements:
+            self.eval(stmt, env)
 
     # If Statement
     @eval.register
@@ -146,7 +153,66 @@ class Interpreter:
         try:
             return BoolValue(l_value > r_value)
         except TypeError:
-            self._error_handler.handle_error(RuntimeException(""))
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Operation '>' not supported on type {l_value.__class__}",
+                    pos=node.pos,
+                )
+            )
+
+    # Geq Expr
+    @eval.register
+    def _(self, node: po.GeqExpr, env: Env):
+        l_value = self.eval(node.l_value, env)
+        r_value = self.eval(node.r_value, env)
+
+        self.ensure_same_type(l_value, r_value, ">=", node)
+
+        try:
+            return BoolValue(l_value >= r_value)
+        except TypeError:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Operation '>=' not supported on type {l_value.__class__}",
+                    pos=node.pos,
+                )
+            )
+
+    # Lt Expr
+    @eval.register
+    def _(self, node: po.LtExpr, env: Env):
+        l_value = self.eval(node.l_value, env)
+        r_value = self.eval(node.r_value, env)
+
+        self.ensure_same_type(l_value, r_value, "<", node)
+
+        try:
+            return BoolValue(l_value < r_value)
+        except TypeError:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Operation '<' not supported on type {l_value.__class__}",
+                    pos=node.pos,
+                )
+            )
+
+    # Leq Expr
+    @eval.register
+    def _(self, node: po.LeqExpr, env: Env):
+        l_value = self.eval(node.l_value, env)
+        r_value = self.eval(node.r_value, env)
+
+        self.ensure_same_type(l_value, r_value, "<=", node)
+
+        try:
+            return BoolValue(l_value <= r_value)
+        except TypeError:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Operation '<=' not supported on type {l_value.__class__}",
+                    pos=node.pos,
+                )
+            )
 
     # Add Expr
     @eval.register
@@ -159,7 +225,7 @@ class Interpreter:
         if not isinstance(l_value, Additive):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Add operation is not supported for type {l_value.__class__}",
+                    f"Operation '+' not supported for type {l_value.__class__}",
                     pos=node.pos,
                 )
             )
@@ -177,7 +243,7 @@ class Interpreter:
         if not isinstance(l_value, Subtractive):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Sub operation is not supported for type {l_value.__class__}",
+                    f"Operation '-' not supported for type {l_value.__class__}",
                     pos=node.pos,
                 )
             )
@@ -195,7 +261,7 @@ class Interpreter:
         if not isinstance(l_value, Multiplicative):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Mul operation is not supported for type {l_value.__class__}",
+                    f"Operation '*' not supported for type {l_value.__class__}",
                     pos=node.pos,
                 )
             )
@@ -228,7 +294,119 @@ class Interpreter:
 
         self._error_handler.handle_error(
             RuntimeException(
-                f"Div operation is not supported for type {l_value.__class__}",
+                f"Operation '/' not supported for type {l_value.__class__}",
                 pos=node.pos,
             )
         )
+
+    # Logic Negation Expr
+    @eval.register
+    def _(self, node: po.LogicNegExpr, env: Env):
+        value = self.eval(node.value, env)
+        if not isinstance(value, BoolValue):
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Logic negation is not supported for type {value.__class__}",
+                    pos=node.pos,
+                )
+            )
+        return BoolValue(not value.value)
+
+    # Arihmetic Negation Expr
+    @eval.register
+    def _(self, node: po.ArithNegExpr, env: Env):
+        value = self.eval(node.value, env)
+
+        if isinstance(value, IntValue):
+            return IntValue(-value.value)
+
+        if isinstance(value, FloatValue):
+            return FloatValue(-value.value)
+
+        self._error_handler.handle_error(
+            RuntimeException(
+                f"Arihmetic negation is not supported for type {value.__class__}",
+                pos=node.pos,
+            )
+        )
+
+    # Access Expr
+    @eval.register
+    def _(self, node: po.AccessExpr, env: Env):
+        pass
+
+    # Call Expr
+    @eval.register
+    def _(self, node: po.CallExpr, env: Env):
+        pass
+
+    # Int Expr
+    @eval.register
+    def _(self, node: po.IntExpr, env: Env):
+        return IntValue(node.value)
+
+    # Float Expr
+    @eval.register
+    def _(self, node: po.FloatExpr, env: Env):
+        return FloatValue(node.value)
+
+    # String Expr
+    @eval.register
+    def _(self, node: po.StringExpr, env: Env):
+        return StringValue(node.value)
+
+    # Identifier
+    @eval.register
+    def _(self, node: po.Identifier, env: Env):
+        pass
+
+    # Bool Expr
+    @eval.register
+    def _(self, node: po.BoolExpr, env: Env):
+        return BoolValue(node.value)
+
+    # List Expr
+    @eval.register
+    def _(self, node: po.ListExpr, env: Env):
+        elements = []
+        for element in node.elements:
+            object = self.eval(element, env)
+            elements.append(object)
+
+        return ListValue(elements)
+
+    # Item Expr
+    @eval.register
+    def _(self, node: po.ItemExpr, env: Env):
+        key = self.eval(node.key, env)
+        value = self.eval(node.value, env)
+
+        return ItemValue(key, value)
+
+    # Dict Expr
+    @eval.register
+    def _(self, node: po.DictExpr, env: Env):
+        dict = DictValue(
+            [], lambda x: 1
+        )  # Tu kiedyś będzie musiała trafić defaultowa funkcja
+
+        for parser_item in node.items:
+            interpreter_item = self.eval(parser_item, env)
+            dict.add(interpreter_item)
+
+        return dict
+
+    # Function expr
+    @eval.register
+    def _(self, node: po.FunctionExpr, env: Env):
+        pass
+
+    # Linq expr
+    @eval.register
+    def _(self, node: po.LinqExpr, env: Env):
+        pass
+
+    # Brackets expr
+    @eval.register
+    def _(self, node: po.BracketsExpr, env: Env):
+        return self.eval(node.value, env)

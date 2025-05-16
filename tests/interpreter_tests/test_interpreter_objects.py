@@ -309,4 +309,3 @@ def test_nested_prints():
         obj.str_long()
         == "{(2: two), (hello: there), (general: kenobi), (True: yes), List(3), Dict(3)}"
     )
-
