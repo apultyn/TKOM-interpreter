@@ -147,18 +147,18 @@ def test_list():
         [IntValue(1), IntValue(2), IntValue(3), IntValue(1), IntValue(2), IntValue(3)]
     )
     assert obj.type_of() == StringValue("List")
-    assert obj.get(0) == IntValue(1)
+    assert obj.get(IntValue(0)) == IntValue(1)
 
-    obj.set(0, IntValue(5))
+    obj.set(IntValue(0), IntValue(5))
     assert obj == ListValue([IntValue(5), IntValue(2), IntValue(3)])
 
-    obj.remove(1)
+    obj.remove(IntValue(1))
     assert obj == ListValue([IntValue(5), IntValue(3)])
 
     with pytest.raises(IndexError):
-        obj.get(2)
+        obj.get(IntValue(2))
     with pytest.raises(IndexError):
-        obj.set(2, IntValue(10))
+        obj.set(IntValue(2), IntValue(10))
 
 
 def test_item():

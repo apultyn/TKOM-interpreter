@@ -17,7 +17,7 @@ def test_int(make_interpreter):
     assert interpreter.eval(CallExpr(
         AccessExpr(
             IntExpr(5, pos=(1, 1)),
-            Identifier("to_string", pos=(1, 3)),
+            Identifier("toString", pos=(1, 3)),
             pos=(1, 5)
         ),
         args=[],

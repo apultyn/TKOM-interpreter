@@ -101,7 +101,10 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
     members: dict[str, Value] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
-        self.members = {"to_string": BuiltInFunc([], self.to_string)}
+        self.members = {
+            "toString": BuiltInFunc([], self.to_string),
+            "toFloat": BuiltInFunc([], self.to_float),
+        }
 
     def truthy(self) -> bool:
         return self.value != 0
@@ -133,9 +136,16 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
         return f"{self.value}"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(order=True)
 class FloatValue(Value, Additive, Subtractive, Multiplicative):
     value: float
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {
+            "toString": BuiltInFunc([], self.to_string),
+            "toInt": BuiltInFunc([], self.to_int),
+        }
 
     def truthy(self):
         return self.value != 0.0
@@ -167,9 +177,16 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
         return f"{self.value}"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(order=True)
 class StringValue(Value, Additive):
     value: str
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {
+            "toInt": BuiltInFunc([], self.to_int),
+            "toFloat": BuiltInFunc([], self.to_float),
+        }
 
     def truthy(self):
         return self.value != ""
@@ -215,10 +232,23 @@ class BoolValue(Value):
         return f"{self.value}"
 
 
+_SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
+
+def is_simple(val: "Value") -> bool:
+    return isinstance(val, _SIMPLE_TYPES)
+
+
 @dataclass
 class ItemValue(Value):
     key: Value
     value: Value
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {
+            "key": BuiltInFunc([], self.get_key),
+            "value": BuiltInFunc([], self.get_value),
+        }
 
     def get_key(self) -> Value:
         return self.key
@@ -246,29 +276,40 @@ class Collection(Value):
 
 @dataclass
 class ListValue(Collection, Additive):
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {
+            "length": BuiltInFunc([], self.length),
+            "get": BuiltInFunc([ItemValue], self.get),
+            "add": BuiltInFunc([Value], self.add),
+            "set": BuiltInFunc([IntValue, Value], self.set),
+            "remove": BuiltInFunc([IntValue], self.remove)
+        }
+
     def __add__(self, other: "ListValue"):
         return ListValue(self.elements + other.elements)
 
     def type_of(self) -> "StringValue":
         return StringValue("List")
 
-    def get(self, index: int) -> Value:
-        if index < 0 or index >= self.length().value:
-            raise IndexError(f"Index {index} out of range")
-        return self.elements[index]
+    def get(self, index: IntValue) -> Value:
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        return self.elements[index.value]
 
     def add(self, value: Value):
         self.elements.append(value)
 
-    def set(self, index: int, value: Value):
-        if index < 0 or index >= self.length().value:
-            raise IndexError(f"Index {index} out of range")
-        self.elements[index] = value
+    def set(self, index: IntValue, value: Value):
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        self.elements[index.value] = value
 
-    def remove(self, index: int):
-        if index < 0 or index >= self.length().value:
-            raise IndexError(f"Index {index} out of range")
-        self.elements.pop(index)
+    def remove(self, index: IntValue):
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        self.elements.pop(index.value)
 
     def __str__(self) -> str:
         return f"List({self.length().value})"
@@ -281,10 +322,23 @@ class ListValue(Collection, Additive):
 @dataclass
 class DictValue(Collection, Additive):
     order_func: "FuncValue" = None
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {
+            "add_new": BuiltInFunc([Value, Value], self.add_new),
+            "add": BuiltInFunc([ItemValue], self.add),
+            "remove": BuiltInFunc([Value], self.remove),
+            "contains": BuiltInFunc([Value], self.contains),
+            "get": BuiltInFunc([Value], self.get),
+        }
 
     def add_new(self, key: Value, value: Value):
         if self.contains(key).value:
             raise KeyError(f"Key {key} already exists in the dictionary")
+        if not is_simple(key):
+            raise KeyError(f"{key.__class__.__qualname__} can't be an item key")
+
         for i, item in enumerate(self.elements):
             if self.order_func(key, item.get_key()) < 0:
                 self.elements.insert(i, ItemValue(key, value))
@@ -350,10 +404,3 @@ class FuncValue(Value):
             local_env.define(name, arg)
 
         return local_env
-
-
-_SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
-
-
-def is_simple(val: "Value") -> bool:
-    return isinstance(val, _SIMPLE_TYPES)

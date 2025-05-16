@@ -387,15 +387,15 @@ class Interpreter:
     @eval.register
     def _(self, node: po.CallExpr, env: Env):
         callee: FuncValue | BuiltInFunc = self.eval(node.callee, env)
-        arg_vals = [self.eval(arg, env) for arg in node.args]
+        arg_objects = [self.eval(arg, env) for arg in node.args]
 
         try:
             if isinstance(callee, FuncValue):
-                exec_env = callee.get_call_env(arg_vals, node.pos)
+                exec_env = callee.get_call_env(arg_objects, node.pos)
                 return self.eval(callee.body, exec_env)
 
             if isinstance(callee, BuiltInFunc):
-                return callee(node.pos, arg_vals)
+                return callee(node.pos, arg_objects)
 
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
