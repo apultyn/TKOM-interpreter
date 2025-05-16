@@ -12,8 +12,9 @@ class Cell:
 
 
 class Env:
-    parent: "Env|None" = None
-    symbols: dict[str, tuple[int, "Value"]]
+    def __init__(self, parent: "Env | None" = None, symbols: dict[str, Cell] = {}):
+        self.parent = parent
+        self.symbols = symbols
 
     def lookup_cell(self, name: str) -> Cell:
         if name in self.symbols:
@@ -143,6 +144,9 @@ class StringValue(Value, Additive):
 
     def truthy(self):
         return self.value != ""
+
+    def length(self):
+        return IntValue(len(self.value))
 
     def to_float(self, node: po.ParserObject) -> "FloatValue":
         try:
@@ -298,4 +302,30 @@ class DictValue(Collection, Additive):
 
 @dataclass
 class FuncValue(Value):
-    pass
+    params: list[str]
+    body: po.Block
+    closure: Env
+
+    def get_call_env(
+        self, args: list["Value"], call_pos: tuple[int, int]
+    ) -> "Value | None":
+        if len(args) != len(self.params):
+            raise RuntimeException(
+                msg=f"Function takes {len(self.params)} arguments, {len(args)} given",
+                pos=call_pos,
+            )
+
+        local_env = Env(self.closure)
+
+        for name, arg in zip(self.params, args):
+            local_env.define(name, arg)
+
+        return local_env
+
+
+
+_SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
+
+
+def is_simple(val: "Value") -> bool:
+    return isinstance(val, _SIMPLE_TYPES)

@@ -2,7 +2,7 @@ from functools import singledispatchmethod
 
 import src.parser.parser_objects as po
 
-from src.util.pyscript_exceptions import PyscriptException, RuntimeException
+from src.util.pyscript_exceptions import RuntimeException
 from src.util.configs import InterpreterConfig
 from src.util.error_handler import ErrorHandler
 from .interpreter_objects import (
@@ -18,7 +18,10 @@ from .interpreter_objects import (
     ListValue,
     ItemValue,
     DictValue,
+    FuncValue,
 )
+
+GLOBAL_ENV = Env()
 
 
 class Interpreter:
@@ -29,7 +32,7 @@ class Interpreter:
     ):
         self._error_handler = error_handler
         self._cfg = cfg
-        self.global_env = Env()
+        self.global_env = GLOBAL_ENV
 
     def ensure_same_type(
         self, l_value: Value, r_value: Value, operation: str, node: po.ParserObject
@@ -94,15 +97,49 @@ class Interpreter:
 
     # Normal Assignment
     def _(self, node: po.NormalAssignmentStmt, env: Env):
-        pass
+        value = self.eval(node.r_value, env)
+        name = node.l_value.value
+
+        if name in env.symbols:
+            env.set(name, value)
+        else:
+            env.define(name, value)
 
     # Plus Assignment
     def _(self, node: po.PlusAssignmentStmt, env: Env):
-        pass
+        name = node.l_value.value
+        try:
+            l_value = env.get(name)
+            r_value = self.eval(node.r_value, env)
+            self.ensure_same_type(l_value, r_value, "+=", node)
+
+            if not isinstance(l_value, Additive):
+                raise RuntimeException(
+                    f"Operation '+=' not supported for type {l_value.__class__}",
+                    pos=node.pos,
+                )
+
+            env.set(name, l_value + r_value)
+        except RuntimeException as exc:
+            self._error_handler.handle_error(exc)
 
     # Minus Assignment
     def _(self, node: po.MinusAssignmentStmt, env: Env):
-        pass
+        name = node.l_value.value
+        try:
+            l_value = env.get(name)
+            r_value = self.eval(node.r_value, env)
+            self.ensure_same_type(l_value, r_value, "+=", node)
+
+            if not isinstance(l_value, Subtractive):
+                raise RuntimeException(
+                    f"Operation '-=' not supported for type {l_value.__class__}",
+                    pos=node.pos,
+                )
+
+            env.set(name, l_value - r_value)
+        except RuntimeException as exc:
+            self._error_handler.handle_error(exc)
 
     # Or Expr
     @eval.register
@@ -338,7 +375,22 @@ class Interpreter:
     # Call Expr
     @eval.register
     def _(self, node: po.CallExpr, env: Env):
-        pass
+        callee: FuncValue = self.eval(node.callee, env)
+
+        if not isinstance(callee, FuncValue):
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Object {callee.__class__} is not callable", pos=node.pos
+                )
+            )
+
+        arg_vals = [self.eval(arg, env) for arg in node.args]
+
+        try:
+            exec_env = callee.get_call_env(arg_vals, node.pos)
+            return self.eval(callee.body, exec_env)
+        except RuntimeException as exc:
+            self._error_handler.handle_error(exc)
 
     # Int Expr
     @eval.register
@@ -358,7 +410,7 @@ class Interpreter:
     # Identifier
     @eval.register
     def _(self, node: po.Identifier, env: Env):
-        pass
+        return env.get(node.value)
 
     # Bool Expr
     @eval.register
@@ -399,7 +451,8 @@ class Interpreter:
     # Function expr
     @eval.register
     def _(self, node: po.FunctionExpr, env: Env):
-        pass
+        param_names = [ident.value for ident in node.params]
+        return FuncValue(param_names, node.body, env)
 
     # Linq expr
     @eval.register
