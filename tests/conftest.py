@@ -45,4 +45,5 @@ def make_parser(make_lexer, mocked_error_handler):
 def make_interpreter(mocked_error_handler):
     def _factory(err=mocked_error_handler):
         return Interpreter(err)
+
     return _factory

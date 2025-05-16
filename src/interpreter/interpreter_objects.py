@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable, Self, Callable
+from copy import deepcopy
 
 import src.parser.parser_objects as po
 from src.util.pyscript_exceptions import RuntimeException
@@ -12,9 +13,11 @@ class Cell:
 
 
 class Env:
-    def __init__(self, parent: "Env | None" = None, symbols: dict[str, Cell] = {}):
+    def __init__(
+        self, parent: "Env | None" = None, symbols: dict[str, Cell] | None = None
+    ):
         self.parent = parent
-        self.symbols = symbols
+        self.symbols = symbols if symbols is not None else {}
 
     def lookup_cell(self, name: str) -> Cell:
         if name in self.symbols:
@@ -234,6 +237,7 @@ class BoolValue(Value):
 
 _SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
 
+
 def is_simple(val: "Value") -> bool:
     return isinstance(val, _SIMPLE_TYPES)
 
@@ -284,7 +288,7 @@ class ListValue(Collection, Additive):
             "get": BuiltInFunc([ItemValue], self.get),
             "add": BuiltInFunc([Value], self.add),
             "set": BuiltInFunc([IntValue, Value], self.set),
-            "remove": BuiltInFunc([IntValue], self.remove)
+            "remove": BuiltInFunc([IntValue], self.remove),
         }
 
     def __add__(self, other: "ListValue"):
@@ -401,6 +405,6 @@ class FuncValue(Value):
         local_env = Env(self.closure)
 
         for name, arg in zip(self.params, args):
-            local_env.define(name, arg)
+            local_env.define(name, deepcopy(arg) if is_simple(arg) else arg)
 
         return local_env

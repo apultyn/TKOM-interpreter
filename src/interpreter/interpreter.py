@@ -1,7 +1,7 @@
 from functools import singledispatchmethod
 
 import src.parser.parser_objects as po
-from src.interpreter.util import get_typeof
+from src.interpreter.util import get_typeof, ReturnSignal
 
 from src.util.pyscript_exceptions import RuntimeException
 from src.util.configs import InterpreterConfig
@@ -21,13 +21,13 @@ from .interpreter_objects import (
     DictValue,
     FuncValue,
     BuiltInFunc,
-    Collection
+    Collection,
 )
 
-GLOBAL_ENV = Env(None, {
-    "print": BuiltInFunc([Value], print),
-    "typeOf": BuiltInFunc([Value], get_typeof)
-})
+GLOBAL_ENV = Env(
+    None,
+    {"print": BuiltInFunc([Value], print), "typeOf": BuiltInFunc([Value], get_typeof)},
+)
 
 
 class Interpreter:
@@ -67,8 +67,18 @@ class Interpreter:
     # Program
     @eval.register
     def _(self, node: po.Program, env: Env):
-        for stmt in node.statements:
-            self.eval(stmt, env)
+        try:
+            for stmt in node.statements:
+                self.eval(stmt, env)
+            print("Script executed.")
+        except ReturnSignal as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Return statement not allowed outside of function",
+                    pos=exc.return_statement.pos
+                )
+            )
+
 
     # If Statement
     @eval.register
@@ -97,9 +107,10 @@ class Interpreter:
     # Return Statement
     @eval.register
     def _(self, node: po.ReturnStmt, env: Env):
+        value = None
         if node.value:
-            return self.eval(node.value, env)
-        return None
+            value = self.eval(node.value, env)
+        raise ReturnSignal
 
     # Normal Assignment
     def _(self, node: po.NormalAssignmentStmt, env: Env):
@@ -135,7 +146,7 @@ class Interpreter:
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
-            self.ensure_same_type(l_value, r_value, "+=", node)
+            self.ensure_same_type(l_value, r_value, "-=", node)
 
             if not isinstance(l_value, Subtractive):
                 raise RuntimeException(
@@ -314,8 +325,8 @@ class Interpreter:
     # Div Expr
     @eval.register
     def _(self, node: po.DivExpr, env: Env):
-        l_value = self.eval(node.l_value)
-        r_value = self.eval(node.r_value)
+        l_value = self.eval(node.l_value, env)
+        r_value = self.eval(node.r_value, env)
 
         self.ensure_same_type(l_value, r_value, "div", node)
 
@@ -385,7 +396,9 @@ class Interpreter:
             raise AttributeError
         except AttributeError:
             self._error_handler.handle_error(
-                f"Object {src.__class__} has no {field} member"
+                RuntimeException(
+                    f"Object {src.__class__} has no {field} member", pos=node.target.pos
+                )
             )
 
     # Call Expr
@@ -404,13 +417,17 @@ class Interpreter:
 
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
+        except ReturnSignal as exc:
+            return exc.return_value
         except Exception as exc:
             self._error_handler.handle_error(
-                RuntimeException(msg = exc.args[0], pos=node.pos)
+                RuntimeException(msg=exc.args[0], pos=node.pos)
             )
 
         self._error_handler.handle_error(
-            RuntimeException(f"Object {callee.__class__.__qualname__} is not callable", pos=node.pos)
+            RuntimeException(
+                f"Object {callee.__class__.__qualname__} is not callable", pos=node.pos
+            )
         )
 
     # Int Expr
@@ -485,7 +502,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Source should be a collection, got {source.__class__.__qualname__}",
-                    pos=node.source.pos
+                    pos=node.source.pos,
                 )
             )
 
@@ -504,7 +521,7 @@ class Interpreter:
                 if not isinstance(condition, BoolValue):
                     self._error_handler.handle_error(
                         f"'where' condition should be a BoolValue, got {condition.__class__.__qualname__}",
-                        pos=node.where.pos
+                        pos=node.where.pos,
                     )
 
                 if not condition.value:
@@ -540,14 +557,13 @@ class Interpreter:
                     self._error_handler.handle_error(
                         RuntimeException(
                             f"Comparing not supported on type {order_key.__class__.__qualname__}",
-                            pos=node.order_by.pos
+                            pos=node.order_by.pos,
                         )
                     )
             else:
                 return_list.append((selects, order_key))
 
         return ListValue([item[0] for item in return_list])
-
 
     # Brackets expr
     @eval.register
