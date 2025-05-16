@@ -1,7 +1,7 @@
 from functools import singledispatchmethod
 
 import src.parser.parser_objects as po
-from src.interpreter.util import get_typeof, ReturnSignal
+from src.interpreter.util import GLOBAL_ENV, ReturnSignal
 
 from src.util.pyscript_exceptions import RuntimeException
 from src.util.configs import InterpreterConfig
@@ -24,20 +24,16 @@ from .interpreter_objects import (
     Collection,
 )
 
-GLOBAL_ENV = Env(
-    None,
-    {"print": BuiltInFunc([Value], print), "typeOf": BuiltInFunc([Value], get_typeof)},
-)
-
 
 class Interpreter:
     def __init__(
         self,
+        *,
         error_handler: ErrorHandler = ErrorHandler(),
-        cfg: InterpreterConfig = InterpreterConfig(),
+        config: InterpreterConfig = InterpreterConfig(),
     ):
         self._error_handler = error_handler
-        self._cfg = cfg
+        self._config = config
         self.global_env = GLOBAL_ENV
 
     def ensure_same_type(
@@ -75,10 +71,9 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Return statement not allowed outside of function",
-                    pos=exc.return_statement.pos
+                    pos=exc.return_statement.pos,
                 )
             )
-
 
     # If Statement
     @eval.register

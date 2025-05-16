@@ -1,4 +1,4 @@
-from src.interpreter.interpreter_objects import Value
+from src.interpreter.interpreter_objects import Value, Env, BuiltInFunc
 from src.parser.parser_objects import ReturnStmt
 
 
@@ -16,3 +16,27 @@ class ReturnSignal(Exception):
         self.return_statement = statement
         self.return_value = return_value
         super().__init__(f"Return signal with {self.return_value}")
+
+
+GLOBAL_ENV = Env(
+    None,
+    {
+        "print": BuiltInFunc(
+            "print",
+            [
+                [Value],
+                [Value, Value],
+                [Value, Value, Value],
+                [Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value, Value, Value, Value, Value],
+                [Value, Value, Value, Value, Value, Value, Value, Value, Value, Value],
+            ],
+            print,
+        ),
+        "typeOf": BuiltInFunc("typeof", [[Value]], get_typeof),
+    },
+)

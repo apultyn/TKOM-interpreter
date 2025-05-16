@@ -75,26 +75,28 @@ class Multiplicative(Protocol):
 
 @dataclass
 class BuiltInFunc(Value):
-    params: list[type[Value]]
+    name: str
+    params_variants: list[list[type[Value]]]
     body: Callable[..., Value | None]
 
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
 
     def __call__(self, call_pos: tuple[int, int], call_args: list[Value]):
-        if len(call_args) != len(self.params):
+        selected_variant = None
+        for param_variant in self.params_variants:
+            if len(call_args) != len(param_variant):
+                continue
+
+            for call_arg, param in zip(call_args, param_variant):
+                if not isinstance(call_arg, param):
+                    break
+            selected_variant = param_variant
+        if selected_variant is None:
             raise RuntimeException(
-                msg=f"Function takes {len(self.params)} arguments, {len(call_args)} given",
+                msg=f"No '{self.name}' function override with {[call_arg.__class__.__qualname__ for call_arg in call_args]} types found",
                 pos=call_pos,
             )
-
-        for i, (call_arg, param) in enumerate(zip(call_args, self.params)):
-            if not isinstance(call_arg, param):
-                raise RuntimeException(
-                    f"Argument {i+1} should be {param.__qualname__}, got {call_arg.__class__.__qualname__}",
-                    pos=call_pos,
-                )
-
         return self.body(*call_args)
 
 
@@ -105,8 +107,8 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": BuiltInFunc([], self.to_string),
-            "toFloat": BuiltInFunc([], self.to_float),
+            "toString": BuiltInFunc("toString", [[]], self.to_string),
+            "toFloat": BuiltInFunc("toFloat", [[]], self.to_float),
         }
 
     def truthy(self) -> bool:
@@ -146,8 +148,8 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": BuiltInFunc([], self.to_string),
-            "toInt": BuiltInFunc([], self.to_int),
+            "toString": BuiltInFunc("toString", [[]], self.to_string),
+            "toInt": BuiltInFunc("toInt", [[]], self.to_int),
         }
 
     def truthy(self):
@@ -187,8 +189,8 @@ class StringValue(Value, Additive):
 
     def __post_init__(self):
         self.members = {
-            "toInt": BuiltInFunc([], self.to_int),
-            "toFloat": BuiltInFunc([], self.to_float),
+            "toInt": BuiltInFunc("toInt", [[]], self.to_int),
+            "toFloat": BuiltInFunc("toFloat", [[]], self.to_float),
         }
 
     def truthy(self):
@@ -250,8 +252,8 @@ class ItemValue(Value):
 
     def __post_init__(self):
         self.members = {
-            "key": BuiltInFunc([], self.get_key),
-            "value": BuiltInFunc([], self.get_value),
+            "key": BuiltInFunc("key", [[]], self.get_key),
+            "value": BuiltInFunc("value", [[]], self.get_value),
         }
 
     def get_key(self) -> Value:
@@ -284,11 +286,11 @@ class ListValue(Collection, Additive):
 
     def __post_init__(self):
         self.members = {
-            "length": BuiltInFunc([], self.length),
-            "get": BuiltInFunc([ItemValue], self.get),
-            "add": BuiltInFunc([Value], self.add),
-            "set": BuiltInFunc([IntValue, Value], self.set),
-            "remove": BuiltInFunc([IntValue], self.remove),
+            "length": BuiltInFunc("length", [[]], self.length),
+            "get": BuiltInFunc("get", [[ItemValue]], self.get),
+            "add": BuiltInFunc("add", [[Value]], self.add),
+            "set": BuiltInFunc("set", [[IntValue, Value]], self.set),
+            "remove": BuiltInFunc("remove", [[IntValue]], self.remove),
         }
 
     def __add__(self, other: "ListValue"):
@@ -330,11 +332,11 @@ class DictValue(Collection, Additive):
 
     def __post_init__(self):
         self.members = {
-            "add_new": BuiltInFunc([Value, Value], self.add_new),
-            "add": BuiltInFunc([ItemValue], self.add),
-            "remove": BuiltInFunc([Value], self.remove),
-            "contains": BuiltInFunc([Value], self.contains),
-            "get": BuiltInFunc([Value], self.get),
+            "add_new": BuiltInFunc("add_new", [[Value, Value]], self.add_new),
+            "add": BuiltInFunc("add", [[ItemValue]], self.add),
+            "remove": BuiltInFunc("remove", [[Value]], self.remove),
+            "contains": BuiltInFunc("contains", [[Value]], self.contains),
+            "get": BuiltInFunc("get", [[Value]], self.get),
         }
 
     def add_new(self, key: Value, value: Value):

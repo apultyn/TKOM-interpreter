@@ -6,6 +6,7 @@ from .util import open_source
 from src.util.configs import AppConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
+from src.interpreter.interpreter import Interpreter
 from src.util.error_handler import ErrorHandler
 
 
@@ -23,4 +24,6 @@ def main():
     with open_source(args.input) as src:
         lexer = Lexer(source=src, error_handler=err, config=cfg.lexer_config)
         parser = Parser(lexer=lexer, error_handler=err)
-        print(parser.parse_program())
+        interpreter = Interpreter(error_handler=err, config=cfg.interpreter_config)
+
+        interpreter.eval(parser.parse_program())

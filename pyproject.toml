@@ -10,4 +10,4 @@ version = "1.0.0"
 include = ["src*"]
 
 [project.scripts]
-psc = "src.interpreter.main:main"
+psc = "src.main.main:main"

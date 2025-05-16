@@ -1,5 +1,5 @@
-src/parser/output
-src/parser/input
+output
+input
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
