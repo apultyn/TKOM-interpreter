@@ -19,6 +19,7 @@ from .interpreter_objects import (
     ItemValue,
     DictValue,
     FuncValue,
+    BuiltInFunc
 )
 
 GLOBAL_ENV = Env()
@@ -370,27 +371,38 @@ class Interpreter:
     # Access Expr
     @eval.register
     def _(self, node: po.AccessExpr, env: Env):
-        pass
+        src = self.eval(node.source, env)
+        field = node.target.value
+
+        try:
+            if field in src.members:
+                return src.members[field]
+            raise AttributeError
+        except AttributeError:
+            self._error_handler.handle_error(
+                f"Object {src.__class__} has no {field} member"
+            )
 
     # Call Expr
     @eval.register
     def _(self, node: po.CallExpr, env: Env):
-        callee: FuncValue = self.eval(node.callee, env)
-
-        if not isinstance(callee, FuncValue):
-            self._error_handler.handle_error(
-                RuntimeException(
-                    f"Object {callee.__class__} is not callable", pos=node.pos
-                )
-            )
-
+        callee: FuncValue | BuiltInFunc = self.eval(node.callee, env)
         arg_vals = [self.eval(arg, env) for arg in node.args]
 
         try:
-            exec_env = callee.get_call_env(arg_vals, node.pos)
-            return self.eval(callee.body, exec_env)
+            if isinstance(callee, FuncValue):
+                exec_env = callee.get_call_env(arg_vals, node.pos)
+                return self.eval(callee.body, exec_env)
+
+            if isinstance(callee, BuiltInFunc):
+                return callee(node.pos, arg_vals)
+
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
+
+        self._error_handler.handle_error(
+            RuntimeException(f"Object {callee.__class__.__qualname__} is not callable", pos=node.pos)
+        )
 
     # Int Expr
     @eval.register

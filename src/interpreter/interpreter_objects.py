@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from typing import Protocol, runtime_checkable, Self
+from typing import Protocol, runtime_checkable, Self, Callable
 
 import src.parser.parser_objects as po
 from src.util.pyscript_exceptions import RuntimeException
@@ -70,9 +70,38 @@ class Multiplicative(Protocol):
         pass
 
 
-@dataclass(frozen=True, order=True)
+@dataclass
+class BuiltInFunc(Value):
+    params: list[type[Value]]
+    body: Callable[..., Value | None]
+
+    def type_of(self) -> "StringValue":
+        return StringValue("FuncValue")
+
+    def __call__(self, call_pos: tuple[int, int], call_args: list[Value]):
+        if len(call_args) != len(self.params):
+            raise RuntimeException(
+                msg=f"Function takes {len(self.params)} arguments, {len(call_args)} given",
+                pos=call_pos,
+            )
+
+        for i, (call_arg, param) in enumerate(zip(call_args, self.params)):
+            if not isinstance(call_arg, param):
+                raise RuntimeException(
+                    f"Argument {i+1} should be {param.__qualname__}, got {call_arg.__class__.__qualname__}",
+                    pos=call_pos,
+                )
+
+        return self.body(*call_args)
+
+
+@dataclass(order=True)
 class IntValue(Value, Additive, Subtractive, Multiplicative):
     value: int
+    members: dict[str, Value] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        self.members = {"to_string": BuiltInFunc([], self.to_string)}
 
     def truthy(self) -> bool:
         return self.value != 0
@@ -321,7 +350,6 @@ class FuncValue(Value):
             local_env.define(name, arg)
 
         return local_env
-
 
 
 _SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
