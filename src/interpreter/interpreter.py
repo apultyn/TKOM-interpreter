@@ -62,10 +62,10 @@ class Interpreter:
 
     # Program
     @eval.register
-    def _(self, node: po.Program, env: Env):
+    def _(self, node: po.Program):
         try:
             for stmt in node.statements:
-                self.eval(stmt, env)
+                self.eval(stmt, self.global_env)
             print("Script executed.")
         except ReturnSignal as exc:
             self._error_handler.handle_error(
@@ -108,18 +108,20 @@ class Interpreter:
         raise ReturnSignal
 
     # Normal Assignment
+    @eval.register
     def _(self, node: po.NormalAssignmentStmt, env: Env):
         value = self.eval(node.r_value, env)
-        name = node.l_value.value
+        ident = node.l_value
 
-        if name in env.symbols:
-            env.set(name, value)
+        if ident.value in env.symbols:
+            env.set(ident, value)
         else:
-            env.define(name, value)
+            env.define(ident, value)
 
     # Plus Assignment
+    @eval.register
     def _(self, node: po.PlusAssignmentStmt, env: Env):
-        name = node.l_value.value
+        name = node.l_value
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
@@ -136,8 +138,9 @@ class Interpreter:
             self._error_handler.handle_error(exc)
 
     # Minus Assignment
+    @eval.register
     def _(self, node: po.MinusAssignmentStmt, env: Env):
-        name = node.l_value.value
+        name = node.l_value
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
@@ -387,7 +390,7 @@ class Interpreter:
 
         try:
             if field in src.members:
-                return src.members[field]
+                return src.members[field].value
             raise AttributeError
         except AttributeError:
             self._error_handler.handle_error(
@@ -414,10 +417,6 @@ class Interpreter:
             self._error_handler.handle_error(exc)
         except ReturnSignal as exc:
             return exc.return_value
-        except Exception as exc:
-            self._error_handler.handle_error(
-                RuntimeException(msg=exc.args[0], pos=node.pos)
-            )
 
         self._error_handler.handle_error(
             RuntimeException(
@@ -443,7 +442,7 @@ class Interpreter:
     # Identifier
     @eval.register
     def _(self, node: po.Identifier, env: Env):
-        return env.get(node.value)
+        return env.get(node)
 
     # Bool Expr
     @eval.register
@@ -490,7 +489,7 @@ class Interpreter:
     # Linq expr
     @eval.register
     def _(self, node: po.LinqExpr, env: Env):
-        var = node.var.value
+        var = node.var
         source = self.eval(node.source, env)
 
         if not isinstance(source, Collection):
