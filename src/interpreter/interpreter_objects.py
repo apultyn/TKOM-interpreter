@@ -165,7 +165,7 @@ class StringValue(Value, Additive):
         return StringValue(self.value + other.value)
 
     def __str__(self) -> str:
-        return f"'{self.value}'"
+        return f"{self.value}"
 
 
 @dataclass
@@ -200,7 +200,7 @@ class ItemValue(Value):
         return f"({self.key}: {self.value})"
 
 
-@dataclass
+@dataclass(order=False)
 class Collection(Value):
     elements: list[Value] = field(default_factory=list)
 
@@ -211,7 +211,7 @@ class Collection(Value):
         return IntValue(len(self.elements))
 
 
-@dataclass(order=False)
+@dataclass
 class ListValue(Collection, Additive):
     def __add__(self, other: "ListValue"):
         return ListValue(self.elements + other.elements)
@@ -237,9 +237,16 @@ class ListValue(Collection, Additive):
             raise IndexError(f"Index {index} out of range")
         self.elements.pop(index)
 
+    def __str__(self) -> str:
+        return f"List({self.length().value})"
+
+    def str_long(self) -> str:
+        elements = ", ".join([str(item) for item in self.elements])
+        return "[" + elements + "]"
+
 
 @dataclass
-class DictValue(Collection):
+class DictValue(Collection, Additive):
     order_func: "FuncValue" = None
 
     def add_new(self, key: Value, value: Value):
@@ -275,6 +282,18 @@ class DictValue(Collection):
 
     def type_of(self) -> "StringValue":
         return StringValue("Dict")
+
+    def __add__(self, other: "DictValue"):
+        for item in other.elements:
+            self.add(item)
+        return self
+
+    def __str__(self) -> str:
+        return f"Dict({self.length().value})"
+
+    def str_long(self) -> str:
+        elements = ", ".join([str(item) for item in self.elements])
+        return "{" + elements + "}"
 
 
 @dataclass

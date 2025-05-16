@@ -140,6 +140,9 @@ def test_list():
     assert obj.length() == IntValue(3)
     assert obj.truthy()
 
+    assert str(obj) == "List(3)"
+    assert obj.str_long() == "[1, 2, 3]"
+
     assert obj + obj2 == ListValue(
         [IntValue(1), IntValue(2), IntValue(3), IntValue(1), IntValue(2), IntValue(3)]
     )
@@ -172,7 +175,7 @@ def test_dict_no_sort():
         [
             ItemValue(IntValue(1), StringValue("one")),
             ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("hello"), StringValue("there")),
         ],
         order_func=default_sort,
     )
@@ -181,7 +184,7 @@ def test_dict_no_sort():
         [
             ItemValue(IntValue(1), StringValue("one")),
             ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("hello"), StringValue("there")),
         ],
         order_func=default_sort,
     )
@@ -189,6 +192,8 @@ def test_dict_no_sort():
     assert obj.length() == IntValue(3)
     assert obj.truthy()
     assert obj.type_of() == StringValue("Dict")
+    assert str(obj) == "Dict(3)"
+    assert obj.str_long() == "{(1: one), (2: two), (hello: there)}"
 
     # Adding
     obj.add_new(StringValue("general"), StringValue("kenobi"))
@@ -196,7 +201,7 @@ def test_dict_no_sort():
         [
             ItemValue(IntValue(1), StringValue("one")),
             ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("hello"), StringValue("there")),
             ItemValue(StringValue("general"), StringValue("kenobi")),
         ],
         order_func=default_sort,
@@ -207,7 +212,7 @@ def test_dict_no_sort():
         [
             ItemValue(IntValue(1), StringValue("one")),
             ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("hello"), StringValue("there")),
             ItemValue(StringValue("general"), StringValue("kenobi")),
             ItemValue(BoolValue(True), StringValue("yes")),
         ],
@@ -225,7 +230,7 @@ def test_dict_no_sort():
     assert obj == DictValue(
         [
             ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(IntValue("hello"), StringValue("there")),
+            ItemValue(StringValue("hello"), StringValue("there")),
             ItemValue(StringValue("general"), StringValue("kenobi")),
             ItemValue(BoolValue(True), StringValue("yes")),
         ],
@@ -244,3 +249,64 @@ def test_dict_no_sort():
 
     with pytest.raises(KeyError):
         obj.get(IntValue(1))
+
+    # Additive
+    obj2 = DictValue(
+        [
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(3), StringValue("two")),
+            ItemValue(StringValue("bye"), StringValue("there")),
+        ],
+        order_func=default_sort,
+    )
+
+    assert obj + obj2 == DictValue(
+        [
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(StringValue("hello"), StringValue("there")),
+            ItemValue(StringValue("general"), StringValue("kenobi")),
+            ItemValue(BoolValue(True), StringValue("yes")),
+            ItemValue(IntValue(1), StringValue("one")),
+            ItemValue(IntValue(3), StringValue("two")),
+            ItemValue(StringValue("bye"), StringValue("there")),
+        ],
+        order_func=default_sort,
+    )
+
+    with pytest.raises(KeyError):
+        obj + DictValue(
+            [
+                ItemValue(IntValue(1), StringValue("one")),
+                ItemValue(IntValue(2), StringValue("two")),
+                ItemValue(StringValue("hello"), StringValue("there")),
+            ],
+            order_func=default_sort,
+        )
+
+
+def test_nested_prints():
+    obj = DictValue(
+        [
+            ItemValue(IntValue(2), StringValue("two")),
+            ItemValue(StringValue("hello"), StringValue("there")),
+            ItemValue(StringValue("general"), StringValue("kenobi")),
+            ItemValue(BoolValue(True), StringValue("yes")),
+            ListValue([IntValue(1), IntValue(2), IntValue(3)]),
+            DictValue(
+                [
+                    ItemValue(IntValue(1), StringValue("one")),
+                    ItemValue(IntValue(2), StringValue("two")),
+                    ItemValue(StringValue("hello"), StringValue("there")),
+                ],
+                order_func=default_sort,
+            ),
+        ],
+        order_func=default_sort,
+    )
+
+    assert str(obj) == "Dict(6)"
+    assert (
+        obj.str_long()
+        == "{(2: two), (hello: there), (general: kenobi), (True: yes), List(3), Dict(3)}"
+    )
+
