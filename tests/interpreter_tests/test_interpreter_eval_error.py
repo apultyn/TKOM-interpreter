@@ -411,3 +411,73 @@ def test_plus_assignment_undefined_variable(make_interpreter, mocked_error_handl
         (1, 1),
         msg="'x' is not defined in this scope",
     )
+
+
+def test_minus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        po.Identifier("x", pos=(1, 1)),
+        io.IntValue(5),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '-=' operation - got 'Int' and 'String'",
+    )
+
+
+def test_minus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        po.Identifier("x", pos=(1, 1)),
+        io.ItemValue(io.IntValue(1), io.IntValue(1)),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '-=' not supported for type 'Item'",
+    )
+
+
+def test_minus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.IntExpr(5),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="'x' is not defined in this scope",
+    )

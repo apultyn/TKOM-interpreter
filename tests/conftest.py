@@ -42,10 +42,12 @@ def make_parser(make_lexer, mocked_error_handler):
 
     return _factory
 
+
 @pytest.fixture
 def make_env():
     def _factory():
         return deepcopy(GLOBAL_ENV)
+
     return _factory
 
 
@@ -53,4 +55,5 @@ def make_env():
 def make_interpreter(mocked_error_handler, make_env) -> Interpreter:
     def _factory(err=mocked_error_handler):
         return Interpreter(error_handler=err, env=make_env())
+
     return _factory
