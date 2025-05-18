@@ -5,7 +5,7 @@ from typing import List, Any, Optional
 @dataclass(kw_only=True)
 class ParserObject:
     _name: str = field(init=False, repr=False)
-    pos: tuple[int, int]
+    pos: tuple[int, int] | None = None
 
     def __post_init__(self):
         self._name = self.__class__.__name__

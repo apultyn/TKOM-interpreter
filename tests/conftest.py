@@ -42,7 +42,7 @@ def make_parser(make_lexer, mocked_error_handler):
 
 
 @pytest.fixture
-def make_interpreter(mocked_error_handler):
+def make_interpreter(mocked_error_handler) -> Interpreter:
     def _factory(err=mocked_error_handler):
         return Interpreter(error_handler=err)
 

@@ -89,9 +89,10 @@ def test_too_long_line_comments(make_lexer, mocked_error_handler):
 
     check_error(mocked_error_handler, LengthException, (3, 8))
 
+
 def test_line_comment_from_interpreter(make_lexer):
     lexer = make_lexer(
-"""// Kopiowanie listy
+        """// Kopiowanie listy
 // backup_list = small_cities.copy();
 // print("Backup: ", backup_list);")"""
     )
@@ -100,8 +101,9 @@ def test_line_comment_from_interpreter(make_lexer):
         Token(TokenType.LINE_COMMENT, pos=(1, 1)),
         Token(TokenType.LINE_COMMENT, pos=(2, 1)),
         Token(TokenType.LINE_COMMENT, pos=(3, 1)),
-        Token(TokenType.EOF, pos=(3, 37))
+        Token(TokenType.EOF, pos=(3, 37)),
     ]
+
 
 def test_block_comment_not_closed(make_lexer, mocked_error_handler):
     lexer = make_lexer("/*Comment not closed*", err=mocked_error_handler)
