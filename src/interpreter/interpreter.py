@@ -1,7 +1,11 @@
 from functools import singledispatchmethod
 
 import src.parser.parser_objects as po
-from src.interpreter.util import GLOBAL_ENV, ReturnSignal
+from src.interpreter.util import (
+    GLOBAL_ENV,
+    ReturnSignal,
+    get_operation_unsupported_type_msg,
+)
 
 from src.util.pyscript_exceptions import RuntimeException
 from src.util.configs import InterpreterConfig
@@ -41,7 +45,7 @@ class Interpreter:
     ):
         try:
             Value.typecheck(l_value, r_value, operation)
-        except ValueError as exc:
+        except TypeError as exc:
             self._error_handler.handle_error(
                 RuntimeException(
                     msg=exc.args[0],
@@ -145,7 +149,7 @@ class Interpreter:
 
             if not isinstance(l_value, Additive):
                 raise RuntimeException(
-                    f"Operation '+=' not supported for type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "+="),
                     pos=node.pos,
                 )
 
@@ -166,7 +170,7 @@ class Interpreter:
 
             if not isinstance(l_value, Subtractive):
                 raise RuntimeException(
-                    f"Operation '-=' not supported for type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "-="),
                     pos=node.pos,
                 )
 
@@ -235,7 +239,7 @@ class Interpreter:
         except TypeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '>' not supported on type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, ">"),
                     pos=node.pos,
                 )
             )
@@ -255,7 +259,7 @@ class Interpreter:
         except TypeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '>=' not supported on type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, ">="),
                     pos=node.pos,
                 )
             )
@@ -275,7 +279,7 @@ class Interpreter:
         except TypeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '<' not supported on type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "<"),
                     pos=node.pos,
                 )
             )
@@ -295,7 +299,7 @@ class Interpreter:
         except TypeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '<=' not supported on type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "<="),
                     pos=node.pos,
                 )
             )
@@ -313,7 +317,7 @@ class Interpreter:
         if not isinstance(l_value, Additive):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '+' not supported for type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "+"),
                     pos=node.pos,
                 )
             )
@@ -333,7 +337,7 @@ class Interpreter:
         if not isinstance(l_value, Subtractive):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '-' not supported for type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "-"),
                     pos=node.pos,
                 )
             )
@@ -353,7 +357,7 @@ class Interpreter:
         if not isinstance(l_value, Multiplicative):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Operation '*' not supported for type {l_value.__class__}",
+                    get_operation_unsupported_type_msg(l_value, "*"),
                     pos=node.pos,
                 )
             )
@@ -388,7 +392,7 @@ class Interpreter:
 
         self._error_handler.handle_error(
             RuntimeException(
-                f"Operation '/' not supported for type {l_value.__class__}",
+                get_operation_unsupported_type_msg(l_value, "/"),
                 pos=node.pos,
             )
         )
@@ -402,7 +406,7 @@ class Interpreter:
         if not isinstance(value, BoolValue):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Logic negation is not supported for type {value.__class__}",
+                    get_operation_unsupported_type_msg(value, "!"),
                     pos=node.pos,
                 )
             )
@@ -423,7 +427,7 @@ class Interpreter:
 
         self._error_handler.handle_error(
             RuntimeException(
-                f"Arihmetic negation is not supported for type {value.__class__}",
+                get_operation_unsupported_type_msg(value, "-"),
                 pos=node.pos,
             )
         )
@@ -536,9 +540,7 @@ class Interpreter:
     def _(self, node: po.DictExpr, env: Env | None = None):
         if env is None:
             env = self.global_env
-        dict = DictValue(
-            [], lambda x:IntValue(1)
-        )
+        dict = DictValue([], lambda x: IntValue(1))
         dict.bind(self)
 
         for parser_item in node.items:

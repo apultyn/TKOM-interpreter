@@ -1,4 +1,11 @@
-from src.interpreter.interpreter_objects import Value, Env, BuiltInFunc, Cell, FuncValue, DictValue
+from src.interpreter.interpreter_objects import (
+    Value,
+    Env,
+    BuiltInFunc,
+    Cell,
+    FuncValue,
+    DictValue,
+)
 from src.parser.parser_objects import ReturnStmt
 
 
@@ -9,6 +16,7 @@ def get_typeof(value: Value):
         raise AttributeError(
             f"Object {value.__class__.__qualname__} does not have type_of method"
         )
+
 
 def get_dict(func_value: Value):
     return DictValue([], func_value)
@@ -24,23 +32,40 @@ class ReturnSignal(Exception):
 GLOBAL_ENV = Env(
     None,
     {
-        "print": Cell(BuiltInFunc(
-            "print",
-            [
-                [Value],
-                [Value, Value],
-                [Value, Value, Value],
-                [Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value, Value, Value, Value, Value],
-                [Value, Value, Value, Value, Value, Value, Value, Value, Value, Value],
-            ],
-            print,
-        )),
+        "print": Cell(
+            BuiltInFunc(
+                "print",
+                [
+                    [Value],
+                    [Value, Value],
+                    [Value, Value, Value],
+                    [Value, Value, Value, Value],
+                    [Value, Value, Value, Value, Value],
+                    [Value, Value, Value, Value, Value, Value],
+                    [Value, Value, Value, Value, Value, Value, Value],
+                    [Value, Value, Value, Value, Value, Value, Value, Value],
+                    [Value, Value, Value, Value, Value, Value, Value, Value, Value],
+                    [
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                        Value,
+                    ],
+                ],
+                print,
+            )
+        ),
         "typeOf": Cell(BuiltInFunc("typeof", [[Value]], get_typeof)),
-        "Dict": Cell(BuiltInFunc("Dict", [[FuncValue]], get_dict))
+        "Dict": Cell(BuiltInFunc("Dict", [[FuncValue]], get_dict)),
     },
 )
+
+
+def get_operation_unsupported_type_msg(value: Value, operation: str):
+    return f"Operation '{operation}' not supported for type '{value.type_of()}'"

@@ -25,7 +25,9 @@ class Env:
             return self.symbols[name]
         if self.parent:
             return self.parent.lookup_cell(name)
-        raise RuntimeException(msg=f"'{name}' is not defined in this scope", pos=identifier.pos)
+        raise RuntimeException(
+            msg=f"'{name}' is not defined in this scope", pos=identifier.pos
+        )
 
     def get(self, identifier: po.Identifier) -> "Value":
         return self.lookup_cell(identifier).value
@@ -49,7 +51,7 @@ class Value(ABC):
     def typecheck(lhs: "Value", rhs: "Value", operation: str):
         if lhs.__class__ is not rhs.__class__:
             raise TypeError(
-                f"Type missmatch in '{operation}' operation - got {lhs.__class__.__qualname__} and {rhs.__class__.__qualname__}"
+                f"Type missmatch in '{operation}' operation - got '{lhs.type_of()}' and '{rhs.type_of()}'"
             )
 
 
@@ -398,7 +400,6 @@ class FuncValue(Value):
 
     def type_of(self) -> StringValue:
         return StringValue("FuncValue")
-
 
     def get_call_env(
         self, args: list["Value"], call_pos: tuple[int, int]

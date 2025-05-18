@@ -89,123 +89,122 @@ def test_and_expr(make_interpreter):
 def test_eq_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.EqExpr(
-            po.IntExpr(5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.EqExpr(po.IntExpr(5), po.IntExpr(5))) == io.BoolValue(
+        True
+    )
 
-    assert interpreter.eval(
-        po.EqExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.EqExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        False
+    )
 
 
 def test_neq_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.NeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.NeqExpr(po.IntExpr(5), po.IntExpr(5))) == io.BoolValue(
+        False
+    )
 
-    assert interpreter.eval(
-        po.NeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.NeqExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        True
+    )
 
 
 def test_gt_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.GtExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.GtExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        True
+    )
 
-    assert interpreter.eval(
-        po.GtExpr(
-            po.IntExpr(-5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.GtExpr(po.IntExpr(-5), po.IntExpr(5))) == io.BoolValue(
+        False
+    )
 
 
 def test_geq_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.GeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.GeqExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        True
+    )
 
-    assert interpreter.eval(
-        po.GeqExpr(
-            po.IntExpr(-5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.GeqExpr(po.IntExpr(-5), po.IntExpr(5))) == io.BoolValue(
+        False
+    )
 
-    assert interpreter.eval(
-        po.GeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.GeqExpr(po.IntExpr(5), po.IntExpr(5))) == io.BoolValue(
+        True
+    )
 
 
 def test_lt_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.LtExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.LtExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        False
+    )
 
-    assert interpreter.eval(
-        po.LtExpr(
-            po.IntExpr(-5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.LtExpr(po.IntExpr(-5), po.IntExpr(5))) == io.BoolValue(
+        True
+    )
 
 
 def test_leq_expr(make_interpreter):
     interpreter = make_interpreter()
 
-    assert interpreter.eval(
-        po.LeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(-5)
-        )
-    ) == io.BoolValue(False)
+    assert interpreter.eval(po.LeqExpr(po.IntExpr(5), po.IntExpr(-5))) == io.BoolValue(
+        False
+    )
 
-    assert interpreter.eval(
-        po.LeqExpr(
-            po.IntExpr(-5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(True)
+    assert interpreter.eval(po.LeqExpr(po.IntExpr(-5), po.IntExpr(5))) == io.BoolValue(
+        True
+    )
 
+    assert interpreter.eval(po.LeqExpr(po.IntExpr(5), po.IntExpr(5))) == io.BoolValue(
+        True
+    )
+
+
+def test_add_expr(make_interpreter):
+    Interpreter = make_interpreter()
+    assert Interpreter.eval(po.AddExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(10)
+
+
+def test_sub_expr(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.SubExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(0)
+
+
+def test_mul_expr(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.MulExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(25)
+
+
+def test_div_expr_int(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.DivExpr(po.IntExpr(5), po.IntExpr(2))) == io.IntValue(2)
+
+
+def test_div_expr_float(make_interpreter):
+    interpreter = make_interpreter()
     assert interpreter.eval(
-        po.LeqExpr(
-            po.IntExpr(5),
-            po.IntExpr(5)
-        )
-    ) == io.BoolValue(True)
+        po.DivExpr(po.FloatExpr(5.0), po.FloatExpr(2.0))
+    ) == io.FloatValue(2.5)
+
+
+def test_logic_neg_expr(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.LogicNegExpr(po.BoolExpr(True))) == io.BoolValue(False)
+
+    assert interpreter.eval(po.LogicNegExpr(po.BoolExpr(False))) == io.BoolValue(True)
+
+
+def test_arith_neg_expr(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.ArithNegExpr(po.IntExpr(5))) == io.IntValue(-5)
+
+    assert interpreter.eval(po.ArithNegExpr(po.FloatExpr(5.0))) == io.FloatValue(-5.0)
 
 
 def test_list_expr(make_interpreter):
