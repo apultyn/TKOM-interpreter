@@ -537,7 +537,7 @@ class Interpreter:
         if env is None:
             env = self.global_env
         dict = DictValue(
-            [], default_sort
+            [], lambda x:IntValue(1)
         )
         dict.bind(self)
 
