@@ -1,7 +1,7 @@
 import pytest
 
-import src.interpreter.interpreter_objects as io
 import src.parser.parser_objects as po
+import src.interpreter.interpreter_objects as io
 
 from src.util.pyscript_exceptions import RuntimeException
 from tests.util import AbortExecution, check_error
@@ -140,4 +140,274 @@ def test_leq_expr_unsupported_type(make_interpreter, mocked_error_handler):
         RuntimeException,
         (1, 1),
         msg="Operation '<=' not supported for type 'List'",
+    )
+
+
+def test_add_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.AddExpr(
+                po.IntExpr(5),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '+' operation - got 'Int' and 'String'",
+    )
+
+
+def test_add_expr_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.AddExpr(
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '+' not supported for type 'Item'",
+    )
+
+
+def test_sub_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.SubExpr(
+                po.IntExpr(5),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '-' operation - got 'Int' and 'String'",
+    )
+
+
+def test_sub_expr_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.SubExpr(
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '-' not supported for type 'Item'",
+    )
+
+
+def test_mul_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MulExpr(
+                po.IntExpr(5),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '*' operation - got 'Int' and 'String'",
+    )
+
+
+def test_mul_expr_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MulExpr(
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '*' not supported for type 'Item'",
+    )
+
+
+def test_div_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DivExpr(
+                po.IntExpr(5),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '/' operation - got 'Int' and 'String'",
+    )
+
+
+def test_div_expr_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DivExpr(
+                po.StringExpr("hi"),
+                po.StringExpr("there"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '/' not supported for type 'String'",
+    )
+
+
+def test_div_expr_zero_division_int(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DivExpr(
+                po.IntExpr(5),
+                po.IntExpr(0),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Division by zero is not allowed",
+    )
+
+
+def test_div_expr_zero_division_float(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DivExpr(
+                po.FloatExpr(5.0),
+                po.FloatExpr(0.0),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Division by zero is not allowed",
+    )
+
+
+def test_plus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        po.Identifier("x", pos=(1, 1)),
+        io.IntValue(5),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '+=' operation - got 'Int' and 'String'",
+    )
+
+
+def test_plus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        po.Identifier("x", pos=(1, 1)),
+        io.ItemValue(io.IntValue(1), io.IntValue(1)),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '+=' not supported for type 'Item'",
+    )
+
+
+def test_plus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.IntExpr(5),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="'x' is not defined in this scope",
     )

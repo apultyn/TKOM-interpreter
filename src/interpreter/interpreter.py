@@ -35,10 +35,11 @@ class Interpreter:
         *,
         error_handler: ErrorHandler = ErrorHandler(),
         config: InterpreterConfig = InterpreterConfig(),
+        env: Env = GLOBAL_ENV,
     ):
         self._error_handler = error_handler
         self._config = config
-        self.global_env = GLOBAL_ENV
+        self.global_env = env
 
     def ensure_same_type(
         self, l_value: Value, r_value: Value, operation: str, node: po.ParserObject
@@ -312,7 +313,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "add", node)
+        self.ensure_same_type(l_value, r_value, "+", node)
 
         if not isinstance(l_value, Additive):
             self._error_handler.handle_error(
@@ -332,7 +333,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "sub", node)
+        self.ensure_same_type(l_value, r_value, "-", node)
 
         if not isinstance(l_value, Subtractive):
             self._error_handler.handle_error(
@@ -352,7 +353,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "mul", node)
+        self.ensure_same_type(l_value, r_value, "*", node)
 
         if not isinstance(l_value, Multiplicative):
             self._error_handler.handle_error(
@@ -372,7 +373,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "div", node)
+        self.ensure_same_type(l_value, r_value, "/", node)
 
         if isinstance(l_value, IntValue):
             try:

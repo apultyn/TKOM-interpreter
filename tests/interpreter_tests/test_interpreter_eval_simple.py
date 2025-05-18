@@ -166,19 +166,47 @@ def test_leq_expr(make_interpreter):
     )
 
 
-def test_add_expr(make_interpreter):
-    Interpreter = make_interpreter()
-    assert Interpreter.eval(po.AddExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(10)
+def test_add_expr_int(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(po.AddExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(10)
 
 
-def test_sub_expr(make_interpreter):
+def test_add_expr_float(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(
+        po.AddExpr(po.FloatExpr(5.0), po.FloatExpr(5.0))
+    ) == io.FloatValue(10.0)
+
+
+def test_add_expr_string(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(
+        po.AddExpr(po.StringExpr("Hello"), po.StringExpr("World"))
+    ) == io.StringValue("HelloWorld")
+
+
+def test_sub_expr_int(make_interpreter):
     interpreter = make_interpreter()
     assert interpreter.eval(po.SubExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(0)
 
 
-def test_mul_expr(make_interpreter):
+def test_sub_expr_float(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(
+        po.SubExpr(po.FloatExpr(5.0), po.FloatExpr(5.0))
+    ) == io.FloatValue(0.0)
+
+
+def test_mul_expr_int(make_interpreter):
     interpreter = make_interpreter()
     assert interpreter.eval(po.MulExpr(po.IntExpr(5), po.IntExpr(5))) == io.IntValue(25)
+
+
+def test_mul_expr_float(make_interpreter):
+    interpreter = make_interpreter()
+    assert interpreter.eval(
+        po.MulExpr(po.FloatExpr(5.0), po.FloatExpr(5.0))
+    ) == io.FloatValue(25.0)
 
 
 def test_div_expr_int(make_interpreter):
@@ -212,3 +240,138 @@ def test_list_expr(make_interpreter):
     assert interpreter.eval(
         po.ListExpr([po.IntExpr(1, pos=(1, 1))], pos=(1, 1))
     ) == io.ListValue([io.IntValue(1)])
+
+
+def test_normal_assignment(make_interpreter):
+    interpreter = make_interpreter()
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(5)
+
+
+def test_normal_assignment_with_expr(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.AddExpr(po.IntExpr(5), po.IntExpr(5)),
+            pos=(1, 1),
+        )
+    )
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(10)
+
+
+def test_normal_assignment_overwrite(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.FloatExpr(10.0),
+            pos=(1, 1),
+        )
+    )
+
+    assert interpreter.global_env.get(po.Identifier("x")) == io.FloatValue(10.0)
+
+
+def test_plus_assignment(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    interpreter.eval(
+        po.PlusAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(10)
+
+
+def test_plus_assignment_with_expr(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    interpreter.eval(
+        po.PlusAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.AddExpr(po.IntExpr(5), po.IntExpr(5)),
+            pos=(1, 1),
+        )
+    )
+
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(15)
+
+
+def test_minus_assignment(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    interpreter.eval(
+        po.MinusAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(0)
+
+
+def test_minus_assignment_with_expr(make_interpreter):
+    interpreter = make_interpreter()
+
+    interpreter.eval(
+        po.NormalAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.IntExpr(5),
+            pos=(1, 1),
+        )
+    )
+
+    interpreter.eval(
+        po.MinusAssignmentStmt(
+            po.Identifier("x", pos=(1, 1)),
+            po.SubExpr(po.IntExpr(5), po.IntExpr(5)),
+            pos=(1, 1),
+        )
+    )
+    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(5)

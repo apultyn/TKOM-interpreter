@@ -1,12 +1,14 @@
 import pytest
 import io
 from unittest.mock import MagicMock
+from copy import deepcopy
 
 from src.util.error_handler import ErrorHandler
 from src.util.configs import LexerConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
-from src.interpreter.interpreter import Interpreter
+from src.interpreter.interpreter import Interpreter, GLOBAL_ENV
+from src.interpreter.interpreter_objects import Env
 from .util import AbortExecution
 
 
@@ -40,10 +42,15 @@ def make_parser(make_lexer, mocked_error_handler):
 
     return _factory
 
+@pytest.fixture
+def make_env():
+    def _factory():
+        return deepcopy(GLOBAL_ENV)
+    return _factory
+
 
 @pytest.fixture
-def make_interpreter(mocked_error_handler) -> Interpreter:
+def make_interpreter(mocked_error_handler, make_env) -> Interpreter:
     def _factory(err=mocked_error_handler):
-        return Interpreter(error_handler=err)
-
+        return Interpreter(error_handler=err, env=make_env())
     return _factory
