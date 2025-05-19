@@ -14,7 +14,10 @@ class Cell:
 
 class Env:
     def __init__(
-        self, context: po.ParserObject, parent: "Env | None" = None, symbols: dict[str, Cell] | None = None
+        self,
+        context: po.ParserObject,
+        parent: "Env | None" = None,
+        symbols: dict[str, Cell] | None = None,
     ):
         self.context = context
         self.parent = parent
@@ -89,7 +92,9 @@ class BuiltInFunc(Value):
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
 
-    def __call__(self, interpreter, env, call_pos: tuple[int, int], call_args: list[Value]):
+    def __call__(
+        self, interpreter, env, call_pos: tuple[int, int], call_args: list[Value]
+    ):
         selected_variant = None
         for param_variant in self.params_variants:
             if len(call_args) != len(param_variant):
@@ -114,7 +119,9 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": Cell(BuiltInFunc("toString", [[]], lambda *_: self.to_string())),
+            "toString": Cell(
+                BuiltInFunc("toString", [[]], lambda *_: self.to_string())
+            ),
             "toFloat": Cell(BuiltInFunc("toFloat", [[]], lambda *_: self.to_float())),
         }
 
@@ -155,7 +162,9 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": Cell(BuiltInFunc("toString", [[]], lambda *_: self.to_string())),
+            "toString": Cell(
+                BuiltInFunc("toString", [[]], lambda *_: self.to_string())
+            ),
             "toInt": Cell(BuiltInFunc("toInt", [[]], lambda *_: self.to_int())),
         }
 
@@ -294,10 +303,22 @@ class ListValue(Collection, Additive):
     def __post_init__(self):
         self.members = {
             "length": Cell(BuiltInFunc("length", [[]], lambda *_: self.length())),
-            "get": Cell(BuiltInFunc("get", [[IntValue]], lambda _, __, int: self.get(int))),
-            "add": Cell(BuiltInFunc("add", [[Value]], lambda _, __, val: self.add(val))),
-            "set": Cell(BuiltInFunc("set", [[IntValue, Value]], lambda _, __, int, val: self.set(int, val))),
-            "remove": Cell(BuiltInFunc("remove", [[IntValue]], lambda _, __, int: self.remove(int))),
+            "get": Cell(
+                BuiltInFunc("get", [[IntValue]], lambda _, __, int: self.get(int))
+            ),
+            "add": Cell(
+                BuiltInFunc("add", [[Value]], lambda _, __, val: self.add(val))
+            ),
+            "set": Cell(
+                BuiltInFunc(
+                    "set",
+                    [[IntValue, Value]],
+                    lambda _, __, int, val: self.set(int, val),
+                )
+            ),
+            "remove": Cell(
+                BuiltInFunc("remove", [[IntValue]], lambda _, __, int: self.remove(int))
+            ),
         }
 
     def __add__(self, other: "ListValue"):
@@ -331,6 +352,7 @@ class ListValue(Collection, Additive):
         elements = ", ".join([str(item) for item in self.elements])
         return "[" + elements + "]"
 
+
 class ReturnSignal(Exception):
     def __init__(self, statement: po.ReturnStmt, return_value: Value | None = None):
         self.return_statement = statement
@@ -345,11 +367,31 @@ class DictValue(Collection):
 
     def __post_init__(self):
         self.members = {
-            "addNew": Cell(BuiltInFunc("addNew", [[Value, Value]], lambda inter, env, val1, val2: self.add_new(inter, env, val1, val2))),
-            "add": Cell(BuiltInFunc("add", [[ItemValue]], lambda inter, env, item: self.add(inter, env, item))),
-            "remove": Cell(BuiltInFunc("remove", [[Value]], lambda _, __, val: self.remove(val))),
-            "contains": Cell(BuiltInFunc("contains", [[Value]], lambda _, __, val: self.contains(val))),
-            "get": Cell(BuiltInFunc("get", [[Value]], lambda _, __, val: self.get(val))),
+            "addNew": Cell(
+                BuiltInFunc(
+                    "addNew",
+                    [[Value, Value]],
+                    lambda inter, env, val1, val2: self.add_new(inter, env, val1, val2),
+                )
+            ),
+            "add": Cell(
+                BuiltInFunc(
+                    "add",
+                    [[ItemValue]],
+                    lambda inter, env, item: self.add(inter, env, item),
+                )
+            ),
+            "remove": Cell(
+                BuiltInFunc("remove", [[Value]], lambda _, __, val: self.remove(val))
+            ),
+            "contains": Cell(
+                BuiltInFunc(
+                    "contains", [[Value]], lambda _, __, val: self.contains(val)
+                )
+            ),
+            "get": Cell(
+                BuiltInFunc("get", [[Value]], lambda _, __, val: self.get(val))
+            ),
         }
 
     def add_new(self, interpreter, env, key: Value, value: Value):
@@ -362,7 +404,9 @@ class DictValue(Collection):
 
         if isinstance(self.order_func, BuiltInFunc):
             for i, item in enumerate(self.elements):
-                if self.order_func(interpreter, env, (None), [new_item, item]) < IntValue(0):
+                if self.order_func(
+                    interpreter, env, (None), [new_item, item]
+                ) < IntValue(0):
                     self.elements.insert(i, new_item)
                     return
             self.elements.append(new_item)
@@ -447,6 +491,8 @@ class FuncValue(Value):
         local_env = Env(self.calling_env)
 
         for name, arg in zip(self.params, args):
-            local_env.define(po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg)
+            local_env.define(
+                po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg
+            )
 
         return local_env

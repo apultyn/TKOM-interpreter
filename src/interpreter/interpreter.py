@@ -25,7 +25,7 @@ from .interpreter_objects import (
     FuncValue,
     BuiltInFunc,
     Collection,
-    ReturnSignal
+    ReturnSignal,
 )
 
 
@@ -73,9 +73,10 @@ class Interpreter:
     @eval.register
     def _(self, node: po.Program):
         try:
+            print("=" * 30 + " Running script... " + "=" * 30)
             for stmt in node.statements:
                 self.eval(stmt, self.global_env)
-            print("Script executed.")
+            print("=" * 30 + " Script executed " + "=" * 30)
         except ReturnSignal as exc:
             self._error_handler.handle_error(
                 RuntimeException(
@@ -462,7 +463,8 @@ class Interpreter:
         except AttributeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Object '{src.__class__.__qualname__}' has no {field} member", pos=node.target.pos
+                    f"Object '{src.__class__.__qualname__}' has no {field} member",
+                    pos=node.target.pos,
                 )
             )
 

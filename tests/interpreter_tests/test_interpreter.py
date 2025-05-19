@@ -21,7 +21,8 @@ def test_int(make_interpreter):
 
 
 def test_all(make_parser, make_interpreter, mocked_error_handler):
-    parser = make_parser("""alphabetical_sort = function(item1, item2) {
+    parser = make_parser(
+        """alphabetical_sort = function(item1, item2) {
     if (item1.key() < item2.key()) {
         return -1;
     } elif (item1.key() > item2.key()) {
@@ -62,7 +63,9 @@ for entry in small_cities {
     print("- ", entry.get(0), " (", entry.get(1), " tys.)");
 }
 
-""", err=mocked_error_handler)
+""",
+        err=mocked_error_handler,
+    )
     interpreter = make_interpreter(err=mocked_error_handler)
     program = parser.parse_program()
 

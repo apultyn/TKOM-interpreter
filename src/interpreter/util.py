@@ -52,11 +52,15 @@ GLOBAL_ENV = Env(
                         Value,
                     ],
                 ],
-                lambda _,__, *args: print(*args),
+                lambda _, __, *args: print(*args),
             )
         ),
-        "typeOf": Cell(BuiltInFunc("typeof", [[Value]], lambda _, __, val: get_typeof(val))),
-        "Dict": Cell(BuiltInFunc("Dict", [[FuncValue]], lambda _, __, func: get_dict(func))),
+        "typeOf": Cell(
+            BuiltInFunc("typeof", [[Value]], lambda _, __, val: get_typeof(val))
+        ),
+        "Dict": Cell(
+            BuiltInFunc("Dict", [[FuncValue]], lambda _, __, func: get_dict(func))
+        ),
     },
 )
 
