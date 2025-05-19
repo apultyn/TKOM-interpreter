@@ -252,7 +252,7 @@ def test_normal_assignment(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(5)
+    assert interpreter.global_env.get("x") == io.IntValue(5)
 
 
 def test_normal_assignment_with_expr(make_interpreter):
@@ -265,7 +265,7 @@ def test_normal_assignment_with_expr(make_interpreter):
             pos=(1, 1),
         )
     )
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(10)
+    assert interpreter.global_env.get("x") == io.IntValue(10)
 
 
 def test_normal_assignment_overwrite(make_interpreter):
@@ -287,7 +287,7 @@ def test_normal_assignment_overwrite(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get(po.Identifier("x")) == io.FloatValue(10.0)
+    assert interpreter.global_env.get("x") == io.FloatValue(10.0)
 
 
 def test_plus_assignment(make_interpreter):
@@ -309,7 +309,7 @@ def test_plus_assignment(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(10)
+    assert interpreter.global_env.get("x") == io.IntValue(10)
 
 
 def test_plus_assignment_with_expr(make_interpreter):
@@ -331,7 +331,7 @@ def test_plus_assignment_with_expr(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(15)
+    assert interpreter.global_env.get("x") == io.IntValue(15)
 
 
 def test_minus_assignment(make_interpreter):
@@ -353,7 +353,7 @@ def test_minus_assignment(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(0)
+    assert interpreter.global_env.get("x") == io.IntValue(0)
 
 
 def test_minus_assignment_with_expr(make_interpreter):
@@ -374,4 +374,4 @@ def test_minus_assignment_with_expr(make_interpreter):
             pos=(1, 1),
         )
     )
-    assert interpreter.global_env.get(po.Identifier("x")) == io.IntValue(5)
+    assert interpreter.global_env.get("x") == io.IntValue(5)

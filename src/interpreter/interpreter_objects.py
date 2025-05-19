@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable, Self, Callable
 import src.parser.parser_objects as po
-from src.util.pyscript_exceptions import RuntimeException
 
 
 @dataclass
@@ -13,8 +12,8 @@ class Cell:
 class Env:
     def __init__(
         self,
-        context: po.ParserObject,
         parent: "Env | None" = None,
+        context: po.ParserObject | str = None,
         symbols: dict[str, Cell] | None = None,
     ):
         self.context = context
@@ -38,7 +37,12 @@ class Env:
         self.symbols[name] = Cell(val)
 
     def __str__(self) -> str:
-        return f"Env with context: '{self.context.__class__.__qualname__}' at row: {self.context.pos[0]}, col: {self.context.pos[1]}"
+        msg_suff = (
+            f"'{self.context.__class__.__qualname__}' at row: {self.context.pos[0]}, col: {self.context.pos[1]}"
+            if isinstance(self.context, po.ParserObject)
+            else self.context
+        )
+        return f"Env with context: {msg_suff}"
 
 
 class Value(ABC):
@@ -80,25 +84,25 @@ class Multiplicative(Protocol):
 
 @dataclass
 class FuncValue(Value):
-    param_variants: list[list[type[Value]]]
-
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
 
 
 @dataclass
 class UserFuncValue(FuncValue):
-    body: po.Block
+    params: list[str]
+    expression: po.FunctionExpr
 
 
 @dataclass
 class BuiltInFuncValue(FuncValue):
+    param_variants: list[list[type[Value]]]
     body: Callable[..., Value | None]
-    needs_inter: bool = False
 
 
 @dataclass
 class AccessedFuncValue(FuncValue):
+    param_variants: list[list[type[Value]]]
     body: Callable[..., Value | None]
     needs_inter: bool = False
     owner: "Value | None" = None
@@ -186,13 +190,13 @@ class StringValue(Value, Additive):
         try:
             return FloatValue(float(self.value))
         except ValueError:
-            raise RuntimeException(f"Cannot cast '{self.value}' to Float")
+            raise ValueError(f"Cannot cast '{self.value}' to Float")
 
     def to_int(self) -> "IntValue":
         try:
             return IntValue(int(self.value))
         except ValueError:
-            raise RuntimeException(f"Cannot cast '{self.value}' to Int")
+            raise ValueError(f"Cannot cast '{self.value}' to Int")
 
     def type_of(self) -> "StringValue":
         return StringValue("String")
@@ -229,13 +233,6 @@ def is_simple(val: "Value") -> bool:
 class ItemValue(Value):
     key: Value
     value: Value
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
-
-    def __post_init__(self):
-        self.members = {
-            "key": Cell(BuiltInFuncValue("key", [[]], lambda *_: self.get_key())),
-            "value": Cell(BuiltInFuncValue("value", [[]], lambda *_: self.get_value())),
-        }
 
     def get_key(self) -> Value:
         return self.key
@@ -302,86 +299,23 @@ class ListValue(Collection, Additive):
 
 
 class ReturnSignal(Exception):
-    def __init__(self, statement: po.ReturnStmt, return_value: Value | None = None):
-        self.return_statement = statement
+    def __init__(
+        self, return_value: Value | None = None, statement: po.ReturnStmt | None = None
+    ):
         self.return_value = return_value
+        self.return_statement = statement
         super().__init__(f"Return signal with {self.return_value}")
 
 
 @dataclass
 class DictValue(Collection):
-    order_func: "UserFuncValue" = field(default=None, repr=False, compare=False)
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
+    order_func: "UserFuncValue" = field(default=None, compare=False)
 
-    def __post_init__(self):
-        self.members = {
-            "addNew": Cell(
-                BuiltInFuncValue(
-                    "addNew",
-                    [[Value, Value]],
-                    lambda inter, env, val1, val2: self.add_new(inter, env, val1, val2),
-                )
-            ),
-            "add": Cell(
-                BuiltInFuncValue(
-                    "add",
-                    [[ItemValue]],
-                    lambda inter, env, item: self.add(inter, env, item),
-                )
-            ),
-            "remove": Cell(
-                BuiltInFuncValue(
-                    "remove", [[Value]], lambda _, __, val: self.remove(val)
-                )
-            ),
-            "contains": Cell(
-                BuiltInFuncValue(
-                    "contains", [[Value]], lambda _, __, val: self.contains(val)
-                )
-            ),
-            "get": Cell(
-                BuiltInFuncValue("get", [[Value]], lambda _, __, val: self.get(val))
-            ),
-        }
-
-    def add_new(self, method, env, key: Value, value: Value):
-        if self.contains(key).value:
-            raise KeyError(f"Key {key} already exists in the dictionary")
-        if not is_simple(key):
-            raise KeyError(f"{key.__class__.__qualname__} can't be an item key")
-
-        new_item = ItemValue(key, value)
-
-        if isinstance(self.order_func, BuiltInFuncValue):
-            for i, item in enumerate(self.elements):
-                if self.order_func(new_item, item) < IntValue(0):
-                    self.elements.insert(i, new_item)
-                    return
-            self.elements.append(new_item)
-
-        if isinstance(self.order_func, UserFuncValue):
-            for i, item in enumerate(self.elements):
-                env = self.order_func.get_call_env([new_item, item], None)
-
-                comp_value = None
-                try:
-                    comp_value = method(self.order_func.body, env)
-                except ReturnSignal as ret:
-                    comp_value = ret.return_value
-
-                if not isinstance(comp_value, IntValue):
-                    raise RuntimeException(
-                        msg=f"Function '{self.order_func.name}' should return IntValue",
-                        pos=self.order_func.body.pos,
-                    )
-
-                if comp_value < IntValue(0):
-                    self.elements.insert(i, new_item)
-                    return
-            self.elements.append(new_item)
-
-    def add(self, method, env, item: ItemValue):
-        self.add_new(method, env, item.get_key(), item.get_value())
+    def check_add(self, item: ItemValue):
+        if self.contains(item.key).value:
+            raise KeyError(f"Key {item.key} already exists in the dictionary")
+        if not is_simple(item.key):
+            raise KeyError(f"'{item.key.type_of}' can't be an item key")
 
     def remove(self, key: Value):
         for i, item in enumerate(self.elements):

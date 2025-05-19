@@ -90,35 +90,33 @@ class Interpreter:
 
     # Program
     def visit_Program(self, node: po.Program, _: Env | None = None):
-        try:
-            print("=" * 30 + " Running script... " + "=" * 30)
-            for stmt in node.statements:
-                self.eval(stmt, self.global_env)
-            print("=" * 30 + " Script executed " + "=" * 30)
-        except ReturnSignal as exc:
-            self._error_handler.handle_error(
-                RuntimeException(
-                    f"Return statement not allowed outside of function",
-                    pos=exc.return_statement.pos,
+        print("=" * 30 + " Running script... " + "=" * 30)
+        for stmt in node.statements:
+            if isinstance(stmt, po.ReturnStmt):
+                self._error_handler.handle_error(
+                    RuntimeException(
+                        msg=f"Return statement not allowed in program", pos=stmt.pos
+                    )
                 )
-            )
+            self.eval(stmt, self.global_env)
+        print("=" * 30 + " Script executed " + "=" * 30)
 
     # If Statement
     def visit_IfStmt(self, node: po.IfStmt, env: Env | None = None):
         if self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(node, env))
+            self.eval(node.body, Env(env, node))
             return
         for elif_stmt in node.elif_statements:
             if self.eval(elif_stmt.condition, env).truthy():
-                self.eval(elif_stmt.body, Env(node, env))
+                self.eval(elif_stmt.body, Env(env, node))
                 return
         if node.else_body:
-            self.eval(node.else_body, Env(node, env))
+            self.eval(node.else_body, Env(env, node))
 
     # While Statement
     def visit_WhileStmt(self, node: po.WhileStmt, env: Env | None = None):
         while self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(node, env))
+            self.eval(node.body, Env(env, node))
 
     # For Statement
     def visit_ForStmt(self, node: po.ForStmt, env: Env | None = None):
@@ -132,7 +130,7 @@ class Interpreter:
                 )
             )
 
-        new_env = Env(node, env)
+        new_env = Env(env, node)
         new_env.define(node.var.val, None)
         for element in source.elements:
             new_env.set(node.var.name, element)
@@ -143,7 +141,7 @@ class Interpreter:
         value = None
         if node.value:
             value = self.eval(node.value, env)
-        raise ReturnSignal(node, value)
+        raise ReturnSignal(value, node)
 
     # Normal Assignment
     def visit_NormalAssignmentStmt(
@@ -176,6 +174,13 @@ class Interpreter:
             env.set(name, l_value + r_value)
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
     # Minus Assignment
     def visit_MinusAssignmentStmt(
@@ -196,6 +201,13 @@ class Interpreter:
             env.set(name, l_value - r_value)
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
+        except ValueError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    exc.args[0],
+                    pos=node.pos,
+                )
+            )
 
     # Or Expr
     def visit_OrExpr(self, node: po.OrExpr, env: Env | None = None):
@@ -430,58 +442,66 @@ class Interpreter:
     # Call Expr
     def visit_CallExpr(self, node: po.CallExpr, env: Env | None = None):
         function: FuncValue = self.eval(node.callee, env)
+        arg_objects = [self.eval(arg, env) for arg in node.args]
 
+        return self.call_function(function, arg_objects, env, node.pos)
+
+    def call_function(
+        self,
+        function: FuncValue,
+        arg_objects: list[Value],
+        env: Env,
+        call_pos: tuple[int, int] = None,
+    ):
         if not isinstance(function, FuncValue):
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Object '{function.__class__.__qualname__}' is not a function",
-                    pos=node.callee.pos,
+                    pos=call_pos,
                 )
             )
-
-        arg_objects = [self.eval(arg, env) for arg in node.args]
-
-        params = self.check_params(arg_objects, function)
-        if params is None:
-            raise RuntimeException(
-                msg=f"No '{function.name}' function override with [{[f"'{call_arg.type_of()}'," for call_arg in arg_objects]}] types found",
-                pos=node.pos,
-            )
-
         try:
             if isinstance(function, UserFuncValue):
-                func_env = Env(env)
+                func_env = Env(env, function.expression)
 
-                for name, arg in zip(params, arg_objects):
-                    func_env.define(
-                        name, deepcopy(arg) if is_simple(arg) else arg
-                    )
-                self.eval(function.body, func_env)
+                for name, arg in zip(function.params, arg_objects):
+                    func_env.define(name, deepcopy(arg) if is_simple(arg) else arg)
+                try:
+                    self.eval(function.expression.body, func_env)
+                except ReturnSignal as ret:
+                    return ret.return_value
+
+            params = self.check_params(arg_objects, function)
+            if params is None:
+                raise RuntimeException(
+                    msg=f"No '{function.name}' function override with [{[f"'{call_arg.type_of()}'," for call_arg in arg_objects]}] types found",
+                    pos=call_pos,
+                )
 
             if isinstance(function, BuiltInFuncValue):
-                if function.needs_inter:
-                    raise ReturnSignal(function.body(self.visit_body, Env(env), *arg_objects))
-                else:
-                    raise ReturnSignal(function.body(*arg_objects))
+                return function.body(*arg_objects)
 
             if isinstance(function, AccessedFuncValue):
                 if function.needs_inter:
-                    raise ReturnSignal(function.body(self.visit_body, Env(env), function.owner, *arg_objects))
+                    return function.body(
+                        self.call_function,
+                        Env(env, "Internal call"),
+                        function.owner,
+                        *arg_objects,
+                    )
                 else:
-                    raise ReturnSignal(function.body(function.owner, *arg_objects))
+                    return function.body(function.owner, *arg_objects)
 
         except RuntimeException as exc:
-            exc.pos = node.pos
+            exc.pos = call_pos
             self._error_handler.handle_error(exc)
-        except IndexError as exc:
+        except KeyError as exc:
             self._error_handler.handle_error(
                 RuntimeException(
                     exc.args[0],
-                    pos=node.pos,
+                    pos=call_pos,
                 )
             )
-        except ReturnSignal as exc:
-            return exc.return_value
 
     # Int Expr
     def visit_IntExpr(self, node: po.IntExpr, env: Env | None = None):
@@ -532,7 +552,7 @@ class Interpreter:
     # Function expr
     def visit_FunctionExpr(self, node: po.FunctionExpr, env: Env | None = None):
         param_names = [ident.value for ident in node.params]
-        return UserFuncValue([param_names], node.body)
+        return UserFuncValue(param_names, node)
 
     # Linq expr
     def visit_LinqExpr(self, node: po.LinqExpr, env: Env | None = None):
@@ -547,7 +567,7 @@ class Interpreter:
                 )
             )
 
-        new_env = Env(node, env)
+        new_env = Env(env, node)
         new_env.define(var.value, None)
 
         return_list = []
