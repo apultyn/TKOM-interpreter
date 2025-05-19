@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable, Self, Callable
-from copy import deepcopy
-
 import src.parser.parser_objects as po
 from src.util.pyscript_exceptions import RuntimeException
 
@@ -82,34 +80,21 @@ class Multiplicative(Protocol):
     def __mul__(self: Self, other: Self) -> Self:
         pass
 
-
 @dataclass
-class BuiltInFunc(Value):
-    name: str
-    params_variants: list[list[type[Value]]]
-    body: Callable[..., Value | None]
+class FuncValue(Value):
+    param_variants: list[list[type[Value]]]
 
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
 
-    def __call__(
-        self, interpreter, env, call_pos: tuple[int, int], call_args: list[Value]
-    ):
-        selected_variant = None
-        for param_variant in self.params_variants:
-            if len(call_args) != len(param_variant):
-                continue
+@dataclass
+class UserFuncValue(FuncValue):
+    body: po.Block
 
-            for call_arg, param in zip(call_args, param_variant):
-                if not isinstance(call_arg, param):
-                    break
-            selected_variant = param_variant
-        if selected_variant is None:
-            raise RuntimeException(
-                msg=f"No '{self.name}' function override with {[call_arg.__class__.__qualname__ for call_arg in call_args]} types found",
-                pos=call_pos,
-            )
-        return self.body(interpreter, env, *call_args)
+
+@dataclass
+class BuiltInFuncValue(FuncValue):
+    body: Callable[..., Value | None]
 
 
 @dataclass(order=True)
@@ -120,9 +105,9 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
     def __post_init__(self):
         self.members = {
             "toString": Cell(
-                BuiltInFunc("toString", [[]], lambda *_: self.to_string())
+                BuiltInFuncValue("toString", [[]], lambda *_: self.to_string())
             ),
-            "toFloat": Cell(BuiltInFunc("toFloat", [[]], lambda *_: self.to_float())),
+            "toFloat": Cell(BuiltInFuncValue("toFloat", [[]], lambda *_: self.to_float())),
         }
 
     def truthy(self) -> bool:
@@ -163,9 +148,9 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
     def __post_init__(self):
         self.members = {
             "toString": Cell(
-                BuiltInFunc("toString", [[]], lambda *_: self.to_string())
+                BuiltInFuncValue("toString", [[]], lambda *_: self.to_string())
             ),
-            "toInt": Cell(BuiltInFunc("toInt", [[]], lambda *_: self.to_int())),
+            "toInt": Cell(BuiltInFuncValue("toInt", [[]], lambda *_: self.to_int())),
         }
 
     def truthy(self):
@@ -205,8 +190,8 @@ class StringValue(Value, Additive):
 
     def __post_init__(self):
         self.members = {
-            "toInt": Cell(BuiltInFunc("toInt", [[]], lambda *_: self.to_int())),
-            "toFloat": Cell(BuiltInFunc("toFloat", [[]], lambda *_: self.to_float())),
+            "toInt": Cell(BuiltInFuncValue("toInt", [[]], lambda *_: self.to_int())),
+            "toFloat": Cell(BuiltInFuncValue("toFloat", [[]], lambda *_: self.to_float())),
         }
 
     def truthy(self):
@@ -268,8 +253,8 @@ class ItemValue(Value):
 
     def __post_init__(self):
         self.members = {
-            "key": Cell(BuiltInFunc("key", [[]], lambda *_: self.get_key())),
-            "value": Cell(BuiltInFunc("value", [[]], lambda *_: self.get_value())),
+            "key": Cell(BuiltInFuncValue("key", [[]], lambda *_: self.get_key())),
+            "value": Cell(BuiltInFuncValue("value", [[]], lambda *_: self.get_value())),
         }
 
     def get_key(self) -> Value:
@@ -302,22 +287,22 @@ class ListValue(Collection, Additive):
 
     def __post_init__(self):
         self.members = {
-            "length": Cell(BuiltInFunc("length", [[]], lambda *_: self.length())),
+            "length": Cell(BuiltInFuncValue("length", [[]], lambda *_: self.length())),
             "get": Cell(
-                BuiltInFunc("get", [[IntValue]], lambda _, __, int: self.get(int))
+                BuiltInFuncValue("get", [[IntValue]], lambda _, __, int: self.get(int))
             ),
             "add": Cell(
-                BuiltInFunc("add", [[Value]], lambda _, __, val: self.add(val))
+                BuiltInFuncValue("add", [[Value]], lambda _, __, val: self.add(val))
             ),
             "set": Cell(
-                BuiltInFunc(
+                BuiltInFuncValue(
                     "set",
                     [[IntValue, Value]],
                     lambda _, __, int, val: self.set(int, val),
                 )
             ),
             "remove": Cell(
-                BuiltInFunc("remove", [[IntValue]], lambda _, __, int: self.remove(int))
+                BuiltInFuncValue("remove", [[IntValue]], lambda _, __, int: self.remove(int))
             ),
         }
 
@@ -362,35 +347,35 @@ class ReturnSignal(Exception):
 
 @dataclass
 class DictValue(Collection):
-    order_func: "FuncValue" = field(default=None, repr=False, compare=False)
+    order_func: "UserFuncValue" = field(default=None, repr=False, compare=False)
     members: dict[str, Cell] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         self.members = {
             "addNew": Cell(
-                BuiltInFunc(
+                BuiltInFuncValue(
                     "addNew",
                     [[Value, Value]],
                     lambda inter, env, val1, val2: self.add_new(inter, env, val1, val2),
                 )
             ),
             "add": Cell(
-                BuiltInFunc(
+                BuiltInFuncValue(
                     "add",
                     [[ItemValue]],
                     lambda inter, env, item: self.add(inter, env, item),
                 )
             ),
             "remove": Cell(
-                BuiltInFunc("remove", [[Value]], lambda _, __, val: self.remove(val))
+                BuiltInFuncValue("remove", [[Value]], lambda _, __, val: self.remove(val))
             ),
             "contains": Cell(
-                BuiltInFunc(
+                BuiltInFuncValue(
                     "contains", [[Value]], lambda _, __, val: self.contains(val)
                 )
             ),
             "get": Cell(
-                BuiltInFunc("get", [[Value]], lambda _, __, val: self.get(val))
+                BuiltInFuncValue("get", [[Value]], lambda _, __, val: self.get(val))
             ),
         }
 
@@ -402,7 +387,7 @@ class DictValue(Collection):
 
         new_item = ItemValue(key, value)
 
-        if isinstance(self.order_func, BuiltInFunc):
+        if isinstance(self.order_func, BuiltInFuncValue):
             for i, item in enumerate(self.elements):
                 if self.order_func(
                     interpreter, env, (None), [new_item, item]
@@ -411,7 +396,7 @@ class DictValue(Collection):
                     return
             self.elements.append(new_item)
 
-        if isinstance(self.order_func, FuncValue):
+        if isinstance(self.order_func, UserFuncValue):
             for i, item in enumerate(self.elements):
                 env = self.order_func.get_call_env([new_item, item], None)
 
@@ -457,42 +442,9 @@ class DictValue(Collection):
     def type_of(self) -> "StringValue":
         return StringValue("Dict")
 
-    # def __add__(self, other: "DictValue"):
-    #     for item in other.elements:
-    #         self.add(item)
-    #     return self
-
     def __str__(self) -> str:
         return f"Dict({self.length().value})"
 
     def str_long(self) -> str:
         elements = ", ".join([str(item) for item in self.elements])
         return "{" + elements + "}"
-
-
-@dataclass
-class FuncValue(Value):
-    params: list[str]
-    body: po.Block
-    calling_env: Env
-
-    def type_of(self) -> StringValue:
-        return StringValue("FuncValue")
-
-    def get_call_env(
-        self, args: list["Value"], call_pos: tuple[int, int]
-    ) -> "Value | None":
-        if len(args) != len(self.params):
-            raise RuntimeException(
-                msg=f"Function takes {len(self.params)} arguments, {len(args)} given",
-                pos=call_pos,
-            )
-
-        local_env = Env(self.calling_env)
-
-        for name, arg in zip(self.params, args):
-            local_env.define(
-                po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg
-            )
-
-        return local_env

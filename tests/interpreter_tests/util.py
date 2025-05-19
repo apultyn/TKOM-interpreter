@@ -1,5 +1,5 @@
-from src.interpreter.interpreter_objects import ItemValue, IntValue, BuiltInFunc
+from src.interpreter.interpreter_objects import ItemValue, IntValue, BuiltInFuncValue
 
 
-def default_sort() -> BuiltInFunc:
-    return BuiltInFunc("default_sort", [[ItemValue, ItemValue]], lambda *_: IntValue(1))
+def default_sort() -> BuiltInFuncValue:
+    return BuiltInFuncValue("default_sort", [[ItemValue, ItemValue]], lambda *_: IntValue(1))

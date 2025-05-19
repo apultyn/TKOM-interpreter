@@ -1,9 +1,9 @@
 from src.interpreter.interpreter_objects import (
     Value,
     Env,
-    BuiltInFunc,
+    BuiltInFuncValue,
     Cell,
-    FuncValue,
+    UserFuncValue,
     DictValue,
 )
 from src.parser.parser_objects import ReturnStmt
@@ -27,8 +27,7 @@ GLOBAL_ENV = Env(
     None,
     {
         "print": Cell(
-            BuiltInFunc(
-                "print",
+            BuiltInFuncValue(
                 [
                     [Value],
                     [Value, Value],
@@ -52,14 +51,14 @@ GLOBAL_ENV = Env(
                         Value,
                     ],
                 ],
-                lambda _, __, *args: print(*args),
+                lambda *args: print(*args),
             )
         ),
         "typeOf": Cell(
-            BuiltInFunc("typeof", [[Value]], lambda _, __, val: get_typeof(val))
+            BuiltInFuncValue("typeof", [[Value]], lambda _, __, val: get_typeof(val))
         ),
         "Dict": Cell(
-            BuiltInFunc("Dict", [[FuncValue]], lambda _, __, func: get_dict(func))
+            BuiltInFuncValue("Dict", [[UserFuncValue]], lambda _, __, func: get_dict(func))
         ),
     },
 )

@@ -1,4 +1,4 @@
-from functools import singledispatchmethod
+from copy import deepcopy
 
 import src.parser.parser_objects as po
 from src.interpreter.util import (
@@ -22,10 +22,12 @@ from .interpreter_objects import (
     ListValue,
     ItemValue,
     DictValue,
+    UserFuncValue,
+    BuiltInFuncValue,
     FuncValue,
-    BuiltInFunc,
     Collection,
     ReturnSignal,
+    is_simple
 )
 
 
@@ -54,24 +56,38 @@ class Interpreter:
                 )
             )
 
-    # Default
-    @singledispatchmethod
-    def eval(self, node: po.ParserObject, env: Env | None = None):
+    def check_params(self, call_args: list[Value], function: FuncValue) -> list[Value] | None:
+        selected = None
+        for param_variant in function.param_variants:
+            if len(call_args) != len(param_variant):
+                continue
+
+            for call_arg, param in zip(call_args, param_variant):
+                if not isinstance(call_arg, param):
+                    break
+            else:
+                selected = param_variant
+        return selected
+
+
+    def eval(self, node: po.ParserObject, env: Env | None = None) -> Value:
         if env is None:
             env = self.global_env
-        raise NotImplementedError(type(node))
+        return node.accept(self, env)
+
+    # Default
+    def visit_default(self, node: po.ParserObject, _: Env | None = None):
+        raise NotImplementedError(
+            f"Interpreter does not support {node.__class__.__name__} node"
+        )
 
     # Block
-    @eval.register
-    def _(self, node: po.Block, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_Block(self, node: po.Block, env: Env | None = None):
         for stmt in node.statements:
             self.eval(stmt, env)
 
     # Program
-    @eval.register
-    def _(self, node: po.Program):
+    def visit_Program(self, node: po.Program, _: Env | None = None):
         try:
             print("=" * 30 + " Running script... " + "=" * 30)
             for stmt in node.statements:
@@ -86,10 +102,7 @@ class Interpreter:
             )
 
     # If Statement
-    @eval.register
-    def _(self, node: po.IfStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_IfStmt(self, node: po.IfStmt, env: Env | None = None):
         if self.eval(node.condition, env).truthy():
             self.eval(node.body, Env(node, env))
             return
@@ -101,18 +114,12 @@ class Interpreter:
             self.eval(node.else_body, Env(node, env))
 
     # While Statement
-    @eval.register
-    def _(self, node: po.WhileStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_WhileStmt(self, node: po.WhileStmt, env: Env | None = None):
         while self.eval(node.condition, env).truthy():
             self.eval(node.body, Env(node, env))
 
     # For Statement
-    @eval.register
-    def _(self, node: po.ForStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_ForStmt(self, node: po.ForStmt, env: Env | None = None):
         source = self.eval(node.source, env)
 
         if not isinstance(source, Collection):
@@ -130,20 +137,17 @@ class Interpreter:
             self.eval(node.body, new_env)
 
     # Return Statement
-    @eval.register
-    def _(self, node: po.ReturnStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_ReturnStmt(self, node: po.ReturnStmt, env: Env | None = None):
         value = None
         if node.value:
             value = self.eval(node.value, env)
         raise ReturnSignal(node, value)
 
     # Normal Assignment
-    @eval.register
-    def _(self, node: po.NormalAssignmentStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_NormalAssignmentStmt(
+        self, node: po.NormalAssignmentStmt, env: Env | None = None
+    ):
+
         value = self.eval(node.r_value, env)
         ident = node.l_value
 
@@ -153,10 +157,9 @@ class Interpreter:
             env.define(ident, value)
 
     # Plus Assignment
-    @eval.register
-    def _(self, node: po.PlusAssignmentStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_PlusAssignmentStmt(
+        self, node: po.PlusAssignmentStmt, env: Env | None = None
+    ):
         name = node.l_value
         try:
             l_value = env.get(name)
@@ -174,10 +177,9 @@ class Interpreter:
             self._error_handler.handle_error(exc)
 
     # Minus Assignment
-    @eval.register
-    def _(self, node: po.MinusAssignmentStmt, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_MinusAssignmentStmt(
+        self, node: po.MinusAssignmentStmt, env: Env | None = None
+    ):
         name = node.l_value
         try:
             l_value = env.get(name)
@@ -195,10 +197,7 @@ class Interpreter:
             self._error_handler.handle_error(exc)
 
     # Or Expr
-    @eval.register
-    def _(self, node: po.OrExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_OrExpr(self, node: po.OrExpr, env: Env | None = None):
         if self.eval(node.l_value, env).truthy():
             return BoolValue(True)
 
@@ -208,10 +207,7 @@ class Interpreter:
         return BoolValue(False)
 
     # And Expr
-    @eval.register
-    def _(self, node: po.AndExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_AndExpr(self, node: po.AndExpr, env: Env | None = None):
         if not self.eval(node.l_value, env).truthy():
             return BoolValue(False)
 
@@ -221,30 +217,21 @@ class Interpreter:
         return BoolValue(True)
 
     # Eq Expr
-    @eval.register
-    def _(self, node: po.EqExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_EqExpr(self, node: po.EqExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
         return BoolValue(l_value == r_value)
 
     # Neq Expr
-    @eval.register
-    def _(self, node: po.NeqExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_NeqExpr(self, node: po.NeqExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
         return BoolValue(l_value != r_value)
 
     # Gt Expr
-    @eval.register
-    def _(self, node: po.GtExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_GtExpr(self, node: po.GtExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -261,10 +248,7 @@ class Interpreter:
             )
 
     # Geq Expr
-    @eval.register
-    def _(self, node: po.GeqExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_GeqExpr(self, node: po.GeqExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -281,10 +265,7 @@ class Interpreter:
             )
 
     # Lt Expr
-    @eval.register
-    def _(self, node: po.LtExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_LtExpr(self, node: po.LtExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -301,10 +282,7 @@ class Interpreter:
             )
 
     # Leq Expr
-    @eval.register
-    def _(self, node: po.LeqExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_LeqExpr(self, node: po.LeqExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -321,10 +299,7 @@ class Interpreter:
             )
 
     # Add Expr
-    @eval.register
-    def _(self, node: po.AddExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_AddExpr(self, node: po.AddExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -341,10 +316,7 @@ class Interpreter:
         return l_value + r_value
 
     # Sub Expr
-    @eval.register
-    def _(self, node: po.SubExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_SubExpr(self, node: po.SubExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -361,10 +333,7 @@ class Interpreter:
         return l_value - r_value
 
     # Mul Expr
-    @eval.register
-    def _(self, node: po.MulExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_MulExpr(self, node: po.MulExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -381,10 +350,7 @@ class Interpreter:
         return l_value * r_value
 
     # Div Expr
-    @eval.register
-    def _(self, node: po.DivExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_DivExpr(self, node: po.DivExpr, env: Env | None = None):
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
@@ -414,10 +380,7 @@ class Interpreter:
         )
 
     # Logic Negation Expr
-    @eval.register
-    def _(self, node: po.LogicNegExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_LogicNegExpr(self, node: po.LogicNegExpr, env: Env | None = None):
         value = self.eval(node.value, env)
         if not isinstance(value, BoolValue):
             self._error_handler.handle_error(
@@ -429,10 +392,7 @@ class Interpreter:
         return BoolValue(not value.value)
 
     # Arihmetic Negation Expr
-    @eval.register
-    def _(self, node: po.ArithNegExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_ArithNegExpr(self, node: po.ArithNegExpr, env: Env | None = None):
         value = self.eval(node.value, env)
 
         if isinstance(value, IntValue):
@@ -449,10 +409,7 @@ class Interpreter:
         )
 
     # Access Expr
-    @eval.register
-    def _(self, node: po.AccessExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_AccessExpr(self, node: po.AccessExpr, env: Env | None = None):
         src = self.eval(node.source, env)
         field = node.target.value
 
@@ -469,73 +426,66 @@ class Interpreter:
             )
 
     # Call Expr
-    @eval.register
-    def _(self, node: po.CallExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_CallExpr(self, node: po.CallExpr, env: Env | None = None):
+        function: UserFuncValue | BuiltInFuncValue = self.eval(node.callee, env)
 
-        callee: FuncValue | BuiltInFunc = self.eval(node.callee, env)
+        if not isinstance(function, FuncValue):
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Object '{function.__class__.__qualname__}' is not a function",
+                    pos=node.callee.pos,
+                )
+            )
+
         arg_objects = [self.eval(arg, env) for arg in node.args]
 
-        try:
-            if isinstance(callee, FuncValue):
-                exec_env = callee.get_call_env(arg_objects, node.pos)
-                return self.eval(callee.body, exec_env)
+        params = self.check_params(arg_objects, function)
+        if params is None:
+            raise RuntimeException(
+                msg=f"No '{function.name}' function override with [{[f"'{call_arg.type_of()}'," for call_arg in arg_objects]}] types found",
+                pos=node.pos,
+            )
 
-            if isinstance(callee, BuiltInFunc):
-                return callee(self, env, node.pos, arg_objects)
+        try:
+            if isinstance(function, UserFuncValue):
+                func_env = Env(env)
+
+                for name, arg in zip(params, arg_objects):
+                    func_env.define(
+                        po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg
+                    )
+                self.eval(function.body, func_env)
+
+            if isinstance(function, BuiltInFuncValue):
+                raise ReturnSignal(function.body(*arg_objects))
 
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
         except ReturnSignal as exc:
             return exc.return_value
 
-        self._error_handler.handle_error(
-            RuntimeException(
-                f"Object {callee.__class__.__qualname__} is not callable", pos=node.pos
-            )
-        )
-
     # Int Expr
-    @eval.register
-    def _(self, node: po.IntExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_IntExpr(self, node: po.IntExpr, env: Env | None = None):
         return IntValue(node.value)
 
     # Float Expr
-    @eval.register
-    def _(self, node: po.FloatExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_FloatExpr(self, node: po.FloatExpr, env: Env | None = None):
         return FloatValue(node.value)
 
     # String Expr
-    @eval.register
-    def _(self, node: po.StringExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_StringExpr(self, node: po.StringExpr, env: Env | None = None):
         return StringValue(node.value)
 
     # Identifier
-    @eval.register
-    def _(self, node: po.Identifier, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_Identifier(self, node: po.Identifier, env: Env | None = None):
         return env.get(node)
 
     # Bool Expr
-    @eval.register
-    def _(self, node: po.BoolExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_BoolExpr(self, node: po.BoolExpr, env: Env | None = None):
         return BoolValue(node.value)
 
     # List Expr
-    @eval.register
-    def _(self, node: po.ListExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_ListExpr(self, node: po.ListExpr, env: Env | None = None):
         elements = []
         for element in node.elements:
             object = self.eval(element, env)
@@ -544,20 +494,14 @@ class Interpreter:
         return ListValue(elements)
 
     # Item Expr
-    @eval.register
-    def _(self, node: po.ItemExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_ItemExpr(self, node: po.ItemExpr, env: Env | None = None):
         key = self.eval(node.key, env)
         value = self.eval(node.value, env)
 
         return ItemValue(key, value)
 
     # Dict Expr
-    @eval.register
-    def _(self, node: po.DictExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_DictExpr(self, node: po.DictExpr, env: Env | None = None):
         dict = DictValue([], lambda x: IntValue(1))
         dict.bind(self)
 
@@ -568,18 +512,12 @@ class Interpreter:
         return dict
 
     # Function expr
-    @eval.register
-    def _(self, node: po.FunctionExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_FunctionExpr(self, node: po.FunctionExpr, env: Env | None = None):
         param_names = [ident.value for ident in node.params]
-        return FuncValue(param_names, node.body, env)
+        return UserFuncValue([param_names], node.body)
 
     # Linq expr
-    @eval.register
-    def _(self, node: po.LinqExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_LinqExpr(self, node: po.LinqExpr, env: Env | None = None):
         var = node.var
         source = self.eval(node.source, env)
 
@@ -651,8 +589,5 @@ class Interpreter:
         return ListValue([item[0] for item in return_list])
 
     # Brackets expr
-    @eval.register
-    def _(self, node: po.BracketsExpr, env: Env | None = None):
-        if env is None:
-            env = self.global_env
+    def visit_BracketsExpr(self, node: po.BracketsExpr, env: Env | None = None):
         return self.eval(node.value, env)
