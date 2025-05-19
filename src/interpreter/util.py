@@ -22,14 +22,8 @@ def get_dict(func_value: Value):
     return DictValue([], func_value)
 
 
-class ReturnSignal(Exception):
-    def __init__(self, statement: ReturnStmt, return_value: Value | None = None):
-        self.return_statement = statement
-        self.return_value = return_value
-        super().__init__(f"Return signal with {self.return_value}")
-
-
 GLOBAL_ENV = Env(
+    "main",
     None,
     {
         "print": Cell(
@@ -58,11 +52,11 @@ GLOBAL_ENV = Env(
                         Value,
                     ],
                 ],
-                print,
+                lambda _,__, *args: print(*args),
             )
         ),
-        "typeOf": Cell(BuiltInFunc("typeof", [[Value]], get_typeof)),
-        "Dict": Cell(BuiltInFunc("Dict", [[FuncValue]], get_dict)),
+        "typeOf": Cell(BuiltInFunc("typeof", [[Value]], lambda _, __, val: get_typeof(val))),
+        "Dict": Cell(BuiltInFunc("Dict", [[FuncValue]], lambda _, __, func: get_dict(func))),
     },
 )
 

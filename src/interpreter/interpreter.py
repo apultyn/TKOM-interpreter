@@ -3,7 +3,6 @@ from functools import singledispatchmethod
 import src.parser.parser_objects as po
 from src.interpreter.util import (
     GLOBAL_ENV,
-    ReturnSignal,
     get_operation_unsupported_type_msg,
 )
 
@@ -26,6 +25,7 @@ from .interpreter_objects import (
     FuncValue,
     BuiltInFunc,
     Collection,
+    ReturnSignal
 )
 
 
@@ -90,14 +90,14 @@ class Interpreter:
         if env is None:
             env = self.global_env
         if self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(env))
+            self.eval(node.body, Env(node, env))
             return
         for elif_stmt in node.elif_statements:
             if self.eval(elif_stmt.condition, env).truthy():
-                self.eval(elif_stmt.body, Env(env))
+                self.eval(elif_stmt.body, Env(node, env))
                 return
         if node.else_body:
-            self.eval(node.else_body, Env(env))
+            self.eval(node.else_body, Env(node, env))
 
     # While Statement
     @eval.register
@@ -105,7 +105,7 @@ class Interpreter:
         if env is None:
             env = self.global_env
         while self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(env))
+            self.eval(node.body, Env(node, env))
 
     # For Statement
     @eval.register
@@ -113,6 +113,20 @@ class Interpreter:
         if env is None:
             env = self.global_env
         source = self.eval(node.source, env)
+
+        if not isinstance(source, Collection):
+            self._error_handler.handle_error(
+                RuntimeException(
+                    f"Source should be a collection, got {source.__class__.__qualname__}",
+                    pos=node.source.pos,
+                )
+            )
+
+        new_env = Env(node, env)
+        new_env.define(node.var, None)
+        for element in source.elements:
+            new_env.set(node.var, element)
+            self.eval(node.body, new_env)
 
     # Return Statement
     @eval.register
@@ -122,7 +136,7 @@ class Interpreter:
         value = None
         if node.value:
             value = self.eval(node.value, env)
-        raise ReturnSignal
+        raise ReturnSignal(node, value)
 
     # Normal Assignment
     @eval.register
@@ -448,7 +462,7 @@ class Interpreter:
         except AttributeError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Object {src.__class__} has no {field} member", pos=node.target.pos
+                    f"Object '{src.__class__.__qualname__}' has no {field} member", pos=node.target.pos
                 )
             )
 
@@ -457,6 +471,7 @@ class Interpreter:
     def _(self, node: po.CallExpr, env: Env | None = None):
         if env is None:
             env = self.global_env
+
         callee: FuncValue | BuiltInFunc = self.eval(node.callee, env)
         arg_objects = [self.eval(arg, env) for arg in node.args]
 
@@ -466,7 +481,7 @@ class Interpreter:
                 return self.eval(callee.body, exec_env)
 
             if isinstance(callee, BuiltInFunc):
-                return callee(node.pos, arg_objects)
+                return callee(self, env, node.pos, arg_objects)
 
         except RuntimeException as exc:
             self._error_handler.handle_error(exc)
@@ -574,12 +589,12 @@ class Interpreter:
                 )
             )
 
-        new_env = Env(env)
+        new_env = Env(node, env)
         new_env.define(var, None)
 
         return_list = []
 
-        for element in source:
+        for element in source.elements:
             new_env.set(var, element)
 
             # where
@@ -596,7 +611,7 @@ class Interpreter:
                     continue
 
             # selects
-            selects = [self.eval(sel, new_env) for sel in node.selects]
+            selects = ListValue([self.eval(sel, new_env) for sel in node.selects])
 
             # order by
             order_key = None

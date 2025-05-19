@@ -14,8 +14,9 @@ class Cell:
 
 class Env:
     def __init__(
-        self, parent: "Env | None" = None, symbols: dict[str, Cell] | None = None
+        self, context: po.ParserObject, parent: "Env | None" = None, symbols: dict[str, Cell] | None = None
     ):
+        self.context = context
         self.parent = parent
         self.symbols = symbols if symbols is not None else {}
 
@@ -24,7 +25,7 @@ class Env:
         if name in self.symbols:
             return self.symbols[name]
         if self.parent:
-            return self.parent.lookup_cell(name)
+            return self.parent.lookup_cell(identifier)
         raise RuntimeException(
             msg=f"'{name}' is not defined in this scope", pos=identifier.pos
         )
@@ -37,6 +38,9 @@ class Env:
 
     def define(self, identifier: po.Identifier, val: "Value"):
         self.symbols[identifier.value] = Cell(val)
+
+    def __str__(self) -> str:
+        return f"Env with context: '{self.context.__class__.__qualname__}' at row: {self.context.pos[0]}, col: {self.context.pos[1]}"
 
 
 class Value(ABC):
@@ -85,7 +89,7 @@ class BuiltInFunc(Value):
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
 
-    def __call__(self, call_pos: tuple[int, int], call_args: list[Value]):
+    def __call__(self, interpreter, env, call_pos: tuple[int, int], call_args: list[Value]):
         selected_variant = None
         for param_variant in self.params_variants:
             if len(call_args) != len(param_variant):
@@ -100,7 +104,7 @@ class BuiltInFunc(Value):
                 msg=f"No '{self.name}' function override with {[call_arg.__class__.__qualname__ for call_arg in call_args]} types found",
                 pos=call_pos,
             )
-        return self.body(*call_args)
+        return self.body(interpreter, env, *call_args)
 
 
 @dataclass(order=True)
@@ -110,8 +114,8 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": Cell(BuiltInFunc("toString", [[]], self.to_string)),
-            "toFloat": Cell(BuiltInFunc("toFloat", [[]], self.to_float)),
+            "toString": Cell(BuiltInFunc("toString", [[]], lambda *_: self.to_string())),
+            "toFloat": Cell(BuiltInFunc("toFloat", [[]], lambda *_: self.to_float())),
         }
 
     def truthy(self) -> bool:
@@ -151,8 +155,8 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
 
     def __post_init__(self):
         self.members = {
-            "toString": Cell(BuiltInFunc("toString", [[]], self.to_string)),
-            "toInt": Cell(BuiltInFunc("toInt", [[]], self.to_int)),
+            "toString": Cell(BuiltInFunc("toString", [[]], lambda *_: self.to_string())),
+            "toInt": Cell(BuiltInFunc("toInt", [[]], lambda *_: self.to_int())),
         }
 
     def truthy(self):
@@ -192,8 +196,8 @@ class StringValue(Value, Additive):
 
     def __post_init__(self):
         self.members = {
-            "toInt": Cell(BuiltInFunc("toInt", [[]], self.to_int)),
-            "toFloat": Cell(BuiltInFunc("toFloat", [[]], self.to_float)),
+            "toInt": Cell(BuiltInFunc("toInt", [[]], lambda *_: self.to_int())),
+            "toFloat": Cell(BuiltInFunc("toFloat", [[]], lambda *_: self.to_float())),
         }
 
     def truthy(self):
@@ -255,8 +259,8 @@ class ItemValue(Value):
 
     def __post_init__(self):
         self.members = {
-            "key": Cell(BuiltInFunc("key", [[]], self.get_key)),
-            "value": Cell(BuiltInFunc("value", [[]], self.get_value)),
+            "key": Cell(BuiltInFunc("key", [[]], lambda *_: self.get_key())),
+            "value": Cell(BuiltInFunc("value", [[]], lambda *_: self.get_value())),
         }
 
     def get_key(self) -> Value:
@@ -289,11 +293,11 @@ class ListValue(Collection, Additive):
 
     def __post_init__(self):
         self.members = {
-            "length": Cell(BuiltInFunc("length", [[]], self.length)),
-            "get": Cell(BuiltInFunc("get", [[ItemValue]], self.get)),
-            "add": Cell(BuiltInFunc("add", [[Value]], self.add)),
-            "set": Cell(BuiltInFunc("set", [[IntValue, Value]], self.set)),
-            "remove": Cell(BuiltInFunc("remove", [[IntValue]], self.remove)),
+            "length": Cell(BuiltInFunc("length", [[]], lambda *_: self.length())),
+            "get": Cell(BuiltInFunc("get", [[IntValue]], lambda _, __, int: self.get(int))),
+            "add": Cell(BuiltInFunc("add", [[Value]], lambda _, __, val: self.add(val))),
+            "set": Cell(BuiltInFunc("set", [[IntValue, Value]], lambda _, __, int, val: self.set(int, val))),
+            "remove": Cell(BuiltInFunc("remove", [[IntValue]], lambda _, __, int: self.remove(int))),
         }
 
     def __add__(self, other: "ListValue"):
@@ -327,35 +331,65 @@ class ListValue(Collection, Additive):
         elements = ", ".join([str(item) for item in self.elements])
         return "[" + elements + "]"
 
+class ReturnSignal(Exception):
+    def __init__(self, statement: po.ReturnStmt, return_value: Value | None = None):
+        self.return_statement = statement
+        self.return_value = return_value
+        super().__init__(f"Return signal with {self.return_value}")
+
 
 @dataclass
-class DictValue(Collection, Additive):
-    order_func: "FuncValue" = None
+class DictValue(Collection):
+    order_func: "FuncValue" = field(default=None, repr=False, compare=False)
     members: dict[str, Cell] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         self.members = {
-            "addNew": Cell(BuiltInFunc("addNew", [[Value, Value]], self.add_new)),
-            "add": Cell(BuiltInFunc("add", [[ItemValue]], self.add)),
-            "remove": Cell(BuiltInFunc("remove", [[Value]], self.remove)),
-            "contains": Cell(BuiltInFunc("contains", [[Value]], self.contains)),
-            "get": Cell(BuiltInFunc("get", [[Value]], self.get)),
+            "addNew": Cell(BuiltInFunc("addNew", [[Value, Value]], lambda inter, env, val1, val2: self.add_new(inter, env, val1, val2))),
+            "add": Cell(BuiltInFunc("add", [[ItemValue]], lambda inter, env, item: self.add(inter, env, item))),
+            "remove": Cell(BuiltInFunc("remove", [[Value]], lambda _, __, val: self.remove(val))),
+            "contains": Cell(BuiltInFunc("contains", [[Value]], lambda _, __, val: self.contains(val))),
+            "get": Cell(BuiltInFunc("get", [[Value]], lambda _, __, val: self.get(val))),
         }
 
-    def add_new(self, key: Value, value: Value):
+    def add_new(self, interpreter, env, key: Value, value: Value):
         if self.contains(key).value:
             raise KeyError(f"Key {key} already exists in the dictionary")
         if not is_simple(key):
             raise KeyError(f"{key.__class__.__qualname__} can't be an item key")
 
-        for i, item in enumerate(self.elements):
-            if self.order_func(key, item.get_key()) < IntValue(0):
-                self.elements.insert(i, ItemValue(key, value))
-                return
-        self.elements.append(ItemValue(key, value))
+        new_item = ItemValue(key, value)
 
-    def add(self, item: ItemValue):
-        self.add_new(item.get_key(), item.get_value())
+        if isinstance(self.order_func, BuiltInFunc):
+            for i, item in enumerate(self.elements):
+                if self.order_func(interpreter, env, (None), [new_item, item]) < IntValue(0):
+                    self.elements.insert(i, new_item)
+                    return
+            self.elements.append(new_item)
+
+        if isinstance(self.order_func, FuncValue):
+            for i, item in enumerate(self.elements):
+                env = self.order_func.get_call_env([new_item, item], None)
+
+                comp_value = None
+                try:
+                    comp_value = interpreter.eval(self.order_func.body, env)
+                except ReturnSignal as ret:
+                    comp_value = ret.return_value
+
+                if not isinstance(comp_value, IntValue):
+                    raise RuntimeException(
+                        msg=f"Function '{self.order_func.name}' should return IntValue",
+                        pos=self.order_func.body.pos,
+                    )
+
+                if comp_value < IntValue(0):
+                    self.elements.insert(i, new_item)
+                    return
+            self.elements.append(new_item)
+
+    def add(self, interpreter, env, item: ItemValue):
+        self.add_new(interpreter, env, item.get_key(), item.get_value())
 
     def remove(self, key: Value):
         for i, item in enumerate(self.elements):
@@ -379,10 +413,10 @@ class DictValue(Collection, Additive):
     def type_of(self) -> "StringValue":
         return StringValue("Dict")
 
-    def __add__(self, other: "DictValue"):
-        for item in other.elements:
-            self.add(item)
-        return self
+    # def __add__(self, other: "DictValue"):
+    #     for item in other.elements:
+    #         self.add(item)
+    #     return self
 
     def __str__(self) -> str:
         return f"Dict({self.length().value})"
@@ -396,7 +430,7 @@ class DictValue(Collection, Additive):
 class FuncValue(Value):
     params: list[str]
     body: po.Block
-    closure: Env
+    calling_env: Env
 
     def type_of(self) -> StringValue:
         return StringValue("FuncValue")
@@ -410,9 +444,9 @@ class FuncValue(Value):
                 pos=call_pos,
             )
 
-        local_env = Env(self.closure)
+        local_env = Env(self.calling_env)
 
         for name, arg in zip(self.params, args):
-            local_env.define(name, deepcopy(arg) if is_simple(arg) else arg)
+            local_env.define(po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg)
 
         return local_env

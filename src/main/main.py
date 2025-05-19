@@ -2,7 +2,7 @@ import argparse
 
 from pathlib import Path
 
-from .util import open_source
+from src.main.util import open_source
 from src.util.configs import AppConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser

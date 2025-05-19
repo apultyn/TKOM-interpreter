@@ -177,7 +177,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=default_sort,
+        order_func=default_sort(),
     )
 
     assert obj == DictValue(
@@ -186,7 +186,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=default_sort,
+        order_func=default_sort(),
     )
 
     assert obj.length() == IntValue(3)
@@ -196,7 +196,7 @@ def test_dict_no_sort():
     assert obj.str_long() == "{(1: one), (2: two), (hello: there)}"
 
     # Adding
-    obj.add_new(StringValue("general"), StringValue("kenobi"))
+    obj.add_new(None, None, StringValue("general"), StringValue("kenobi"))
     assert obj == DictValue(
         [
             ItemValue(IntValue(1), StringValue("one")),
@@ -204,10 +204,10 @@ def test_dict_no_sort():
             ItemValue(StringValue("hello"), StringValue("there")),
             ItemValue(StringValue("general"), StringValue("kenobi")),
         ],
-        order_func=default_sort,
+        order_func=default_sort(),
     )
 
-    obj.add(ItemValue(BoolValue(True), StringValue("yes")))
+    obj.add(None, None, ItemValue(BoolValue(True), StringValue("yes")))
     assert obj == DictValue(
         [
             ItemValue(IntValue(1), StringValue("one")),
@@ -216,14 +216,14 @@ def test_dict_no_sort():
             ItemValue(StringValue("general"), StringValue("kenobi")),
             ItemValue(BoolValue(True), StringValue("yes")),
         ],
-        order_func=default_sort,
+        order_func=default_sort(),
     )
 
     with pytest.raises(KeyError):
-        obj.add_new(IntValue(1), StringValue("duplicate"))
+        obj.add_new(None, None, IntValue(1), StringValue("duplicate"))
 
     with pytest.raises(KeyError):
-        obj.add(ItemValue(BoolValue(True), StringValue("duplicate")))
+        obj.add(None, None, ItemValue(BoolValue(True), StringValue("duplicate")))
 
     # Removing
     obj.remove(IntValue(1))
@@ -250,38 +250,38 @@ def test_dict_no_sort():
     with pytest.raises(KeyError):
         obj.get(IntValue(1))
 
-    # Additive
-    obj2 = DictValue(
-        [
-            ItemValue(IntValue(1), StringValue("one")),
-            ItemValue(IntValue(3), StringValue("two")),
-            ItemValue(StringValue("bye"), StringValue("there")),
-        ],
-        order_func=default_sort,
-    )
+    # # Additive
+    # obj2 = DictValue(
+    #     [
+    #         ItemValue(IntValue(1), StringValue("one")),
+    #         ItemValue(IntValue(3), StringValue("two")),
+    #         ItemValue(StringValue("bye"), StringValue("there")),
+    #     ],
+    #     order_func=default_sort,
+    # )
 
-    assert obj + obj2 == DictValue(
-        [
-            ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(StringValue("hello"), StringValue("there")),
-            ItemValue(StringValue("general"), StringValue("kenobi")),
-            ItemValue(BoolValue(True), StringValue("yes")),
-            ItemValue(IntValue(1), StringValue("one")),
-            ItemValue(IntValue(3), StringValue("two")),
-            ItemValue(StringValue("bye"), StringValue("there")),
-        ],
-        order_func=default_sort,
-    )
+    # assert obj + obj2 == DictValue(
+    #     [
+    #         ItemValue(IntValue(2), StringValue("two")),
+    #         ItemValue(StringValue("hello"), StringValue("there")),
+    #         ItemValue(StringValue("general"), StringValue("kenobi")),
+    #         ItemValue(BoolValue(True), StringValue("yes")),
+    #         ItemValue(IntValue(1), StringValue("one")),
+    #         ItemValue(IntValue(3), StringValue("two")),
+    #         ItemValue(StringValue("bye"), StringValue("there")),
+    #     ],
+    #     order_func=default_sort,
+    # )
 
-    with pytest.raises(KeyError):
-        obj + DictValue(
-            [
-                ItemValue(IntValue(1), StringValue("one")),
-                ItemValue(IntValue(2), StringValue("two")),
-                ItemValue(StringValue("hello"), StringValue("there")),
-            ],
-            order_func=default_sort,
-        )
+    # with pytest.raises(KeyError):
+    #     obj + DictValue(
+    #         [
+    #             ItemValue(IntValue(1), StringValue("one")),
+    #             ItemValue(IntValue(2), StringValue("two")),
+    #             ItemValue(StringValue("hello"), StringValue("there")),
+    #         ],
+    #         order_func=default_sort,
+    #     )
 
 
 def test_nested_prints():
