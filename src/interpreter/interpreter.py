@@ -27,7 +27,8 @@ from .interpreter_objects import (
     FuncValue,
     Collection,
     ReturnSignal,
-    is_simple
+    AccessedFuncValue,
+    is_simple,
 )
 
 
@@ -56,7 +57,9 @@ class Interpreter:
                 )
             )
 
-    def check_params(self, call_args: list[Value], function: FuncValue) -> list[Value] | None:
+    def check_params(
+        self, call_args: list[Value], function: FuncValue
+    ) -> list[Value] | None:
         selected = None
         for param_variant in function.param_variants:
             if len(call_args) != len(param_variant):
@@ -68,7 +71,6 @@ class Interpreter:
             else:
                 selected = param_variant
         return selected
-
 
     def eval(self, node: po.ParserObject, env: Env | None = None) -> Value:
         if env is None:
@@ -131,9 +133,9 @@ class Interpreter:
             )
 
         new_env = Env(node, env)
-        new_env.define(node.var, None)
+        new_env.define(node.var.val, None)
         for element in source.elements:
-            new_env.set(node.var, element)
+            new_env.set(node.var.name, element)
             self.eval(node.body, new_env)
 
     # Return Statement
@@ -147,20 +149,19 @@ class Interpreter:
     def visit_NormalAssignmentStmt(
         self, node: po.NormalAssignmentStmt, env: Env | None = None
     ):
-
         value = self.eval(node.r_value, env)
         ident = node.l_value
 
         if ident.value in env.symbols:
-            env.set(ident, value)
+            env.set(ident.value, value)
         else:
-            env.define(ident, value)
+            env.define(ident.value, value)
 
     # Plus Assignment
     def visit_PlusAssignmentStmt(
         self, node: po.PlusAssignmentStmt, env: Env | None = None
     ):
-        name = node.l_value
+        name = node.l_value.value
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
@@ -180,7 +181,7 @@ class Interpreter:
     def visit_MinusAssignmentStmt(
         self, node: po.MinusAssignmentStmt, env: Env | None = None
     ):
-        name = node.l_value
+        name = node.l_value.value
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
@@ -413,21 +414,22 @@ class Interpreter:
         src = self.eval(node.source, env)
         field = node.target.value
 
+        method_sig = src.__class__.__qualname__ + "." + field
         try:
-            if field in src.members:
-                return src.members[field].value
-            raise AttributeError
-        except AttributeError:
+            method = env.get(method_sig)
+        except ValueError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Object '{src.__class__.__qualname__}' has no {field} member",
-                    pos=node.target.pos,
+                    f"Object of type '{src.type_of()}' has no '{field}' method",
+                    pos=node.pos,
                 )
             )
+        method.owner = src
+        return method
 
     # Call Expr
     def visit_CallExpr(self, node: po.CallExpr, env: Env | None = None):
-        function: UserFuncValue | BuiltInFuncValue = self.eval(node.callee, env)
+        function: FuncValue = self.eval(node.callee, env)
 
         if not isinstance(function, FuncValue):
             self._error_handler.handle_error(
@@ -452,15 +454,32 @@ class Interpreter:
 
                 for name, arg in zip(params, arg_objects):
                     func_env.define(
-                        po.Identifier(name), deepcopy(arg) if is_simple(arg) else arg
+                        name, deepcopy(arg) if is_simple(arg) else arg
                     )
                 self.eval(function.body, func_env)
 
             if isinstance(function, BuiltInFuncValue):
-                raise ReturnSignal(function.body(*arg_objects))
+                if function.needs_inter:
+                    raise ReturnSignal(function.body(self.visit_body, Env(env), *arg_objects))
+                else:
+                    raise ReturnSignal(function.body(*arg_objects))
+
+            if isinstance(function, AccessedFuncValue):
+                if function.needs_inter:
+                    raise ReturnSignal(function.body(self.visit_body, Env(env), function.owner, *arg_objects))
+                else:
+                    raise ReturnSignal(function.body(function.owner, *arg_objects))
 
         except RuntimeException as exc:
+            exc.pos = node.pos
             self._error_handler.handle_error(exc)
+        except IndexError as exc:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    exc.args[0],
+                    pos=node.pos,
+                )
+            )
         except ReturnSignal as exc:
             return exc.return_value
 
@@ -478,7 +497,7 @@ class Interpreter:
 
     # Identifier
     def visit_Identifier(self, node: po.Identifier, env: Env | None = None):
-        return env.get(node)
+        return env.get(node.value)
 
     # Bool Expr
     def visit_BoolExpr(self, node: po.BoolExpr, env: Env | None = None):
@@ -502,8 +521,7 @@ class Interpreter:
 
     # Dict Expr
     def visit_DictExpr(self, node: po.DictExpr, env: Env | None = None):
-        dict = DictValue([], lambda x: IntValue(1))
-        dict.bind(self)
+        dict = DictValue([], lambda _, __: IntValue(1))
 
         for parser_item in node.items:
             interpreter_item = self.eval(parser_item, env)
@@ -530,12 +548,12 @@ class Interpreter:
             )
 
         new_env = Env(node, env)
-        new_env.define(var, None)
+        new_env.define(var.value, None)
 
         return_list = []
 
         for element in source.elements:
-            new_env.set(var, element)
+            new_env.set(var.value, element)
 
             # where
             if node.where:

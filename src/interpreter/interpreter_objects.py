@@ -21,24 +21,21 @@ class Env:
         self.parent = parent
         self.symbols = symbols if symbols is not None else {}
 
-    def lookup_cell(self, identifier: po.Identifier) -> Cell:
-        name = identifier.value
+    def lookup_cell(self, name: str) -> Cell:
         if name in self.symbols:
             return self.symbols[name]
         if self.parent:
-            return self.parent.lookup_cell(identifier)
-        raise RuntimeException(
-            msg=f"'{name}' is not defined in this scope", pos=identifier.pos
-        )
+            return self.parent.lookup_cell(name)
+        raise ValueError(f"'{name}' is not defined in this scope")
 
-    def get(self, identifier: po.Identifier) -> "Value":
-        return self.lookup_cell(identifier).value
+    def get(self, name: str) -> "Value":
+        return self.lookup_cell(name).value
 
-    def set(self, identifier: po.Identifier, val: "Value"):
-        self.lookup_cell(identifier).value = val
+    def set(self, name: str, val: "Value"):
+        self.lookup_cell(name).value = val
 
-    def define(self, identifier: po.Identifier, val: "Value"):
-        self.symbols[identifier.value] = Cell(val)
+    def define(self, name: str, val: "Value"):
+        self.symbols[name] = Cell(val)
 
     def __str__(self) -> str:
         return f"Env with context: '{self.context.__class__.__qualname__}' at row: {self.context.pos[0]}, col: {self.context.pos[1]}"
@@ -80,12 +77,14 @@ class Multiplicative(Protocol):
     def __mul__(self: Self, other: Self) -> Self:
         pass
 
+
 @dataclass
 class FuncValue(Value):
     param_variants: list[list[type[Value]]]
 
     def type_of(self) -> "StringValue":
         return StringValue("FuncValue")
+
 
 @dataclass
 class UserFuncValue(FuncValue):
@@ -95,20 +94,19 @@ class UserFuncValue(FuncValue):
 @dataclass
 class BuiltInFuncValue(FuncValue):
     body: Callable[..., Value | None]
+    needs_inter: bool = False
+
+
+@dataclass
+class AccessedFuncValue(FuncValue):
+    body: Callable[..., Value | None]
+    needs_inter: bool = False
+    owner: "Value | None" = None
 
 
 @dataclass(order=True)
 class IntValue(Value, Additive, Subtractive, Multiplicative):
     value: int
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
-
-    def __post_init__(self):
-        self.members = {
-            "toString": Cell(
-                BuiltInFuncValue("toString", [[]], lambda *_: self.to_string())
-            ),
-            "toFloat": Cell(BuiltInFuncValue("toFloat", [[]], lambda *_: self.to_float())),
-        }
 
     def truthy(self) -> bool:
         return self.value != 0
@@ -143,15 +141,6 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
 @dataclass(order=True)
 class FloatValue(Value, Additive, Subtractive, Multiplicative):
     value: float
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
-
-    def __post_init__(self):
-        self.members = {
-            "toString": Cell(
-                BuiltInFuncValue("toString", [[]], lambda *_: self.to_string())
-            ),
-            "toInt": Cell(BuiltInFuncValue("toInt", [[]], lambda *_: self.to_int())),
-        }
 
     def truthy(self):
         return self.value != 0.0
@@ -186,13 +175,6 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
 @dataclass(order=True)
 class StringValue(Value, Additive):
     value: str
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
-
-    def __post_init__(self):
-        self.members = {
-            "toInt": Cell(BuiltInFuncValue("toInt", [[]], lambda *_: self.to_int())),
-            "toFloat": Cell(BuiltInFuncValue("toFloat", [[]], lambda *_: self.to_float())),
-        }
 
     def truthy(self):
         return self.value != ""
@@ -200,19 +182,17 @@ class StringValue(Value, Additive):
     def length(self):
         return IntValue(len(self.value))
 
-    def to_float(self, node: po.ParserObject) -> "FloatValue":
+    def to_float(self) -> "FloatValue":
         try:
             return FloatValue(float(self.value))
         except ValueError:
-            msg = f"Cannot cast '{self.value}' to Float"
-            raise RuntimeException(msg, pos=node.pos)
+            raise RuntimeException(f"Cannot cast '{self.value}' to Float")
 
-    def to_int(self, node: po.ParserObject) -> "IntValue":
+    def to_int(self) -> "IntValue":
         try:
             return IntValue(int(self.value))
         except ValueError:
-            msg = f"Cannot cast '{self.value}' to Int"
-            raise RuntimeException(msg, pos=node.pos)
+            raise RuntimeException(f"Cannot cast '{self.value}' to Int")
 
     def type_of(self) -> "StringValue":
         return StringValue("String")
@@ -263,6 +243,9 @@ class ItemValue(Value):
     def get_value(self) -> Value:
         return self.value
 
+    def to_string(self) -> StringValue:
+        return StringValue(f"{self.key}: {self.value}")
+
     def type_of(self):
         return StringValue("Item")
 
@@ -283,29 +266,6 @@ class Collection(Value):
 
 @dataclass
 class ListValue(Collection, Additive):
-    members: dict[str, Cell] = field(init=False, repr=False, compare=False)
-
-    def __post_init__(self):
-        self.members = {
-            "length": Cell(BuiltInFuncValue("length", [[]], lambda *_: self.length())),
-            "get": Cell(
-                BuiltInFuncValue("get", [[IntValue]], lambda _, __, int: self.get(int))
-            ),
-            "add": Cell(
-                BuiltInFuncValue("add", [[Value]], lambda _, __, val: self.add(val))
-            ),
-            "set": Cell(
-                BuiltInFuncValue(
-                    "set",
-                    [[IntValue, Value]],
-                    lambda _, __, int, val: self.set(int, val),
-                )
-            ),
-            "remove": Cell(
-                BuiltInFuncValue("remove", [[IntValue]], lambda _, __, int: self.remove(int))
-            ),
-        }
-
     def __add__(self, other: "ListValue"):
         return ListValue(self.elements + other.elements)
 
@@ -329,6 +289,9 @@ class ListValue(Collection, Additive):
         if index.value < 0 or index.value >= self.length().value:
             raise IndexError(f"Index {index.value} out of range")
         self.elements.pop(index.value)
+
+    def to_string(self) -> StringValue:
+        return StringValue(self.str_long())
 
     def __str__(self) -> str:
         return f"List({self.length().value})"
@@ -367,7 +330,9 @@ class DictValue(Collection):
                 )
             ),
             "remove": Cell(
-                BuiltInFuncValue("remove", [[Value]], lambda _, __, val: self.remove(val))
+                BuiltInFuncValue(
+                    "remove", [[Value]], lambda _, __, val: self.remove(val)
+                )
             ),
             "contains": Cell(
                 BuiltInFuncValue(
@@ -379,7 +344,7 @@ class DictValue(Collection):
             ),
         }
 
-    def add_new(self, interpreter, env, key: Value, value: Value):
+    def add_new(self, method, env, key: Value, value: Value):
         if self.contains(key).value:
             raise KeyError(f"Key {key} already exists in the dictionary")
         if not is_simple(key):
@@ -389,9 +354,7 @@ class DictValue(Collection):
 
         if isinstance(self.order_func, BuiltInFuncValue):
             for i, item in enumerate(self.elements):
-                if self.order_func(
-                    interpreter, env, (None), [new_item, item]
-                ) < IntValue(0):
+                if self.order_func(new_item, item) < IntValue(0):
                     self.elements.insert(i, new_item)
                     return
             self.elements.append(new_item)
@@ -402,7 +365,7 @@ class DictValue(Collection):
 
                 comp_value = None
                 try:
-                    comp_value = interpreter.eval(self.order_func.body, env)
+                    comp_value = method(self.order_func.body, env)
                 except ReturnSignal as ret:
                     comp_value = ret.return_value
 
@@ -417,8 +380,8 @@ class DictValue(Collection):
                     return
             self.elements.append(new_item)
 
-    def add(self, interpreter, env, item: ItemValue):
-        self.add_new(interpreter, env, item.get_key(), item.get_value())
+    def add(self, method, env, item: ItemValue):
+        self.add_new(method, env, item.get_key(), item.get_value())
 
     def remove(self, key: Value):
         for i, item in enumerate(self.elements):
@@ -438,6 +401,9 @@ class DictValue(Collection):
             if item.get_key() == key:
                 return item
         raise KeyError(f"Key {key} not found in the dictionary")
+
+    def to_string(self) -> StringValue:
+        return StringValue(self.str_long())
 
     def type_of(self) -> "StringValue":
         return StringValue("Dict")

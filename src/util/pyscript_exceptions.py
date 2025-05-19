@@ -46,5 +46,5 @@ class SyntaxException(PyscriptException):
 
 
 class RuntimeException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
+    def __init__(self, msg: str, pos: tuple[int, int] = None):
         super().__init__(error_type="RUNTIME", msg=msg, pos=pos)
