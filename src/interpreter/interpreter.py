@@ -131,9 +131,9 @@ class Interpreter:
             )
 
         new_env = Env(env, node)
-        new_env.define(node.var.val, None)
+        new_env.define(node.var.value, None)
         for element in source.elements:
-            new_env.set(node.var.name, element)
+            new_env.set(node.var.value, element)
             self.eval(node.body, new_env)
 
     # Return Statement
@@ -470,6 +470,7 @@ class Interpreter:
                     self.eval(function.expression.body, func_env)
                 except ReturnSignal as ret:
                     return ret.return_value
+                return None
 
             params = self.check_params(arg_objects, function)
             if params is None:

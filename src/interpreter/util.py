@@ -31,6 +31,7 @@ def add_to_dict(
 
         if soring_val < IntValue(0):
             dict_value.elements.insert(i, new_item)
+            return
     dict_value.elements.append(new_item)
 
 
@@ -101,7 +102,7 @@ GLOBAL_ENV = Env(
             AccessedFuncValue([[]], lambda list_value: list_value.length()),
         ),
         "ListValue.get": Cell(
-            AccessedFuncValue([Value], lambda list_value, index: list_value.get(index)),
+            AccessedFuncValue([[Value]], lambda list_value, index: list_value.get(index)),
         ),
         "ListValue.set": Cell(
             AccessedFuncValue(
@@ -126,7 +127,7 @@ GLOBAL_ENV = Env(
             AccessedFuncValue([[]], lambda dict_value: dict_value.length()),
         ),
         "DictValue.get": Cell(
-            AccessedFuncValue([Value], lambda dict_value, key: dict_value.get(key)),
+            AccessedFuncValue([[Value]], lambda dict_value, key: dict_value.get(key)),
         ),
         "DictValue.contains": Cell(
             AccessedFuncValue(
