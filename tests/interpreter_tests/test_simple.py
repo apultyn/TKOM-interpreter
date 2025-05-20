@@ -703,7 +703,8 @@ def test_dict_expr(make_interpreter):
             ItemValue(IntValue(10), IntValue(-5)),
             ItemValue(IntValue(4), StringValue("Val")),
             ItemValue(StringValue("Key"), StringValue("value")),
-        ], DEFAULT_SORT
+        ],
+        DEFAULT_SORT,
     )
 
 

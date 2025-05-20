@@ -55,4 +55,56 @@ def test_Dict(make_interpreter):
 
 
 def test_add_new_to_dict_default(make_interpreter):
-    interpreter = make_interpreter(env=[("x", io.DictValue([io.ItemValue(io.IntValue(1), io.IntValue(2))], lambda: io.ItemValue(1)))])
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                io.DictValue(
+                    [io.ItemValue(io.IntValue(1), io.IntValue(2))], DEFAULT_SORT
+                ),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        po.CallExpr(
+            po.AccessExpr(po.Identifier("x"), po.Identifier("addNew")),
+            [po.IntExpr(3), po.IntExpr(4)],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == io.DictValue(
+        [
+            io.ItemValue(io.IntValue(1), io.IntValue(2)),
+            io.ItemValue(io.IntValue(3), io.IntValue(4)),
+        ],
+        DEFAULT_SORT,
+    )
+
+
+def test_add_to_dict_default(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                io.DictValue(
+                    [io.ItemValue(io.IntValue(1), io.IntValue(2))], DEFAULT_SORT
+                ),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        po.CallExpr(
+            po.AccessExpr(po.Identifier("x"), po.Identifier("add")),
+            [po.ItemExpr(po.IntExpr(3), po.IntExpr(4))],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == io.DictValue(
+        [
+            io.ItemValue(io.IntValue(1), io.IntValue(2)),
+            io.ItemValue(io.IntValue(3), io.IntValue(4)),
+        ],
+        DEFAULT_SORT,
+    )

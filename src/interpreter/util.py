@@ -17,7 +17,7 @@ from src.interpreter.interpreter_objects import (
 from src.util.pyscript_exceptions import RuntimeException
 
 
-DEFAULT_SORT = BuiltInFuncValue(lambda: IntValue(1))
+DEFAULT_SORT = BuiltInFuncValue(lambda _, __: IntValue(1))
 
 
 def check_args_length(args, expected_length: int, func_name: str):

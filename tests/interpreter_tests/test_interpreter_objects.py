@@ -12,6 +12,7 @@ from src.interpreter.interpreter_objects import (
 
 from src.interpreter.util import DEFAULT_SORT
 
+
 def test_int():
     obj = IntValue(5)
 
@@ -177,7 +178,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=DEFAULT_SORT
+        order_func=DEFAULT_SORT,
     )
 
     assert obj == DictValue(
@@ -186,7 +187,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=DEFAULT_SORT
+        order_func=DEFAULT_SORT,
     )
 
     assert obj.length() == IntValue(3)
@@ -202,7 +203,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=DEFAULT_SORT
+        order_func=DEFAULT_SORT,
     )
 
     with pytest.raises(KeyError):
@@ -233,10 +234,10 @@ def test_nested_prints():
                     ItemValue(IntValue(2), StringValue("two")),
                     ItemValue(StringValue("hello"), StringValue("there")),
                 ],
-                order_func=DEFAULT_SORT
+                order_func=DEFAULT_SORT,
             ),
         ],
-        order_func=DEFAULT_SORT
+        order_func=DEFAULT_SORT,
     )
 
     assert str(obj) == "Dict(6)"

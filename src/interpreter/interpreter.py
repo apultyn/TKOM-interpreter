@@ -4,7 +4,7 @@ import src.parser.parser_objects as po
 from src.interpreter.util import (
     GLOBAL_ENV,
     get_operation_unsupported_type_msg,
-    DEFAULT_SORT
+    DEFAULT_SORT,
 )
 
 from src.util.pyscript_exceptions import RuntimeException
