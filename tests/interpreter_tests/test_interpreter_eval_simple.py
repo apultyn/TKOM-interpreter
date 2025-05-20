@@ -1,4 +1,4 @@
-import pytest
+from unittest.mock import MagicMock
 
 from src.interpreter.interpreter_objects import (
     IntValue,
@@ -683,6 +683,31 @@ def test_access_expr(make_interpreter):
     assert func.body() == IntValue(5)
     assert func.owner == IntValue(0)
 
+
+def test_call_expr(make_interpreter, monkeypatch):
+    dummy_func = UserFuncValue([[]], None)
+
+    interpreter = make_interpreter(env=[("my_func", dummy_func)])
+    node = CallExpr(
+        Identifier("my_func"),
+        [IntExpr(5), MulExpr(FloatExpr(8.5), FloatExpr(7.3))],
+        pos=(1, 1)
+    )
+
+    expected_value = StringValue("Result")
+    mock_call = MagicMock(return_value = expected_value)
+
+    monkeypatch.setattr(interpreter, "call_function", mock_call)
+
+    assert interpreter.eval(node) == StringValue("Result")
+
+    mock_call.assert_called_once()
+    function, arg_objects, env, call_pos = mock_call.call_args[0]
+
+    assert function is dummy_func
+    assert arg_objects == [IntValue(5), FloatValue(62.05)]
+    assert env is interpreter.global_env
+    assert call_pos == (1, 1)
 
 def test_call_function_user(make_interpreter):
     interpreter = make_interpreter()
