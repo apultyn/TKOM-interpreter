@@ -1,3 +1,5 @@
+import pytest
+
 from src.interpreter.interpreter_objects import (
     IntValue,
     StringValue,
@@ -8,6 +10,7 @@ from src.interpreter.interpreter_objects import (
     ItemValue,
     DictValue,
     UserFuncValue,
+    BuiltInFuncValue
 )
 from src.parser.parser_objects import (
     IfStmt,
@@ -679,3 +682,48 @@ def test_access_expr(make_interpreter):
     assert isinstance(another_func, AccessedFuncValue)
     assert func.body() == IntValue(5)
     assert func.owner == IntValue(0)
+
+
+def test_call_function_user(make_interpreter):
+    interpreter = make_interpreter()
+
+    func = UserFuncValue(
+        ["arg1", "arg2"],
+        FunctionExpr(
+            [Identifier("arg1"), Identifier("arg2")],
+            Block([ReturnStmt(AddExpr(Identifier("arg1"), Identifier("arg2")))]),
+        ),
+    )
+
+    assert interpreter.call_function(
+        func,
+        [IntValue(1), IntValue(3)],
+    ) == IntValue(4)
+
+
+def test_call_function_built_in(make_interpreter):
+    interpreter = make_interpreter()
+
+    func = BuiltInFuncValue(
+        [[StringValue]], lambda text: text + StringValue(" There")
+    )
+
+    assert interpreter.call_function(
+        func,
+        [StringValue("Hello")]
+    ) == StringValue("Hello There")
+
+
+def test_call_function_access(make_interpreter):
+    interpreter = make_interpreter()
+
+    func = AccessedFuncValue(
+        [[FloatValue]],
+        lambda owner, float : (float / FloatValue(2.5)) + owner,
+        owner=FloatValue(1.75)
+    )
+
+    assert interpreter.call_function(
+        func,
+        [FloatValue(-6.25)]
+    ) == FloatValue(-0.75)

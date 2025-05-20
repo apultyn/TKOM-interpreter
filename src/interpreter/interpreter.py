@@ -458,7 +458,7 @@ class Interpreter:
         self,
         function: FuncValue,
         arg_objects: list[Value],
-        env: Env,
+        env: Env = None,
         call_pos: tuple[int, int] = None,
     ) -> Value | None:
         if not isinstance(function, FuncValue):
@@ -468,6 +468,10 @@ class Interpreter:
                     pos=call_pos,
                 )
             )
+
+        if env is None:
+            env = self.global_env
+
         try:
             if isinstance(function, UserFuncValue):
                 func_env = Env(env, function.expression)
