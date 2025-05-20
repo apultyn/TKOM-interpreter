@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from typing import List, Any, Optional
+from abc import ABC
 
 
 @dataclass(kw_only=True)
@@ -9,6 +10,11 @@ class ParserObject:
 
     def __post_init__(self):
         self._name = self.__class__.__name__
+
+    def accept(self, visitor, *args, **kwargs):
+        method_name = f"visit_{self._name}"
+        visit = getattr(visitor, method_name, visitor.visit_default)
+        return visit(self, *args, **kwargs)
 
 
 class Statement(ParserObject):

@@ -347,7 +347,7 @@ def test_plus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
     interpreter.global_env.define(
-        po.Identifier("x", pos=(1, 1)),
+        "x",
         io.IntValue(5),
     )
 
@@ -372,7 +372,7 @@ def test_plus_assignment_unsupported_type(make_interpreter, mocked_error_handler
     interpreter = make_interpreter()
 
     interpreter.global_env.define(
-        po.Identifier("x", pos=(1, 1)),
+        "x",
         io.ItemValue(io.IntValue(1), io.IntValue(1)),
     )
 
@@ -417,7 +417,7 @@ def test_minus_assignment_type_missmatch(make_interpreter, mocked_error_handler)
     interpreter = make_interpreter()
 
     interpreter.global_env.define(
-        po.Identifier("x", pos=(1, 1)),
+        "x",
         io.IntValue(5),
     )
 
@@ -442,7 +442,7 @@ def test_minus_assignment_unsupported_type(make_interpreter, mocked_error_handle
     interpreter = make_interpreter()
 
     interpreter.global_env.define(
-        po.Identifier("x", pos=(1, 1)),
+        "x",
         io.ItemValue(io.IntValue(1), io.IntValue(1)),
     )
 
