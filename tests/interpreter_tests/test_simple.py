@@ -51,6 +51,8 @@ from src.parser.parser_objects import (
     BracketsExpr,
 )
 
+from src.interpreter.util import DEFAULT_SORT
+
 
 def test_if_stmt_if_body(make_interpreter):
     interpreter = make_interpreter(
@@ -694,14 +696,14 @@ def test_dict_expr(make_interpreter):
                 ItemExpr(IntExpr(10), IntExpr(-5)),
                 ItemExpr(AddExpr(IntExpr(2), IntExpr(2)), StringExpr("Val")),
                 ItemExpr(StringExpr("Key"), StringExpr("value")),
-            ]
+            ],
         )
     ) == DictValue(
         [
             ItemValue(IntValue(10), IntValue(-5)),
             ItemValue(IntValue(4), StringValue("Val")),
             ItemValue(StringValue("Key"), StringValue("value")),
-        ]
+        ], DEFAULT_SORT
     )
 
 

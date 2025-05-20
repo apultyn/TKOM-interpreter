@@ -4,6 +4,7 @@ import src.parser.parser_objects as po
 from src.interpreter.util import (
     GLOBAL_ENV,
     get_operation_unsupported_type_msg,
+    DEFAULT_SORT
 )
 
 from src.util.pyscript_exceptions import RuntimeException
@@ -452,7 +453,7 @@ class Interpreter:
         if not isinstance(function, FuncValue):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Object '{function.__class__.__qualname__}' is not a function",
+                    f"Object '{function.type_of()}' is not a function",
                     pos=call_pos,
                 )
             )
@@ -475,16 +476,16 @@ class Interpreter:
             if isinstance(function, BuiltInFuncValue):
                 return function.body(*arg_objects)
 
-            if isinstance(function, AccessedFuncValue):
-                if function.needs_inter:
-                    return function.body(
-                        self.call_function,
-                        Env(env, "Internal call"),
-                        function.owner,
-                        *arg_objects,
-                    )
-                else:
-                    return function.body(function.owner, *arg_objects)
+            # Access Function
+            if function.needs_inter:
+                return function.body(
+                    self.call_function,
+                    Env(env, "Internal call"),
+                    function.owner,
+                    *arg_objects,
+                )
+            else:
+                return function.body(function.owner, *arg_objects)
 
         except RuntimeException as exc:
             exc.pos = call_pos
@@ -537,10 +538,18 @@ class Interpreter:
 
     # Dict Expr
     def visit_DictExpr(self, node: po.DictExpr, env: Env | None = None) -> DictValue:
-        dict = DictValue([], lambda: IntValue(1))
+        dict = DictValue([], DEFAULT_SORT)
 
         for parser_item in node.items:
             interpreter_item = self.eval(parser_item, env)
+
+            if dict.contains(interpreter_item.get_key()).truthy():
+                self._error_handler.handle_error(
+                    RuntimeException(
+                        f"Item with key '{interpreter_item.get_key()}' already exists in dictionary",
+                        pos=parser_item.key.pos,
+                    )
+                )
             dict.elements.append(interpreter_item)
 
         return dict
@@ -551,10 +560,10 @@ class Interpreter:
     ) -> UserFuncValue:
         param_names = []
         for ident in node.params:
-            if ident in param_names:
+            if ident.value in param_names:
                 self._error_handler.handle_error(
                     RuntimeException(
-                        f"Param {ident.value} already defined", pos=ident.pos
+                        f"Param '{ident.value}' already defined", pos=ident.pos
                     )
                 )
             param_names.append(ident.value)
@@ -568,7 +577,7 @@ class Interpreter:
         if not isinstance(source, Collection):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Source should be a collection, got {source.__class__.__qualname__}",
+                    f"Source should be a collection, got '{source.type_of()}'",
                     pos=node.source.pos,
                 )
             )
@@ -587,8 +596,10 @@ class Interpreter:
 
                 if not isinstance(condition, BoolValue):
                     self._error_handler.handle_error(
-                        f"'where' condition should be a BoolValue, got {condition.__class__.__qualname__}",
-                        pos=node.where.pos,
+                        RuntimeException(
+                            f"'where' condition should be a Bool, got '{condition.type_of()}'",
+                            pos=node.where.pos,
+                        )
                     )
 
                 if not condition.value:
@@ -602,31 +613,22 @@ class Interpreter:
             if node.order_by:
                 order_key = self.eval(node.order_by, new_env)
 
-                try:
-                    inserted = False
-                    # descending
-                    if node.descending:
-                        for i, item in enumerate(return_list):
-                            if order_key > item[1]:
-                                return_list.insert(i, (selects, order_key))
-                                inserted = True
-                                break
-                    else:
-                        for i, item in enumerate(return_list):
-                            if order_key < item[i]:
-                                return_list.insert(i, (selects, order_key))
-                                inserted = True
-                                break
-                    if not inserted:
-                        return_list.append((selects, order_key))
-
-                except TypeError:
-                    self._error_handler.handle_error(
-                        RuntimeException(
-                            f"Comparing not supported on type {order_key.__class__.__qualname__}",
-                            pos=node.order_by.pos,
-                        )
-                    )
+                inserted = False
+                # descending
+                if node.descending:
+                    for i, item in enumerate(return_list):
+                        if order_key > item[1]:
+                            return_list.insert(i, (selects, order_key))
+                            inserted = True
+                            break
+                else:
+                    for i, item in enumerate(return_list):
+                        if order_key < item[i]:
+                            return_list.insert(i, (selects, order_key))
+                            inserted = True
+                            break
+                if not inserted:
+                    return_list.append((selects, order_key))
             else:
                 return_list.append((selects, order_key))
 

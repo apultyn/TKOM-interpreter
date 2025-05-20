@@ -310,7 +310,7 @@ class ReturnSignal(Exception):
 
 @dataclass
 class DictValue(Collection):
-    order_func: "UserFuncValue" = field(default=None, compare=False)
+    order_func: "FuncValue" = field(default=None)
 
     def check_add(self, item: ItemValue):
         if self.contains(item.key).value:

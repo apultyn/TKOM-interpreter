@@ -17,6 +17,9 @@ from src.interpreter.interpreter_objects import (
 from src.util.pyscript_exceptions import RuntimeException
 
 
+DEFAULT_SORT = BuiltInFuncValue(lambda: IntValue(1))
+
+
 def check_args_length(args, expected_length: int, func_name: str):
     if len(args) != expected_length:
         word = "argument" if len(args) == 1 else "arguments"
@@ -48,13 +51,14 @@ def get_dict(args):
         raise RuntimeException(
             f"Function 'Dict' requires 0 or 1 argument, got {len(args)}"
         )
+    func = DEFAULT_SORT
     if len(args) == 1:
         func = args[0]
         if not isinstance(func, FuncValue):
             raise RuntimeException(
                 f"Dict constructor requires 'Function' type argument, got '{func.type_of()}'"
             )
-        return DictValue(order_func=func)
+    return DictValue(order_func=func)
 
 
 def add_new_to_dict(call_method, env: Env, dict_value: DictValue, args):

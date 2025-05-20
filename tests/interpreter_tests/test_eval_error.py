@@ -585,3 +585,123 @@ def test_access_expr_not_existing(make_interpreter, mocked_error_handler):
         (10, 2),
         msg="Object of type 'Int' has no 'notExistingMember' member",
     )
+
+
+def test_call_function_not_func(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.call_function(io.IntValue(5), [], call_pos=(5, 2))
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (5, 2),
+        msg="Object 'Int' is not a function",
+    )
+
+
+def test_dict_expr_duplicated_keys(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DictExpr(
+                [
+                    po.ItemExpr(po.IntExpr(1), po.StringExpr("val")),
+                    po.ItemExpr(po.IntExpr(1, pos=(3, 18)), po.StringExpr("another")),
+                ]
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (3, 18),
+        msg="Item with key '1' already exists in dictionary",
+    )
+
+
+def test_func_expr_duplicated_params(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.FunctionExpr(
+                [
+                    po.Identifier("arg1"),
+                    po.Identifier("arg2"),
+                    po.Identifier("arg1", pos=(6, 8)),
+                ],
+                None,
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (6, 8),
+        msg="Param 'arg1' already defined",
+    )
+
+
+def test_linq_expr_not_collection(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                po.Identifier("x"),
+                po.IntExpr(5, pos=(12, 21)),
+                [],
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (12, 21),
+        msg="Source should be a collection, got 'Int'",
+    )
+
+
+def test_linq_expr_where_not_bool(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                var=po.Identifier("x"),
+                source=po.ListExpr([po.IntExpr(5)]),
+                selects=[],
+                where=po.ListExpr([], pos=(2, 2)),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 2),
+        msg="'where' condition should be a Bool, got 'List'",
+    )
+
+
+def test_linq_expr_where_comparing_error(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                var=po.Identifier("x"),
+                source=po.ListExpr([po.ListExpr([])]),
+                selects=po.Identifier("x"),
+                where=po.LtExpr(po.ListExpr([]), po.ListExpr([]), pos=(4, 8)),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (4, 8),
+        msg="Operation '<' not supported for type 'List'",
+    )

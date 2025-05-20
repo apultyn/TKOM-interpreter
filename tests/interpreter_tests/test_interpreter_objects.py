@@ -1,6 +1,5 @@
 import pytest
 
-from tests.interpreter_tests.util import get_default_sort
 from src.interpreter.interpreter_objects import (
     IntValue,
     FloatValue,
@@ -10,9 +9,8 @@ from src.interpreter.interpreter_objects import (
     ItemValue,
     DictValue,
 )
-from src.parser.parser_objects import CallExpr, Identifier
-from src.util.pyscript_exceptions import RuntimeException
 
+from src.interpreter.util import DEFAULT_SORT
 
 def test_int():
     obj = IntValue(5)
@@ -179,7 +177,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=get_default_sort(),
+        order_func=DEFAULT_SORT
     )
 
     assert obj == DictValue(
@@ -188,7 +186,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=get_default_sort(),
+        order_func=DEFAULT_SORT
     )
 
     assert obj.length() == IntValue(3)
@@ -204,7 +202,7 @@ def test_dict_no_sort():
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
         ],
-        order_func=get_default_sort,
+        order_func=DEFAULT_SORT
     )
 
     with pytest.raises(KeyError):
@@ -235,10 +233,10 @@ def test_nested_prints():
                     ItemValue(IntValue(2), StringValue("two")),
                     ItemValue(StringValue("hello"), StringValue("there")),
                 ],
-                order_func=get_default_sort,
+                order_func=DEFAULT_SORT
             ),
         ],
-        order_func=get_default_sort,
+        order_func=DEFAULT_SORT
     )
 
     assert str(obj) == "Dict(6)"
