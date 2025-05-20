@@ -8,7 +8,7 @@ from src.interpreter.interpreter_objects import (
     UserFuncValue,
     IntValue,
     ItemValue,
-    Collection
+    Collection,
 )
 
 from src.util.pyscript_exceptions import RuntimeException
@@ -45,7 +45,6 @@ def print_args(args):
             arg = str(arg)
         modified.append(arg)
     print(*modified)
-
 
 
 GLOBAL_ENV = Env(
@@ -115,7 +114,9 @@ GLOBAL_ENV = Env(
             AccessedFuncValue([[]], lambda list_value: list_value.length()),
         ),
         "ListValue.get": Cell(
-            AccessedFuncValue([[Value]], lambda list_value, index: list_value.get(index)),
+            AccessedFuncValue(
+                [[Value]], lambda list_value, index: list_value.get(index)
+            ),
         ),
         "ListValue.set": Cell(
             AccessedFuncValue(

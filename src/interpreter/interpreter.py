@@ -104,14 +104,14 @@ class Interpreter:
     # If Statement
     def visit_IfStmt(self, node: po.IfStmt, env: Env | None = None):
         if self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(env, node))
+            self.eval(node.body, env)
             return
         for elif_stmt in node.elif_statements:
             if self.eval(elif_stmt.condition, env).truthy():
-                self.eval(elif_stmt.body, Env(env, node))
+                self.eval(elif_stmt.body, env)
                 return
         if node.else_body:
-            self.eval(node.else_body, Env(env, node))
+            self.eval(node.else_body, env)
 
     # While Statement
     def visit_WhileStmt(self, node: po.WhileStmt, env: Env | None = None):
