@@ -1,7 +1,29 @@
 import pytest
 
-import src.parser.parser_objects as po
-import src.interpreter.interpreter_objects as io
+from src.parser.parser_objects import (
+    CallExpr,
+    Identifier,
+    IntExpr,
+    AccessExpr,
+    FloatExpr,
+    StringExpr,
+    BoolExpr,
+    ItemExpr,
+    ListExpr,
+    DictExpr,
+    FunctionExpr,
+    ReturnStmt,
+    Block,
+)
+from src.interpreter.interpreter_objects import (
+    ListValue,
+    UserFuncValue,
+    IntValue,
+    ItemValue,
+    StringValue,
+    DictValue,
+    BoolValue,
+)
 
 from src.interpreter.util import DEFAULT_SORT
 
@@ -9,7 +31,7 @@ from src.interpreter.util import DEFAULT_SORT
 @pytest.mark.parametrize("amount", range(10))
 def test_print(make_interpreter, capsys, amount):
     make_interpreter().eval(
-        po.CallExpr(po.Identifier("print"), [po.IntExpr(5) for _ in range(amount)])
+        CallExpr(Identifier("print"), [IntExpr(5) for _ in range(amount)])
     )
 
     captured = capsys.readouterr()
@@ -20,38 +42,38 @@ def test_print(make_interpreter, capsys, amount):
 @pytest.mark.parametrize(
     "object, type",
     [
-        (po.IntExpr(1), "Int"),
-        (po.FloatExpr(1.5), "Float"),
-        (po.StringExpr("hi"), "String"),
-        (po.BoolExpr(True), "Bool"),
-        (po.ItemExpr(po.StringExpr("key"), po.StringExpr("val")), "Item"),
-        (po.ListExpr([]), "List"),
-        (po.DictExpr([]), "Dict"),
-        (po.FunctionExpr([], None), "Function"),
-        (po.Identifier("print"), "Function"),
-        (po.AccessExpr(po.ListExpr([]), po.Identifier("get")), "Function"),
+        (IntExpr(1), "Int"),
+        (FloatExpr(1.5), "Float"),
+        (StringExpr("hi"), "String"),
+        (BoolExpr(True), "Bool"),
+        (ItemExpr(StringExpr("key"), StringExpr("val")), "Item"),
+        (ListExpr([]), "List"),
+        (DictExpr([]), "Dict"),
+        (FunctionExpr([], None), "Function"),
+        (Identifier("print"), "Function"),
+        (AccessExpr(ListExpr([]), Identifier("get")), "Function"),
     ],
 )
 def test_typeof(make_interpreter, object, type):
     assert make_interpreter().eval(
-        po.CallExpr(po.Identifier("typeOf"), [object])
-    ) == io.StringValue(type)
+        CallExpr(Identifier("typeOf"), [object])
+    ) == StringValue(type)
 
 
 def test_Dict(make_interpreter):
     interpreter = make_interpreter()
-    assert interpreter.eval(po.CallExpr(po.Identifier("Dict"), [])) == io.DictValue(
+    assert interpreter.eval(CallExpr(Identifier("Dict"), [])) == DictValue(
         [], DEFAULT_SORT
     )
 
-    function = po.FunctionExpr(
-        [po.Identifier("item1"), po.Identifier("item2")],
-        po.Block([po.ReturnStmt(po.IntExpr(1))]),
+    function = FunctionExpr(
+        [Identifier("item1"), Identifier("item2")],
+        Block([ReturnStmt(IntExpr(1))]),
     )
 
-    assert interpreter.eval(
-        po.CallExpr(po.Identifier("Dict"), [function])
-    ) == io.DictValue([], io.UserFuncValue(["item1", "item2"], function))
+    assert interpreter.eval(CallExpr(Identifier("Dict"), [function])) == DictValue(
+        [], UserFuncValue(["item1", "item2"], function)
+    )
 
 
 def test_add_new_to_dict_default(make_interpreter):
@@ -59,24 +81,22 @@ def test_add_new_to_dict_default(make_interpreter):
         env=[
             (
                 "x",
-                io.DictValue(
-                    [io.ItemValue(io.IntValue(1), io.IntValue(2))], DEFAULT_SORT
-                ),
+                DictValue([ItemValue(IntValue(1), IntValue(2))], DEFAULT_SORT),
             )
         ]
     )
 
     interpreter.eval(
-        po.CallExpr(
-            po.AccessExpr(po.Identifier("x"), po.Identifier("addNew")),
-            [po.IntExpr(3), po.IntExpr(4)],
+        CallExpr(
+            AccessExpr(Identifier("x"), Identifier("addNew")),
+            [IntExpr(3), IntExpr(4)],
         )
     )
 
-    assert interpreter.global_env.get("x") == io.DictValue(
+    assert interpreter.global_env.get("x") == DictValue(
         [
-            io.ItemValue(io.IntValue(1), io.IntValue(2)),
-            io.ItemValue(io.IntValue(3), io.IntValue(4)),
+            ItemValue(IntValue(1), IntValue(2)),
+            ItemValue(IntValue(3), IntValue(4)),
         ],
         DEFAULT_SORT,
     )
@@ -87,24 +107,142 @@ def test_add_to_dict_default(make_interpreter):
         env=[
             (
                 "x",
-                io.DictValue(
-                    [io.ItemValue(io.IntValue(1), io.IntValue(2))], DEFAULT_SORT
+                DictValue([ItemValue(IntValue(1), IntValue(2))], DEFAULT_SORT),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        CallExpr(
+            AccessExpr(Identifier("x"), Identifier("add")),
+            [ItemExpr(IntExpr(3), IntExpr(4))],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == DictValue(
+        [
+            ItemValue(IntValue(1), IntValue(2)),
+            ItemValue(IntValue(3), IntValue(4)),
+        ],
+        DEFAULT_SORT,
+    )
+
+
+def test_list_get(make_interpreter):
+    assert make_interpreter().eval(
+        CallExpr(
+            AccessExpr(
+                ListExpr([IntExpr(1), IntExpr(2), IntExpr(3)]), Identifier("get")
+            ),
+            [IntExpr(1)],
+        )
+    ) == IntValue(2)
+
+
+def test_list_set(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                ListValue([IntValue(1), IntValue(2), IntValue(3)]),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        CallExpr(
+            AccessExpr(Identifier("x"), Identifier("set")),
+            [IntExpr(1), StringExpr("hi")],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == ListValue(
+        [IntValue(1), StringValue("hi"), IntValue(3)]
+    )
+
+
+def test_list_add(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                ListValue([IntValue(1), IntValue(2), IntValue(3)]),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        CallExpr(
+            AccessExpr(Identifier("x"), Identifier("add")),
+            [IntExpr(4)],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == ListValue(
+        [IntValue(1), IntValue(2), IntValue(3), IntValue(4)]
+    )
+
+
+def test_list_remove(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                ListValue([IntValue(1), IntValue(2), IntValue(3)]),
+            )
+        ]
+    )
+
+    interpreter.eval(
+        CallExpr(
+            AccessExpr(Identifier("x"), Identifier("remove")),
+            [IntExpr(0)],
+        )
+    )
+
+    assert interpreter.global_env.get("x") == ListValue([IntValue(2), IntValue(3)])
+
+
+def test_dict_contains(make_interpreter):
+    assert make_interpreter().eval(
+        CallExpr(
+            AccessExpr(
+                DictExpr(
+                    [ItemExpr(IntExpr(1), IntExpr(2)), ItemExpr(IntExpr(3), IntExpr(4))]
+                ),
+                Identifier("contains"),
+            ),
+            [IntExpr(3)],
+        )
+    ) == BoolValue(True)
+
+
+def test_dict_remove(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            (
+                "x",
+                DictValue(
+                    [
+                        ItemValue(IntValue(1), IntValue(1)),
+                        ItemValue(IntValue(2), IntValue(2)),
+                    ],
+                    DEFAULT_SORT,
                 ),
             )
         ]
     )
 
     interpreter.eval(
-        po.CallExpr(
-            po.AccessExpr(po.Identifier("x"), po.Identifier("add")),
-            [po.ItemExpr(po.IntExpr(3), po.IntExpr(4))],
+        CallExpr(
+            AccessExpr(
+                Identifier("x"),
+                Identifier("remove"),
+            ),
+            [IntExpr(2)],
         )
     )
 
-    assert interpreter.global_env.get("x") == io.DictValue(
-        [
-            io.ItemValue(io.IntValue(1), io.IntValue(2)),
-            io.ItemValue(io.IntValue(3), io.IntValue(4)),
-        ],
-        DEFAULT_SORT,
+    assert interpreter.global_env.get("x") == DictValue(
+        [ItemValue(IntValue(1), IntValue(1))], DEFAULT_SORT
     )
