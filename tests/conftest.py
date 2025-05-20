@@ -8,7 +8,7 @@ from src.util.configs import LexerConfig
 from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
 from src.interpreter.interpreter import Interpreter, GLOBAL_ENV
-from src.interpreter.interpreter_objects import Env
+from src.interpreter.interpreter_objects import Value
 from .util import AbortExecution
 
 
@@ -53,7 +53,11 @@ def make_env():
 
 @pytest.fixture
 def make_interpreter(mocked_error_handler, make_env) -> Interpreter:
-    def _factory(err=mocked_error_handler):
-        return Interpreter(error_handler=err, env=make_env())
+    def _factory(*, env: list[tuple[str, Value]] = [], err=mocked_error_handler):
+        interpreter = Interpreter(error_handler=err, env=make_env())
+
+        for name, value in env:
+            interpreter.global_env.define(name, value)
+        return interpreter
 
     return _factory
