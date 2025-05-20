@@ -551,8 +551,9 @@ def test_logic_neg_not_bool(make_interpreter, mocked_error_handler):
         mocked_error_handler,
         RuntimeException,
         (4, 7),
-        msg="Operation '!' not supported for type 'Function'"
+        msg="Operation '!' not supported for type 'Function'",
     )
+
 
 def test_arith_neg_not_bool(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
@@ -564,18 +565,23 @@ def test_arith_neg_not_bool(make_interpreter, mocked_error_handler):
         mocked_error_handler,
         RuntimeException,
         (4, 7),
-        msg="Operation '-' not supported for type 'Dict'"
+        msg="Operation '-' not supported for type 'Dict'",
     )
+
 
 def test_access_expr_not_existing(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("x", io.IntValue(10))])
 
     with pytest.raises(AbortExecution):
-        interpreter.eval(po.AccessExpr(po.Identifier("x"), po.Identifier("notExistingMember"), pos=(10, 2)))
+        interpreter.eval(
+            po.AccessExpr(
+                po.Identifier("x"), po.Identifier("notExistingMember"), pos=(10, 2)
+            )
+        )
 
     check_error(
         mocked_error_handler,
         RuntimeException,
         (10, 2),
-        msg="Object of type 'Int' has no 'notExistingMember' member"
+        msg="Object of type 'Int' has no 'notExistingMember' member",
     )

@@ -99,13 +99,11 @@ class UserFuncValue(FuncValue):
 
 @dataclass
 class BuiltInFuncValue(FuncValue):
-    param_variants: list[list[type[Value]]]
     body: Callable[..., Value | None]
 
 
 @dataclass
 class AccessedFuncValue(FuncValue):
-    param_variants: list[list[type[Value]]]
     body: Callable[..., Value | None]
     needs_inter: bool = False
     owner: "Value | None" = None

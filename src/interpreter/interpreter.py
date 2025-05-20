@@ -57,21 +57,6 @@ class Interpreter:
                 )
             )
 
-    def check_params(
-        self, call_args: list[Value], function: FuncValue
-    ) -> list[Value] | None:
-        selected = None
-        for param_variant in function.param_variants:
-            if len(call_args) != len(param_variant):
-                continue
-
-            for call_arg, param in zip(call_args, param_variant):
-                if not isinstance(call_arg, param):
-                    break
-            else:
-                selected = param_variant
-        return selected
-
     def eval(self, node: po.ParserObject, env: Env | None = None) -> Value:
         if env is None:
             env = self.global_env
@@ -486,13 +471,6 @@ class Interpreter:
                 except ReturnSignal as ret:
                     return ret.return_value
                 return None
-
-            params = self.check_params(arg_objects, function)
-            if params is None:
-                raise RuntimeException(
-                    msg=f"No '{function.name}' function override with [{[f"'{call_arg.type_of()}'," for call_arg in arg_objects]}] types found",
-                    pos=call_pos,
-                )
 
             if isinstance(function, BuiltInFuncValue):
                 return function.body(*arg_objects)
