@@ -11,24 +11,28 @@ from src.interpreter.interpreter_objects import (
     IntValue,
     ItemValue,
     Collection,
+    ListValue,
 )
 
 from src.util.pyscript_exceptions import RuntimeException
 
 
-def get_typeof(args):
-    if len(args) != 1:
+def check_args_length(args, expected_length: int, func_name: str):
+    if len(args) != expected_length:
+        word = "argument" if len(args) == 1 else "arguments"
         raise RuntimeException(
-            f"Function 'typeOf' requires 1 argument, got {len(args)}"
+            f"Function '{func_name}' requires {expected_length} {word}, got {len(args)}"
         )
+
+
+def get_typeof(args):
+    check_args_length(args, 1, "typeOf")
     return args[0].type_of()
 
 
 def get_no_arg_func(object: Value, func_name: str, args):
-    if len(args) != 0:
-        raise RuntimeException(
-            f"Function 'toString' requires no arguments, got {len(args)}"
-        )
+    check_args_length(args, 0, func_name)
+
     snake_case = re.sub(r"([a-z])([A-Z])", r"\1_\2", func_name).lower()
     func = getattr(object, snake_case, None)
     if func is None:
@@ -54,24 +58,21 @@ def get_dict(args):
 
 
 def add_new_to_dict(call_method, env: Env, dict_value: DictValue, args):
-    if len(args) != 2:
-        raise RuntimeException(
-            f"Function 'addNew' requires 2 arguments, got {len(args)}"
-        )
+    check_args_length(args, 2, "addNew")
 
     item = ItemValue(args[0], args[1])
-    return add_to_dict(call_method, env, dict_value, item)
+    add_to_dict(call_method, env, dict_value, item)
 
 
 def add_item_to_dict(call_method, env: Env, dict_value: DictValue, args):
-    if len(args) != 1:
-        raise RuntimeException(f"Function 'add' requires no arguments, got {len(args)}")
+    check_args_length(args, 1, "add")
+
     item = args[0]
     if not isinstance(item, ItemValue):
         raise RuntimeException(
             f"Function 'add' requires 'Item' type argument, got {item.type_of()}"
         )
-    return add_to_dict(call_method, env, dict_value, args[0])
+    add_to_dict(call_method, env, dict_value, args[0])
 
 
 def add_to_dict(call_method, env: Env, dict_value: DictValue, new_item: ItemValue):
@@ -92,6 +93,63 @@ def add_to_dict(call_method, env: Env, dict_value: DictValue, new_item: ItemValu
             dict_value.elements.insert(i, new_item)
             return
     dict_value.elements.append(new_item)
+
+
+def list_get(list: ListValue, args):
+    check_args_length(args, 1, "get")
+
+    idx = args[0]
+    if not isinstance(idx, IntValue):
+        raise RuntimeException(
+            f"Function 'get' requires 'Int' type argument, got {idx.type_of()}"
+        )
+
+    return list.get(idx)
+
+
+def dict_get(dict: DictValue, args):
+    check_args_length(args, 1, "get")
+    key = args[0]
+
+    return dict.get(key)
+
+
+def list_set(list: ListValue, args):
+    check_args_length(args, 2, "set")
+
+    idx, val = args
+    if not isinstance(idx, IntValue):
+        raise RuntimeException(f"Index param should be an 'Int', got {idx.type_of()}")
+
+    list.set(idx, val)
+
+
+def list_add(list: ListValue, args):
+    check_args_length(args, 1, "add")
+
+    list.add(args[0])
+
+
+def list_remove(list: ListValue, args):
+    check_args_length(args, 1, "remove")
+
+    idx = args[0]
+    if not isinstance(idx, IntValue):
+        raise RuntimeException(f"Index param should be an 'Int', got {idx.type_of()}")
+
+    list.remove(idx)
+
+
+def dict_remove(dict: DictValue, args):
+    check_args_length(args, 1, "remove")
+
+    dict.remove(args[0])
+
+
+def dict_contains(dict: DictValue, args):
+    check_args_length(args, 1, "contains")
+
+    return dict.contains(args[0])
 
 
 def print_args(args):
@@ -169,20 +227,18 @@ GLOBAL_ENV = Env(
             ),
         ),
         "ListValue.get": Cell(
-            AccessedFuncValue(
-                [[Value]], lambda list_value, index: list_value.get(index)
-            ),
+            AccessedFuncValue(lambda list_value, *args: list_get(list_value, args)),
         ),
         "ListValue.set": Cell(
             AccessedFuncValue(
-                lambda list_value, index, value: list_value.set(index, value),
+                lambda list_value, *args: list_set(list_value, args),
             ),
         ),
         "ListValue.add": Cell(
-            AccessedFuncValue(lambda list_value, value: list_value.add(value)),
+            AccessedFuncValue(lambda list_value, *args: list_add(list_value, args)),
         ),
         "ListValue.remove": Cell(
-            AccessedFuncValue(lambda list_value, index: list_value.remove(index)),
+            AccessedFuncValue(lambda list_value, *args: list_remove(list_value, args)),
         ),
         "ListValue.toString": Cell(
             AccessedFuncValue(
@@ -195,13 +251,15 @@ GLOBAL_ENV = Env(
             ),
         ),
         "DictValue.get": Cell(
-            AccessedFuncValue(lambda dict_value, key: dict_value.get(key)),
+            AccessedFuncValue(lambda dict_value, *args: dict_get(dict_value, args)),
         ),
         "DictValue.contains": Cell(
-            AccessedFuncValue(lambda dict_value, key: dict_value.contains(key)),
+            AccessedFuncValue(
+                lambda dict_value, *args: dict_contains(dict_value, args)
+            ),
         ),
         "DictValue.remove": Cell(
-            AccessedFuncValue(lambda dict_value, key: dict_value.remove(key)),
+            AccessedFuncValue(lambda dict_value, *args: dict_remove(dict_value, args)),
         ),
         "DictValue.toString": Cell(
             AccessedFuncValue(
