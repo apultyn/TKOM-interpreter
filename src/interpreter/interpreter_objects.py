@@ -93,6 +93,9 @@ class UserFuncValue(FuncValue):
     params: list[str]
     expression: po.FunctionExpr
 
+    def __str__(self) -> str:
+        return "UserFunc"
+
 
 @dataclass
 class BuiltInFuncValue(FuncValue):

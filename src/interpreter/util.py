@@ -8,6 +8,7 @@ from src.interpreter.interpreter_objects import (
     UserFuncValue,
     IntValue,
     ItemValue,
+    Collection
 )
 
 from src.util.pyscript_exceptions import RuntimeException
@@ -33,6 +34,18 @@ def add_to_dict(
             dict_value.elements.insert(i, new_item)
             return
     dict_value.elements.append(new_item)
+
+
+def print_args(args):
+    modified = []
+    for arg in args:
+        if isinstance(arg, Collection):
+            arg = arg.str_long()
+        else:
+            arg = str(arg)
+        modified.append(arg)
+    print(*modified)
+
 
 
 GLOBAL_ENV = Env(
@@ -64,7 +77,7 @@ GLOBAL_ENV = Env(
                         Value,
                     ],
                 ],
-                print,
+                lambda *args: print_args(args),
             )
         ),
         "typeOf": Cell(BuiltInFuncValue([[Value]], lambda val: val.type_of())),

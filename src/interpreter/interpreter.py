@@ -90,7 +90,7 @@ class Interpreter:
 
     # Program
     def visit_Program(self, node: po.Program, _: Env | None = None):
-        print("=" * 30 + " Running script... " + "=" * 30)
+        print("=" * 29 + " Running script... " + "=" * 29)
         for stmt in node.statements:
             if isinstance(stmt, po.ReturnStmt):
                 self._error_handler.handle_error(
@@ -546,7 +546,7 @@ class Interpreter:
 
         for parser_item in node.items:
             interpreter_item = self.eval(parser_item, env)
-            dict.add(interpreter_item)
+            dict.elements.append(interpreter_item)
 
         return dict
 

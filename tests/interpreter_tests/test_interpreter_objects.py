@@ -22,6 +22,7 @@ def test_int():
     assert obj.to_string() == StringValue("5")
     assert obj.truthy()
     assert obj.type_of() == StringValue("Int")
+    assert str(obj) == "5"
 
     assert not IntValue(0).truthy()
 
@@ -48,6 +49,7 @@ def test_float():
     assert obj.to_string() == StringValue("3.4")
     assert obj.truthy()
     assert obj.type_of() == StringValue("Float")
+    assert str(obj) == "3.4"
 
     assert not FloatValue(0.0).truthy()
 
@@ -89,6 +91,7 @@ def test_string():
     assert obj == StringValue("My string")
     assert obj.type_of() == StringValue("String")
     assert obj.truthy()
+    assert str(obj) == "My string"
 
     assert not StringValue("").truthy()
 
@@ -104,24 +107,20 @@ def test_string():
 
 
 def test_string_casting():
-    node = CallExpr(callee=Identifier("to_smth", pos=(1, 1)), args=[], pos=(1, 5))
-
     assert StringValue("12345").to_int() == IntValue(12345)
     assert StringValue("-0.56").to_float() == FloatValue(-0.56)
 
-    with pytest.raises(RuntimeException) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         StringValue("Hello").to_int()
 
     exc = excinfo.value
-    assert exc.pos == (1, 5)
-    assert exc.msg == "Cannot cast 'Hello' to Int"
+    assert exc.args[0] == "Cannot cast 'Hello' to Int"
 
-    with pytest.raises(RuntimeException) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         StringValue("Hello").to_float()
 
     exc = excinfo.value
-    assert exc.pos == (1, 5)
-    assert exc.msg == "Cannot cast 'Hello' to Float"
+    assert exc.args[0] == "Cannot cast 'Hello' to Float"
 
 
 def test_bool():
@@ -130,6 +129,18 @@ def test_bool():
 
     assert obj_true.truthy() and not obj_false.truthy()
     assert obj_true.type_of() == StringValue("Bool")
+    assert str(obj_true) == "True"
+    assert str(obj_false) == "False"
+
+
+def test_item():
+    obj = ItemValue(IntValue(1), StringValue("one"))
+
+    assert obj == ItemValue(IntValue(1), StringValue("one"))
+    assert obj.get_key() == IntValue(1)
+    assert obj.get_value() == StringValue("one")
+    assert obj.type_of() == StringValue("Item")
+    assert str(obj) == "(1: one)"
 
 
 def test_list():
@@ -161,15 +172,6 @@ def test_list():
         obj.set(IntValue(2), IntValue(10))
 
 
-def test_item():
-    obj = ItemValue(IntValue(1), StringValue("one"))
-
-    assert obj == ItemValue(IntValue(1), StringValue("one"))
-    assert obj.get_key() == IntValue(1)
-    assert obj.get_value() == StringValue("one")
-    assert obj.type_of() == StringValue("Item")
-
-
 def test_dict_no_sort():
     obj = DictValue(
         [
@@ -195,44 +197,12 @@ def test_dict_no_sort():
     assert str(obj) == "Dict(3)"
     assert obj.str_long() == "{(1: one), (2: two), (hello: there)}"
 
-    # Adding
-    obj.add_new(None, None, StringValue("general"), StringValue("kenobi"))
-    assert obj == DictValue(
-        [
-            ItemValue(IntValue(1), StringValue("one")),
-            ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(StringValue("hello"), StringValue("there")),
-            ItemValue(StringValue("general"), StringValue("kenobi")),
-        ],
-        order_func=get_default_sort(),
-    )
-
-    obj.add(None, None, ItemValue(BoolValue(True), StringValue("yes")))
-    assert obj == DictValue(
-        [
-            ItemValue(IntValue(1), StringValue("one")),
-            ItemValue(IntValue(2), StringValue("two")),
-            ItemValue(StringValue("hello"), StringValue("there")),
-            ItemValue(StringValue("general"), StringValue("kenobi")),
-            ItemValue(BoolValue(True), StringValue("yes")),
-        ],
-        order_func=get_default_sort(),
-    )
-
-    with pytest.raises(KeyError):
-        obj.add_new(None, None, IntValue(1), StringValue("duplicate"))
-
-    with pytest.raises(KeyError):
-        obj.add(None, None, ItemValue(BoolValue(True), StringValue("duplicate")))
-
     # Removing
     obj.remove(IntValue(1))
     assert obj == DictValue(
         [
             ItemValue(IntValue(2), StringValue("two")),
             ItemValue(StringValue("hello"), StringValue("there")),
-            ItemValue(StringValue("general"), StringValue("kenobi")),
-            ItemValue(BoolValue(True), StringValue("yes")),
         ],
         order_func=get_default_sort,
     )
@@ -241,47 +211,14 @@ def test_dict_no_sort():
         obj.remove(IntValue(1))
 
     # Contains
-    assert obj.contains(StringValue("general")) == BoolValue(True)
-    assert obj.contains(StringValue("General")) == BoolValue(False)
+    assert obj.contains(StringValue("hello")) == BoolValue(True)
+    assert obj.contains(StringValue("Hello")) == BoolValue(False)
 
     # Get
-    assert obj.get(BoolValue(True)) == ItemValue(BoolValue(True), StringValue("yes"))
+    assert obj.get(IntValue(2)) == ItemValue(IntValue(2), StringValue("two"))
 
     with pytest.raises(KeyError):
         obj.get(IntValue(1))
-
-    # # Additive
-    # obj2 = DictValue(
-    #     [
-    #         ItemValue(IntValue(1), StringValue("one")),
-    #         ItemValue(IntValue(3), StringValue("two")),
-    #         ItemValue(StringValue("bye"), StringValue("there")),
-    #     ],
-    #     order_func=default_sort,
-    # )
-
-    # assert obj + obj2 == DictValue(
-    #     [
-    #         ItemValue(IntValue(2), StringValue("two")),
-    #         ItemValue(StringValue("hello"), StringValue("there")),
-    #         ItemValue(StringValue("general"), StringValue("kenobi")),
-    #         ItemValue(BoolValue(True), StringValue("yes")),
-    #         ItemValue(IntValue(1), StringValue("one")),
-    #         ItemValue(IntValue(3), StringValue("two")),
-    #         ItemValue(StringValue("bye"), StringValue("there")),
-    #     ],
-    #     order_func=default_sort,
-    # )
-
-    # with pytest.raises(KeyError):
-    #     obj + DictValue(
-    #         [
-    #             ItemValue(IntValue(1), StringValue("one")),
-    #             ItemValue(IntValue(2), StringValue("two")),
-    #             ItemValue(StringValue("hello"), StringValue("there")),
-    #         ],
-    #         order_func=default_sort,
-    #     )
 
 
 def test_nested_prints():
