@@ -39,8 +39,8 @@ class Program(ParserObject):
 class IfStmt(Statement):
     condition: Expression
     body: Block
-    elif_statements: List["ElifStmt"]
-    else_body: Block
+    elif_statements: List["ElifStmt"] = field(default_factory=list)
+    else_body: Block | None = None
 
 
 @dataclass

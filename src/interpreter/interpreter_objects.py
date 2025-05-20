@@ -85,7 +85,7 @@ class Multiplicative(Protocol):
 @dataclass
 class FuncValue(Value):
     def type_of(self) -> "StringValue":
-        return StringValue("FuncValue")
+        return StringValue("Function")
 
 
 @dataclass

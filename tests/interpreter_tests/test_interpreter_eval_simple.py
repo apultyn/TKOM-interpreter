@@ -10,7 +10,7 @@ from src.interpreter.interpreter_objects import (
     ItemValue,
     DictValue,
     UserFuncValue,
-    BuiltInFuncValue
+    BuiltInFuncValue,
 )
 from src.parser.parser_objects import (
     IfStmt,
@@ -180,6 +180,70 @@ def test_if_stmt_else(make_interpreter):
     assert interpreter.global_env.get("path") == StringValue("else")
 
 
+def test_if_execute_only_1_elif(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("x", StringValue("Elif")), ("path", StringValue("None"))]
+    )
+    interpreter.eval(
+        IfStmt(
+            condition=EqExpr(Identifier("x"), StringExpr("If")),
+            body=Block(
+                [NormalAssignmentStmt(Identifier("path"), StringExpr("if_body"))]
+            ),
+            elif_statements=[
+                ElifStmt(
+                    condition=EqExpr(Identifier("x"), StringExpr("Elif")),
+                    body=Block(
+                        [NormalAssignmentStmt(Identifier("path"), StringExpr("elif1"))]
+                    ),
+                ),
+                ElifStmt(
+                    condition=EqExpr(Identifier("x"), StringExpr("Elif")),
+                    body=Block(
+                        [NormalAssignmentStmt(Identifier("path"), StringExpr("elif2"))]
+                    ),
+                ),
+            ],
+            else_body=Block(
+                [NormalAssignmentStmt(Identifier("path"), StringExpr("else"))]
+            ),
+        )
+    )
+
+    assert interpreter.global_env.get("path") == StringValue("elif1")
+
+
+def test_if_no_path(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("x", StringValue("Else")), ("path", StringValue("None"))]
+    )
+    interpreter.eval(
+        IfStmt(
+            condition=EqExpr(Identifier("x"), StringExpr("If")),
+            body=Block(
+                [NormalAssignmentStmt(Identifier("path"), StringExpr("if_body"))]
+            ),
+            elif_statements=[
+                ElifStmt(
+                    condition=EqExpr(Identifier("x"), StringExpr("Elif1")),
+                    body=Block(
+                        [NormalAssignmentStmt(Identifier("path"), StringExpr("elif1"))]
+                    ),
+                ),
+                ElifStmt(
+                    condition=EqExpr(Identifier("x"), StringExpr("Elif1")),
+                    body=Block(
+                        [NormalAssignmentStmt(Identifier("path"), StringExpr("elif2"))]
+                    ),
+                ),
+            ],
+            else_body=None,
+        )
+    )
+
+    assert interpreter.global_env.get("path") == StringValue("None")
+
+
 def test_while_stmt(make_interpreter):
     interpreter = make_interpreter(env=[("x", IntValue(5)), ("i", IntValue(0))])
 
@@ -196,6 +260,24 @@ def test_while_stmt(make_interpreter):
     )
 
     assert interpreter.global_env.get("i") == IntValue(6)
+
+
+def test_while_stmt_0(make_interpreter):
+    interpreter = make_interpreter(env=[("x", IntValue(5)), ("i", IntValue(0))])
+
+    interpreter.eval(
+        WhileStmt(
+            condition=LtExpr(Identifier("x"), IntExpr(0)),
+            body=Block(
+                [
+                    MinusAssignmentStmt(Identifier("x"), IntExpr(1)),
+                    PlusAssignmentStmt(Identifier("i"), IntExpr(1)),
+                ]
+            ),
+        )
+    )
+
+    assert interpreter.global_env.get("i") == IntValue(0)
 
 
 def test_for_stmt(make_interpreter):
@@ -231,6 +313,26 @@ def test_for_stmt(make_interpreter):
         [IntValue(2), IntValue(3), IntValue(4)]
     )
     interpreter.global_env.get("var") == StringValue("Original")
+
+
+def test_for_stmt_empty_col(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            ("list", ListValue([])),
+            ("counter", IntValue(0)),
+            ("var", StringValue("Original")),
+        ]
+    )
+
+    interpreter.eval(
+        ForStmt(
+            var=Identifier("var"),
+            source=Identifier("list"),
+            body=Block([PlusAssignmentStmt(Identifier("counter"), IntValue(1))]),
+        )
+    )
+
+    assert interpreter.global_env.get("counter") == IntValue(0)
 
 
 def test_normal_assignment(make_interpreter):
@@ -453,23 +555,22 @@ def test_eq_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(EqExpr(IntExpr(5), IntExpr(5))) == BoolValue(True)
-
     assert interpreter.eval(EqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(False)
+    assert interpreter.eval(EqExpr(IntExpr(5), ListExpr([]))) == BoolValue(False)
 
 
 def test_neq_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(NeqExpr(IntExpr(5), IntExpr(5))) == BoolValue(False)
-
     assert interpreter.eval(NeqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(True)
+    assert interpreter.eval(NeqExpr(IntExpr(5), ListExpr([]))) == BoolValue(True)
 
 
 def test_gt_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(GtExpr(IntExpr(5), IntExpr(-5))) == BoolValue(True)
-
     assert interpreter.eval(GtExpr(IntExpr(-5), IntExpr(5))) == BoolValue(False)
 
 
@@ -477,9 +578,7 @@ def test_geq_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(GeqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(True)
-
     assert interpreter.eval(GeqExpr(IntExpr(-5), IntExpr(5))) == BoolValue(False)
-
     assert interpreter.eval(GeqExpr(IntExpr(5), IntExpr(5))) == BoolValue(True)
 
 
@@ -487,7 +586,6 @@ def test_lt_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(LtExpr(IntExpr(5), IntExpr(-5))) == BoolValue(False)
-
     assert interpreter.eval(LtExpr(IntExpr(-5), IntExpr(5))) == BoolValue(True)
 
 
@@ -495,9 +593,7 @@ def test_leq_expr(make_interpreter):
     interpreter = make_interpreter()
 
     assert interpreter.eval(LeqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(False)
-
     assert interpreter.eval(LeqExpr(IntExpr(-5), IntExpr(5))) == BoolValue(True)
-
     assert interpreter.eval(LeqExpr(IntExpr(5), IntExpr(5))) == BoolValue(True)
 
 
@@ -551,14 +647,12 @@ def test_div_expr_float(make_interpreter):
 def test_logic_neg_expr(make_interpreter):
     interpreter = make_interpreter()
     assert interpreter.eval(LogicNegExpr(BoolExpr(True))) == BoolValue(False)
-
     assert interpreter.eval(LogicNegExpr(BoolExpr(False))) == BoolValue(True)
 
 
 def test_arith_neg_expr(make_interpreter):
     interpreter = make_interpreter()
     assert interpreter.eval(ArithNegExpr(IntExpr(5))) == IntValue(-5)
-
     assert interpreter.eval(ArithNegExpr(FloatExpr(5.0))) == FloatValue(-5.0)
 
 
@@ -691,11 +785,11 @@ def test_call_expr(make_interpreter, monkeypatch):
     node = CallExpr(
         Identifier("my_func"),
         [IntExpr(5), MulExpr(FloatExpr(8.5), FloatExpr(7.3))],
-        pos=(1, 1)
+        pos=(1, 1),
     )
 
     expected_value = StringValue("Result")
-    mock_call = MagicMock(return_value = expected_value)
+    mock_call = MagicMock(return_value=expected_value)
 
     monkeypatch.setattr(interpreter, "call_function", mock_call)
 
@@ -708,6 +802,7 @@ def test_call_expr(make_interpreter, monkeypatch):
     assert arg_objects == [IntValue(5), FloatValue(62.05)]
     assert env is interpreter.global_env
     assert call_pos == (1, 1)
+
 
 def test_call_function_user(make_interpreter):
     interpreter = make_interpreter()
@@ -729,14 +824,11 @@ def test_call_function_user(make_interpreter):
 def test_call_function_built_in(make_interpreter):
     interpreter = make_interpreter()
 
-    func = BuiltInFuncValue(
-        [[StringValue]], lambda text: text + StringValue(" There")
-    )
+    func = BuiltInFuncValue([[StringValue]], lambda text: text + StringValue(" There"))
 
-    assert interpreter.call_function(
-        func,
-        [StringValue("Hello")]
-    ) == StringValue("Hello There")
+    assert interpreter.call_function(func, [StringValue("Hello")]) == StringValue(
+        "Hello There"
+    )
 
 
 def test_call_function_access(make_interpreter):
@@ -744,11 +836,8 @@ def test_call_function_access(make_interpreter):
 
     func = AccessedFuncValue(
         [[FloatValue]],
-        lambda owner, float : (float / FloatValue(2.5)) + owner,
-        owner=FloatValue(1.75)
+        lambda owner, float: (float / FloatValue(2.5)) + owner,
+        owner=FloatValue(1.75),
     )
 
-    assert interpreter.call_function(
-        func,
-        [FloatValue(-6.25)]
-    ) == FloatValue(-0.75)
+    assert interpreter.call_function(func, [FloatValue(-6.25)]) == FloatValue(-0.75)

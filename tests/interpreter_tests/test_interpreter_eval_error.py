@@ -7,6 +7,204 @@ from src.util.pyscript_exceptions import RuntimeException
 from tests.util import AbortExecution, check_error
 
 
+def test_program_return(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(po.Program([po.ReturnStmt(po.IntExpr(5), pos=(3, 1))]))
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (3, 1),
+        msg="Return statement not allowed outside function",
+    )
+
+
+def test_program_return_nested(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.Program(
+                [
+                    po.IfStmt(
+                        condition=po.IntExpr(5),
+                        body=po.Block([po.ReturnStmt(po.IntExpr(5), pos=(3, 1))]),
+                    )
+                ]
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (3, 1),
+        msg="Return statement not allowed outside function",
+    )
+
+
+def test_for_stmt_not_collention(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.ForStmt(
+                po.Identifier("var"),
+                po.IntExpr(5, pos=(2, 5)),
+                po.Block([]),
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 5),
+        msg="Source should be a collection, got 'Int'",
+    )
+
+
+def test_plus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        "x",
+        io.IntValue(5),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '+=' operation - got 'Int' and 'String'",
+    )
+
+
+def test_plus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        "x",
+        io.ItemValue(io.IntValue(1), io.IntValue(1)),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '+=' not supported for type 'Item'",
+    )
+
+
+def test_plus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.PlusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.IntExpr(5),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="'x' is not defined in this scope",
+    )
+
+
+def test_minus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        "x",
+        io.IntValue(5),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.StringExpr("5"),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '-=' operation - got 'Int' and 'String'",
+    )
+
+
+def test_minus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    interpreter.global_env.define(
+        "x",
+        io.ItemValue(io.IntValue(1), io.IntValue(1)),
+    )
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Operation '-=' not supported for type 'Item'",
+    )
+
+
+def test_minus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.MinusAssignmentStmt(
+                po.Identifier("x", pos=(1, 1)),
+                po.IntExpr(5),
+                pos=(1, 1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="'x' is not defined in this scope",
+    )
+
+
 def test_gt_expr_type_missmatch(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
@@ -343,141 +541,41 @@ def test_div_expr_zero_division_float(make_interpreter, mocked_error_handler):
     )
 
 
-def test_plus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
+def test_logic_neg_not_bool(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
-    interpreter.global_env.define(
-        "x",
-        io.IntValue(5),
-    )
-
     with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.PlusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.StringExpr("5"),
-                pos=(1, 1),
-            )
-        )
+        interpreter.eval(po.LogicNegExpr(po.FunctionExpr([], None), pos=(4, 7)))
 
     check_error(
         mocked_error_handler,
         RuntimeException,
-        (1, 1),
-        msg="Type missmatch in '+=' operation - got 'Int' and 'String'",
+        (4, 7),
+        msg="Operation '!' not supported for type 'Function'"
     )
 
-
-def test_plus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
+def test_arith_neg_not_bool(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
-    interpreter.global_env.define(
-        "x",
-        io.ItemValue(io.IntValue(1), io.IntValue(1)),
-    )
-
     with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.PlusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
-                pos=(1, 1),
-            )
-        )
+        interpreter.eval(po.ArithNegExpr(po.DictExpr([]), pos=(4, 7)))
 
     check_error(
         mocked_error_handler,
         RuntimeException,
-        (1, 1),
-        msg="Operation '+=' not supported for type 'Item'",
+        (4, 7),
+        msg="Operation '-' not supported for type 'Dict'"
     )
 
-
-def test_plus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter()
+def test_access_expr_not_existing(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("x", io.IntValue(10))])
 
     with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.PlusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.IntExpr(5),
-                pos=(1, 1),
-            )
-        )
+        interpreter.eval(po.AccessExpr(po.Identifier("x"), po.Identifier("notExistingMember"), pos=(10, 2)))
 
     check_error(
         mocked_error_handler,
         RuntimeException,
-        (1, 1),
-        msg="'x' is not defined in this scope",
-    )
-
-
-def test_minus_assignment_type_missmatch(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter()
-
-    interpreter.global_env.define(
-        "x",
-        io.IntValue(5),
-    )
-
-    with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.MinusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.StringExpr("5"),
-                pos=(1, 1),
-            )
-        )
-
-    check_error(
-        mocked_error_handler,
-        RuntimeException,
-        (1, 1),
-        msg="Type missmatch in '-=' operation - got 'Int' and 'String'",
-    )
-
-
-def test_minus_assignment_unsupported_type(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter()
-
-    interpreter.global_env.define(
-        "x",
-        io.ItemValue(io.IntValue(1), io.IntValue(1)),
-    )
-
-    with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.MinusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.ItemExpr(po.IntExpr(1), po.IntExpr(1)),
-                pos=(1, 1),
-            )
-        )
-
-    check_error(
-        mocked_error_handler,
-        RuntimeException,
-        (1, 1),
-        msg="Operation '-=' not supported for type 'Item'",
-    )
-
-
-def test_minus_assignment_undefined_variable(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter()
-
-    with pytest.raises(AbortExecution):
-        interpreter.eval(
-            po.MinusAssignmentStmt(
-                po.Identifier("x", pos=(1, 1)),
-                po.IntExpr(5),
-                pos=(1, 1),
-            )
-        )
-
-    check_error(
-        mocked_error_handler,
-        RuntimeException,
-        (1, 1),
-        msg="'x' is not defined in this scope",
+        (10, 2),
+        msg="Object of type 'Int' has no 'notExistingMember' member"
     )

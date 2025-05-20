@@ -91,14 +91,17 @@ class Interpreter:
     # Program
     def visit_Program(self, node: po.Program, _: Env | None = None) -> None:
         print("=" * 29 + " Running script... " + "=" * 29)
-        for stmt in node.statements:
-            if isinstance(stmt, po.ReturnStmt):
-                self._error_handler.handle_error(
-                    RuntimeException(
-                        msg=f"Return statement not allowed in program", pos=stmt.pos
-                    )
+        try:
+            for stmt in node.statements:
+                self.eval(stmt, self.global_env)
+        except ReturnSignal as ret:
+            self._error_handler.handle_error(
+                RuntimeException(
+                    msg=f"Return statement not allowed outside function",
+                    pos=ret.return_statement.pos,
                 )
-            self.eval(stmt, self.global_env)
+            )
+
         print("=" * 30 + " Script executed " + "=" * 30)
 
     # If Statement
@@ -125,7 +128,7 @@ class Interpreter:
         if not isinstance(source, Collection):
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Source should be a collection, got {source.__class__.__qualname__}",
+                    f"Source should be a collection, got '{source.type_of()}'",
                     pos=node.source.pos,
                 )
             )
@@ -440,7 +443,7 @@ class Interpreter:
         except ValueError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"Object of type '{src.type_of()}' has no '{field}' method",
+                    f"Object of type '{src.type_of()}' has no '{field}' member",
                     pos=node.pos,
                 )
             )
