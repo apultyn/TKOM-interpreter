@@ -28,6 +28,7 @@ from src.parser.parser_objects import (
 )
 
 from src.interpreter.util import DEFAULT_SORT
+from .util import get
 
 
 def test_assigning_copies(make_interpreter):
@@ -55,15 +56,15 @@ def test_assigning_copies(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get("int") == IntValue(1)
-    assert interpreter.global_env.get("string") == StringValue("Hi")
-    assert interpreter.global_env.get("float") == FloatValue(-5.0)
-    assert interpreter.global_env.get("bool") == BoolValue(True)
+    assert get(interpreter, "int") == IntValue(1)
+    assert get(interpreter, "string") == StringValue("Hi")
+    assert get(interpreter, "float") == FloatValue(-5.0)
+    assert get(interpreter, "bool") == BoolValue(True)
 
-    assert interpreter.global_env.get("a") == IntValue(2)
-    assert interpreter.global_env.get("b") == StringValue("Hithere")
-    assert interpreter.global_env.get("c") == FloatValue(-2.5)
-    assert interpreter.global_env.get("d") == BoolValue(False)
+    assert get(interpreter, "a") == IntValue(2)
+    assert get(interpreter, "b") == StringValue("Hithere")
+    assert get(interpreter, "c") == FloatValue(-2.5)
+    assert get(interpreter, "d") == BoolValue(False)
 
 
 def test_assigning_ref(make_interpreter):
@@ -110,25 +111,25 @@ def test_assigning_ref(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get("a") is interpreter.global_env.get("item")
-    assert interpreter.global_env.get("b") is interpreter.global_env.get("list")
-    assert interpreter.global_env.get("c") is interpreter.global_env.get("dict")
+    assert get(interpreter, "a") is get(interpreter, "item")
+    assert get(interpreter, "b") is get(interpreter, "list")
+    assert get(interpreter, "c") is get(interpreter, "dict")
 
-    assert interpreter.global_env.get("a") == ItemValue(
+    assert get(interpreter, "a") == ItemValue(
         StringValue("key"), ListValue([IntValue(1)])
     )
-    assert interpreter.global_env.get("item") == ItemValue(
+    assert get(interpreter, "item") == ItemValue(
         StringValue("key"), ListValue([IntValue(1)])
     )
 
-    assert interpreter.global_env.get("b") == ListValue(
+    assert get(interpreter, "b") == ListValue(
         [IntValue(1), IntValue(2), IntValue(3), IntValue(1)]
     )
-    assert interpreter.global_env.get("list") == ListValue(
+    assert get(interpreter, "list") == ListValue(
         [IntValue(1), IntValue(2), IntValue(3), IntValue(1)]
     )
 
-    assert interpreter.global_env.get("c") == DictValue(
+    assert get(interpreter, "c") == DictValue(
         [
             ItemValue(StringValue("key"), StringValue("value")),
             ItemValue(StringValue("other"), StringValue("other value")),
@@ -136,7 +137,7 @@ def test_assigning_ref(make_interpreter):
         ],
         DEFAULT_SORT,
     )
-    assert interpreter.global_env.get("dict") == DictValue(
+    assert get(interpreter, "dict") == DictValue(
         [
             ItemValue(StringValue("key"), StringValue("value")),
             ItemValue(StringValue("other"), StringValue("other value")),
@@ -218,14 +219,123 @@ def test_passing_simple(make_interpreter):
         )
     )
 
-    assert interpreter.global_env.get("int") == IntValue(1)
-    assert interpreter.global_env.get("int2") == IntValue(2)
+    assert get(interpreter, "int") == IntValue(1)
+    assert get(interpreter, "int2") == IntValue(2)
 
-    assert interpreter.global_env.get("float") == FloatValue(-5.0)
-    assert interpreter.global_env.get("float2") == FloatValue(-3.5)
+    assert get(interpreter, "float") == FloatValue(-5.0)
+    assert get(interpreter, "float2") == FloatValue(-3.5)
 
-    assert interpreter.global_env.get("string") == StringValue("Hi")
-    assert interpreter.global_env.get("string2") == StringValue("HiHi")
+    assert get(interpreter, "string") == StringValue("Hi")
+    assert get(interpreter, "string2") == StringValue("HiHi")
 
-    assert interpreter.global_env.get("bool") == BoolValue(True)
-    assert interpreter.global_env.get("bool2") == BoolValue(False)
+    assert get(interpreter, "bool") == BoolValue(True)
+    assert get(interpreter, "bool2") == BoolValue(False)
+
+
+def test_passing_complex(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            ("item", ItemValue(StringValue("key"), ListValue([]))),
+            ("list", ListValue([IntValue(1), IntValue(2), IntValue(3)])),
+            (
+                "dict",
+                DictValue(
+                    [
+                        ItemValue(StringValue("key"), StringValue("value")),
+                        ItemValue(StringValue("other"), StringValue("other value")),
+                    ],
+                    DEFAULT_SORT,
+                ),
+            ),
+            (
+                "func_item",
+                UserFuncValue(
+                    ["arg1"],
+                    FunctionExpr(
+                        [Identifier("arg1")],
+                        Block(
+                            [
+                                CallExpr(
+                                    AccessExpr(
+                                        CallExpr(
+                                            AccessExpr(
+                                                Identifier("arg1"), Identifier("value")
+                                            ),
+                                            args=[],
+                                        ),
+                                        Identifier("add"),
+                                    ),
+                                    args=[IntExpr(1)],
+                                ),
+                                ReturnStmt(Identifier("arg1")),
+                            ]
+                        ),
+                    ),
+                ),
+            ),
+            (
+                "func_list",
+                UserFuncValue(
+                    ["arg1"],
+                    FunctionExpr(
+                        [Identifier("arg1")],
+                        Block(
+                            [
+                                CallExpr(
+                                    AccessExpr(Identifier("arg1"), Identifier("add")),
+                                    args=[IntExpr(1)],
+                                ),
+                                ReturnStmt(Identifier("arg1")),
+                            ]
+                        ),
+                    ),
+                ),
+            ),
+            (
+                "func_dict",
+                UserFuncValue(
+                    ["arg1"],
+                    FunctionExpr(
+                        [Identifier("arg1")],
+                        Block(
+                            [
+                                CallExpr(
+                                    AccessExpr(Identifier("arg1"), Identifier("add")),
+                                    args=[
+                                        ItemExpr(
+                                            StringExpr("one_more"),
+                                            StringExpr("gimmie break"),
+                                        )
+                                    ],
+                                ),
+                                ReturnStmt(Identifier("arg1")),
+                            ]
+                        ),
+                    ),
+                ),
+            ),
+        ]
+    )
+
+    interpreter.eval(
+        Program(
+            [
+                NormalAssignmentStmt(
+                    Identifier("item2"),
+                    CallExpr(Identifier("func_item"), [Identifier("item")]),
+                ),
+                NormalAssignmentStmt(
+                    Identifier("list2"),
+                    CallExpr(Identifier("func_list"), [Identifier("list")]),
+                ),
+                NormalAssignmentStmt(
+                    Identifier("dict2"),
+                    CallExpr(Identifier("func_dict"), [Identifier("dict")]),
+                ),
+            ]
+        )
+    )
+
+    assert get(interpreter, "item") is get(interpreter, "item2")
+    assert get(interpreter, "list") is get(interpreter, "list2")
+    assert get(interpreter, "dict") is get(interpreter, "dict2")
