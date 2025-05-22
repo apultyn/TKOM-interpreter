@@ -2,7 +2,7 @@ from copy import copy
 
 import src.parser.parser_objects as po
 from src.interpreter.util import (
-    GLOBAL_ENV,
+    global_env,
     get_operation_unsupported_type_msg,
     DEFAULT_SORT,
 )
@@ -39,7 +39,7 @@ class Interpreter:
         *,
         error_handler: ErrorHandler = ErrorHandler(),
         config: InterpreterConfig = InterpreterConfig(),
-        env: Env = GLOBAL_ENV,
+        env: Env = global_env,
     ):
         self._error_handler = error_handler
         self._config = config
@@ -454,7 +454,7 @@ class Interpreter:
         src = self.eval(node.source, env)
         field = node.target.value
 
-        method_sig = src.__class__.__qualname__ + "." + field
+        method_sig = src.TYPE_NAME + "." + field
         try:
             method = env.get(method_sig)
         except ValueError:
@@ -514,9 +514,9 @@ class Interpreter:
             # Access Function
             if function.needs_inter:
                 return function.body(
-                    self.call_function,
-                    Env(None, env),
                     function.owner,
+                    Env(None, env),
+                    self.call_function,
                     *arg_objects,
                 )
             else:

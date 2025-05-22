@@ -757,7 +757,7 @@ def test_access_expr(make_interpreter):
     interpreter = make_interpreter(
         env=[
             (
-                "IntValue.getFive",
+                "Int.getFive",
                 AccessedFuncValue(body=lambda: IntValue(5)),
             )
         ]
@@ -826,7 +826,7 @@ def test_call_function_user(make_interpreter):
 def test_call_function_built_in(make_interpreter):
     interpreter = make_interpreter()
 
-    func = BuiltInFuncValue(lambda text: text + StringValue(" There"))
+    func = BuiltInFuncValue(lambda _, text: text + StringValue(" There"))
 
     assert interpreter.call_function(func, [StringValue("Hello")]) == StringValue(
         "Hello There"
@@ -837,7 +837,7 @@ def test_call_function_access(make_interpreter):
     interpreter = make_interpreter()
 
     func = AccessedFuncValue(
-        lambda owner, float: (float / FloatValue(2.5)) + owner,
+        lambda owner, _, float: (float / FloatValue(2.5)) + owner,
         owner=FloatValue(1.75),
     )
 

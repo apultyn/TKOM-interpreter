@@ -49,7 +49,10 @@ class Env:
         return "\n".join(reversed(parts))
 
 
+@dataclass
 class Value(ABC):
+    TYPE_NAME: ClassVar[str] = "Value"
+
     def truthy(self) -> bool:
         return True
 
@@ -99,8 +102,10 @@ class Multiplicative(Protocol):
 
 @dataclass
 class FuncValue(Value):
+    TYPE_NAME: ClassVar[str] = "Function"
+
     def type_of(self) -> "StringValue":
-        return StringValue("Function")
+        return StringValue(self.TYPE_NAME)
 
 
 @dataclass
@@ -171,7 +176,7 @@ class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
         return IntValue(int(self.value))
 
     def type_of(self) -> "StringValue":
-        return StringValue(self.TYPE_NAMEq)
+        return StringValue(self.TYPE_NAME)
 
     def __add__(self, other: "FloatValue") -> "FloatValue":
         return FloatValue(self.value + other.value)
@@ -267,6 +272,7 @@ class ItemValue(Value):
 @dataclass(order=False)
 class Collection(Value, ComplexValue):
     elements: list[Value] = field(default_factory=list)
+    TYPE_NAME: ClassVar[str] = "Collection"
 
     def truthy(self):
         return len(self.elements) > 0
