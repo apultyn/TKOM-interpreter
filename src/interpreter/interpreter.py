@@ -46,7 +46,12 @@ class Interpreter:
         self.global_env = env
 
     def ensure_same_type(
-        self, l_value: Value, r_value: Value, operation: str, node: po.ParserObject, env: Env
+        self,
+        l_value: Value,
+        r_value: Value,
+        operation: str,
+        node: po.ParserObject,
+        env: Env,
     ) -> None:
         try:
             Value.typecheck(l_value, r_value, operation)
@@ -76,7 +81,9 @@ class Interpreter:
             try:
                 self.eval(stmt, env)
             except ValueError as exc:
-                self._error_handler.handle_error(RuntimeException(exc.args[0], env, stmt.pos))
+                self._error_handler.handle_error(
+                    RuntimeException(exc.args[0], env, stmt.pos)
+                )
 
     # Program
     def visit_Program(self, node: po.Program, env: Env | None = None) -> None:
@@ -382,7 +389,9 @@ class Interpreter:
                 return l_value // r_value
             except ZeroDivisionError:
                 self._error_handler.handle_error(
-                    RuntimeException("Division by zero is not allowed", env, pos=node.pos)
+                    RuntimeException(
+                        "Division by zero is not allowed", env, pos=node.pos
+                    )
                 )
 
         if isinstance(l_value, FloatValue):
@@ -390,7 +399,9 @@ class Interpreter:
                 return l_value / r_value
             except ZeroDivisionError:
                 self._error_handler.handle_error(
-                    RuntimeException("Division by zero is not allowed", env, pos=node.pos)
+                    RuntimeException(
+                        "Division by zero is not allowed", env, pos=node.pos
+                    )
                 )
 
         self._error_handler.handle_error(
@@ -498,7 +509,7 @@ class Interpreter:
                 return None
 
             if isinstance(function, BuiltInFuncValue):
-                return function.body(*arg_objects)
+                return function.body(Env(None, env), *arg_objects)
 
             # Access Function
             if function.needs_inter:
@@ -509,7 +520,7 @@ class Interpreter:
                     *arg_objects,
                 )
             else:
-                return function.body(function.owner, *arg_objects)
+                return function.body(function.owner, Env(None, env), *arg_objects)
 
         except RuntimeException as exc:
             exc.pos = call_pos
