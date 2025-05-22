@@ -23,7 +23,7 @@ class LexerConfig:
 
 @dataclass
 class InterpreterConfig:
-    recursion_depth: int = 1000
+    pass
 
 
 @dataclass

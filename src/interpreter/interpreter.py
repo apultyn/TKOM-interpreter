@@ -525,12 +525,12 @@ class Interpreter:
         except RuntimeException as exc:
             exc.pos = call_pos
             self._error_handler.handle_error(exc)
-        except KeyError as exc:
+        except RecursionError:
             self._error_handler.handle_error(
                 RuntimeException(
-                    exc.args[0],
+                    f"Maximum recursion depth achieved",
                     env,
-                    pos=call_pos,
+                    pos=call_pos
                 )
             )
 
