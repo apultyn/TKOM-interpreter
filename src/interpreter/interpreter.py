@@ -504,7 +504,7 @@ class Interpreter:
             if function.needs_inter:
                 return function.body(
                     self.call_function,
-                    Env("Internal function call", env),
+                    Env(None, env),
                     function.owner,
                     *arg_objects,
                 )
@@ -513,8 +513,6 @@ class Interpreter:
 
         except RuntimeException as exc:
             exc.pos = call_pos
-            if not exc.env:
-                exc.env = env
             self._error_handler.handle_error(exc)
         except KeyError as exc:
             self._error_handler.handle_error(

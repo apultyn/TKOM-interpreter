@@ -67,6 +67,7 @@ def get_dict(args):
 
 def add_new_to_dict(call_method, env: Env, dict_value: DictValue, args):
     check_args_length(args, 2, "addNew")
+    env.context = "'addNew' builtin function"
 
     item = ItemValue(args[0], args[1])
     add_to_dict(call_method, env, dict_value, item)
@@ -74,12 +75,13 @@ def add_new_to_dict(call_method, env: Env, dict_value: DictValue, args):
 
 def add_item_to_dict(call_method, env: Env, dict_value: DictValue, args):
     check_args_length(args, 1, "add")
+    env.context = "'add' builtin function"
 
     item = args[0]
     if not isinstance(item, ItemValue):
         raise RuntimeException(
             f"Function 'add' requires 'Item' type argument, got '{item.type_of()}'",
-            "'add' builtin method"
+            env
         )
     add_to_dict(call_method, env, dict_value, args[0])
 
@@ -88,7 +90,7 @@ def add_to_dict(call_method, env: Env, dict_value: DictValue, new_item: ItemValu
     try:
         dict_value.check_add(new_item)
     except KeyError as exc:
-        raise RuntimeException(exc.args[0], "'add' builtin method")
+        raise RuntimeException(exc.args[0], env)
 
     for i, existing_item in enumerate(dict_value.elements):
         soring_val = call_method(dict_value.order_func, [new_item, existing_item], env)
@@ -96,6 +98,7 @@ def add_to_dict(call_method, env: Env, dict_value: DictValue, new_item: ItemValu
         if not isinstance(soring_val, IntValue):
             raise RuntimeException(
                 f"Sorting function should return 'Int', got '{soring_val.type_of()}'",
+                env
             )
 
         if soring_val < IntValue(0):
