@@ -44,7 +44,7 @@ def get_no_arg_func(object: Value, env: Env, func_name: str, args):
     if func is None:
         raise RuntimeException(
             f"Object of type '{object.__class__.__qualname__} has no {snake_case} method",
-            env
+            env,
         )
 
     return func()
@@ -62,7 +62,7 @@ def get_dict(env: Env, args):
         if not isinstance(func, FuncValue):
             raise RuntimeException(
                 f"Dict constructor requires 'Function' type argument, got '{func.type_of()}'",
-                env
+                env,
             )
     return DictValue(order_func=func)
 
@@ -135,7 +135,9 @@ def list_set(list: ListValue, env: Env, args):
 
     idx, val = args
     if not isinstance(idx, IntValue):
-        raise RuntimeException(f"Index param should be an 'Int', got '{idx.type_of()}'", env)
+        raise RuntimeException(
+            f"Index param should be an 'Int', got '{idx.type_of()}'", env
+        )
 
     list.set(idx, val)
 
@@ -153,7 +155,9 @@ def list_remove(list: ListValue, env: Env, args):
 
     idx = args[0]
     if not isinstance(idx, IntValue):
-        raise RuntimeException(f"Index param should be an 'Int', got '{idx.type_of()}'", env)
+        raise RuntimeException(
+            f"Index param should be an 'Int', got '{idx.type_of()}'", env
+        )
 
     list.remove(idx)
 
