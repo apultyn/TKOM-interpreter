@@ -200,6 +200,13 @@ GLOBAL_ENV = Env(
                 lambda float_value, *args: get_no_arg_func(float_value, "toInt", args)
             )
         ),
+        "StringValue.length": Cell(
+            AccessedFuncValue(
+                lambda string_value, *args: get_no_arg_func(
+                    string_value, "length", args
+                )
+            )
+        ),
         "StringValue.toInt": Cell(
             AccessedFuncValue(
                 lambda string_value, *args: get_no_arg_func(string_value, "toInt", args)
@@ -233,16 +240,21 @@ GLOBAL_ENV = Env(
         "ListValue.get": Cell(
             AccessedFuncValue(lambda list_value, *args: list_get(list_value, args)),
         ),
+        "ListValue.add": Cell(
+            AccessedFuncValue(lambda list_value, *args: list_add(list_value, args)),
+        ),
         "ListValue.set": Cell(
             AccessedFuncValue(
                 lambda list_value, *args: list_set(list_value, args),
             ),
         ),
-        "ListValue.add": Cell(
-            AccessedFuncValue(lambda list_value, *args: list_add(list_value, args)),
-        ),
         "ListValue.remove": Cell(
             AccessedFuncValue(lambda list_value, *args: list_remove(list_value, args)),
+        ),
+        "ListValue.copy": Cell(
+            AccessedFuncValue(
+                lambda list_value, *args: get_no_arg_func(list_value, "copy", args)
+            )
         ),
         "ListValue.toString": Cell(
             AccessedFuncValue(
@@ -257,13 +269,18 @@ GLOBAL_ENV = Env(
         "DictValue.get": Cell(
             AccessedFuncValue(lambda dict_value, *args: dict_get(dict_value, args)),
         ),
+        "DictValue.remove": Cell(
+            AccessedFuncValue(lambda dict_value, *args: dict_remove(dict_value, args)),
+        ),
         "DictValue.contains": Cell(
             AccessedFuncValue(
                 lambda dict_value, *args: dict_contains(dict_value, args)
             ),
         ),
-        "DictValue.remove": Cell(
-            AccessedFuncValue(lambda dict_value, *args: dict_remove(dict_value, args)),
+        "DictValue.copy": Cell(
+            AccessedFuncValue(
+                lambda dict_value, *args: get_no_arg_func(dict_value, "copy", args)
+            )
         ),
         "DictValue.toString": Cell(
             AccessedFuncValue(

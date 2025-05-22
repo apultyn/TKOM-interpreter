@@ -14,6 +14,8 @@ from src.parser.parser_objects import (
     FunctionExpr,
     ReturnStmt,
     Block,
+    Program,
+    NormalAssignmentStmt,
 )
 from src.interpreter.interpreter_objects import (
     ListValue,
@@ -26,6 +28,7 @@ from src.interpreter.interpreter_objects import (
 )
 
 from src.interpreter.util import DEFAULT_SORT
+from tests.interpreter_tests.util import get
 
 
 @pytest.mark.parametrize("amount", range(10))
@@ -245,4 +248,71 @@ def test_dict_remove(make_interpreter):
 
     assert interpreter.global_env.get("x") == DictValue(
         [ItemValue(IntValue(1), IntValue(1))], DEFAULT_SORT
+    )
+
+
+def test_copying_values(make_interpreter):
+    interpreter = make_interpreter(
+        env=[
+            ("list", ListValue([IntValue(1), IntValue(2), IntValue(3)])),
+            (
+                "dict",
+                DictValue(
+                    [
+                        ItemValue(StringValue("key"), StringValue("value")),
+                        ItemValue(StringValue("other"), StringValue("other value")),
+                    ],
+                    DEFAULT_SORT,
+                ),
+            ),
+        ]
+    )
+
+    interpreter.eval(
+        Program(
+            [
+                NormalAssignmentStmt(
+                    Identifier("list2"),
+                    CallExpr(AccessExpr(Identifier("list"), Identifier("copy")), []),
+                ),
+                NormalAssignmentStmt(
+                    Identifier("dict2"),
+                    CallExpr(AccessExpr(Identifier("dict"), Identifier("copy")), []),
+                ),
+                CallExpr(
+                    AccessExpr(Identifier("list2"), Identifier("add")), [IntExpr(4)]
+                ),
+                CallExpr(
+                    AccessExpr(Identifier("dict2"), Identifier("add")),
+                    [ItemExpr(StringExpr("one_more"), StringExpr("tkom"))],
+                ),
+            ]
+        )
+    )
+
+    assert get(interpreter, "list") is not get(interpreter, "list2")
+    assert get(interpreter, "dict") is not get(interpreter, "dict2")
+
+    assert get(interpreter, "list") == ListValue(
+        [IntValue(1), IntValue(2), IntValue(3)]
+    )
+    assert get(interpreter, "list2") == ListValue(
+        [IntValue(1), IntValue(2), IntValue(3), IntValue(4)]
+    )
+
+    assert get(interpreter, "dict") == DictValue(
+        [
+            ItemValue(StringValue("key"), StringValue("value")),
+            ItemValue(StringValue("other"), StringValue("other value")),
+        ],
+        DEFAULT_SORT,
+    )
+
+    assert get(interpreter, "dict2") == DictValue(
+        [
+            ItemValue(StringValue("key"), StringValue("value")),
+            ItemValue(StringValue("other"), StringValue("other value")),
+            ItemValue(StringValue("one_more"), StringValue("tkom")),
+        ],
+        DEFAULT_SORT,
     )

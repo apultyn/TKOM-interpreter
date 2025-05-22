@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy
 
 import src.parser.parser_objects as po
 from src.interpreter.util import (
@@ -29,7 +29,7 @@ from .interpreter_objects import (
     Collection,
     ReturnSignal,
     AccessedFuncValue,
-    is_simple,
+    SimpleValue,
 )
 
 
@@ -466,7 +466,9 @@ class Interpreter:
                 func_env = Env(env, function.expression)
 
                 for name, arg in zip(function.params, arg_objects):
-                    func_env.define(name, deepcopy(arg) if is_simple(arg) else arg)
+                    func_env.define(
+                        name, copy(arg) if isinstance(arg, SimpleValue) else arg
+                    )
                 try:
                     self.eval(function.expression.body, func_env)
                 except ReturnSignal as ret:

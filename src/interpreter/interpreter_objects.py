@@ -61,6 +61,17 @@ class Value(ABC):
             )
 
 
+class SimpleValue(Value, ABC):
+    pass
+
+
+@runtime_checkable
+class ComplexValue(Protocol):
+    @abstractmethod
+    def copy(self: Self) -> Self:
+        pass
+
+
 @runtime_checkable
 class Additive(Protocol):
     @abstractmethod
@@ -110,11 +121,8 @@ class AccessedFuncValue(FuncValue):
 
 
 @dataclass(order=True)
-class IntValue(Value, Additive, Subtractive, Multiplicative):
+class IntValue(SimpleValue, Additive, Subtractive, Multiplicative):
     value: int
-
-    def truthy(self) -> bool:
-        return self.value != 0
 
     def to_string(self) -> "StringValue":
         return StringValue(str(self.value))
@@ -142,13 +150,13 @@ class IntValue(Value, Additive, Subtractive, Multiplicative):
     def __str__(self) -> str:
         return f"{self.value}"
 
+    def truthy(self) -> bool:
+        return self.value != 0
+
 
 @dataclass(order=True)
-class FloatValue(Value, Additive, Subtractive, Multiplicative):
+class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
     value: float
-
-    def truthy(self):
-        return self.value != 0.0
 
     def to_string(self) -> "StringValue":
         return StringValue(str(self.value))
@@ -176,28 +184,28 @@ class FloatValue(Value, Additive, Subtractive, Multiplicative):
     def __str__(self) -> str:
         return f"{self.value}"
 
+    def truthy(self):
+        return self.value != 0.0
+
 
 @dataclass(order=True)
-class StringValue(Value, Additive):
+class StringValue(SimpleValue, Additive):
     value: str
-
-    def truthy(self):
-        return self.value != ""
 
     def length(self):
         return IntValue(len(self.value))
-
-    def to_float(self) -> "FloatValue":
-        try:
-            return FloatValue(float(self.value))
-        except ValueError:
-            raise ValueError(f"Cannot cast '{self.value}' to Float")
 
     def to_int(self) -> "IntValue":
         try:
             return IntValue(int(self.value))
         except ValueError:
             raise ValueError(f"Cannot cast '{self.value}' to Int")
+
+    def to_float(self) -> "FloatValue":
+        try:
+            return FloatValue(float(self.value))
+        except ValueError:
+            raise ValueError(f"Cannot cast '{self.value}' to Float")
 
     def type_of(self) -> "StringValue":
         return StringValue("String")
@@ -208,9 +216,12 @@ class StringValue(Value, Additive):
     def __str__(self) -> str:
         return f"{self.value}"
 
+    def truthy(self):
+        return self.value != ""
+
 
 @dataclass
-class BoolValue(Value):
+class BoolValue(SimpleValue):
     value: bool
 
     def truthy(self):
@@ -221,13 +232,6 @@ class BoolValue(Value):
 
     def __str__(self) -> str:
         return f"{self.value}"
-
-
-_SIMPLE_TYPES = (IntValue, FloatValue, StringValue, BoolValue)
-
-
-def is_simple(val: "Value") -> bool:
-    return isinstance(val, _SIMPLE_TYPES)
 
 
 @dataclass
@@ -252,7 +256,7 @@ class ItemValue(Value):
 
 
 @dataclass(order=False)
-class Collection(Value):
+class Collection(Value, ComplexValue):
     elements: list[Value] = field(default_factory=list)
 
     def truthy(self):
@@ -264,12 +268,6 @@ class Collection(Value):
 
 @dataclass
 class ListValue(Collection, Additive):
-    def __add__(self, other: "ListValue"):
-        return ListValue(self.elements + other.elements)
-
-    def type_of(self) -> "StringValue":
-        return StringValue("List")
-
     def get(self, index: IntValue) -> Value:
         if index.value < 0 or index.value >= self.length().value:
             raise IndexError(f"Index {index.value} out of range")
@@ -288,8 +286,17 @@ class ListValue(Collection, Additive):
             raise IndexError(f"Index {index.value} out of range")
         self.elements.pop(index.value)
 
+    def copy(self) -> "ListValue":
+        return ListValue(self.elements.copy())
+
     def to_string(self) -> StringValue:
         return StringValue(self.str_long())
+
+    def __add__(self, other: "ListValue"):
+        return ListValue(self.elements + other.elements)
+
+    def type_of(self) -> "StringValue":
+        return StringValue("List")
 
     def __str__(self) -> str:
         return f"List({self.length().value})"
@@ -312,11 +319,11 @@ class ReturnSignal(Exception):
 class DictValue(Collection):
     order_func: "FuncValue" = field(default=None)
 
-    def check_add(self, item: ItemValue):
-        if self.contains(item.key).value:
-            raise KeyError(f"Key {item.key} already exists in the dictionary")
-        if not is_simple(item.key):
-            raise KeyError(f"'{item.key.type_of}' can't be an item key")
+    def get(self, key: Value) -> Value:
+        for item in self.elements:
+            if item.get_key() == key:
+                return item
+        raise KeyError(f"Key {key} not found in the dictionary")
 
     def remove(self, key: Value):
         for i, item in enumerate(self.elements):
@@ -331,11 +338,8 @@ class DictValue(Collection):
                 return BoolValue(True)
         return BoolValue(False)
 
-    def get(self, key: Value) -> Value:
-        for item in self.elements:
-            if item.get_key() == key:
-                return item
-        raise KeyError(f"Key {key} not found in the dictionary")
+    def copy(self) -> "DictValue":
+        return DictValue(self.elements.copy(), self.order_func)
 
     def to_string(self) -> StringValue:
         return StringValue(self.str_long())
@@ -349,3 +353,9 @@ class DictValue(Collection):
     def str_long(self) -> str:
         elements = ", ".join([str(item) for item in self.elements])
         return "{" + elements + "}"
+
+    def check_add(self, item: ItemValue):
+        if self.contains(item.key).value:
+            raise KeyError(f"Key {item.key} already exists in the dictionary")
+        if not isinstance(item.key, SimpleValue):
+            raise KeyError(f"'{item.key.type_of}' can't be an item key")
