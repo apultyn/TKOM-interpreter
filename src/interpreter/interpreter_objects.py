@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
-from typing import Protocol, runtime_checkable, Self, Callable
+from typing import Protocol, runtime_checkable, Self, Callable, ClassVar
 import src.parser.parser_objects as po
 
 
@@ -127,6 +127,7 @@ class AccessedFuncValue(FuncValue):
 @dataclass(order=True)
 class IntValue(SimpleValue, Additive, Subtractive, Multiplicative):
     value: int
+    TYPE_NAME: ClassVar[str] = "Int"
 
     def to_string(self) -> "StringValue":
         return StringValue(str(self.value))
@@ -135,7 +136,7 @@ class IntValue(SimpleValue, Additive, Subtractive, Multiplicative):
         return FloatValue(float(self.value))
 
     def type_of(self) -> "StringValue":
-        return StringValue("Int")
+        return StringValue(self.TYPE_NAME)
 
     def __add__(self, other: "IntValue") -> "IntValue":
         return IntValue(self.value + other.value)
@@ -161,6 +162,7 @@ class IntValue(SimpleValue, Additive, Subtractive, Multiplicative):
 @dataclass(order=True)
 class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
     value: float
+    TYPE_NAME: ClassVar[str] = "Float"
 
     def to_string(self) -> "StringValue":
         return StringValue(str(self.value))
@@ -169,7 +171,7 @@ class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
         return IntValue(int(self.value))
 
     def type_of(self) -> "StringValue":
-        return StringValue("Float")
+        return StringValue(self.TYPE_NAMEq)
 
     def __add__(self, other: "FloatValue") -> "FloatValue":
         return FloatValue(self.value + other.value)
@@ -195,6 +197,7 @@ class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
 @dataclass(order=True)
 class StringValue(SimpleValue, Additive):
     value: str
+    TYPE_NAME: ClassVar[str] = "String"
 
     def length(self):
         return IntValue(len(self.value))
@@ -212,7 +215,7 @@ class StringValue(SimpleValue, Additive):
             raise ValueError(f"Cannot cast '{self.value}' to Float")
 
     def type_of(self) -> "StringValue":
-        return StringValue("String")
+        return StringValue(self.TYPE_NAME)
 
     def __add__(self, other: "StringValue"):
         return StringValue(self.value + other.value)
@@ -227,12 +230,13 @@ class StringValue(SimpleValue, Additive):
 @dataclass
 class BoolValue(SimpleValue):
     value: bool
+    TYPE_NAME: ClassVar[str] = "Bool"
 
     def truthy(self):
         return self.value
 
     def type_of(self) -> "StringValue":
-        return StringValue("Bool")
+        return StringValue(self.TYPE_NAME)
 
     def __str__(self) -> str:
         return f"{self.value}"
@@ -242,6 +246,7 @@ class BoolValue(SimpleValue):
 class ItemValue(Value):
     key: Value
     value: Value
+    TYPE_NAME: ClassVar[str] = "Item"
 
     def get_key(self) -> Value:
         return self.key
@@ -253,7 +258,7 @@ class ItemValue(Value):
         return StringValue(f"{self.key}: {self.value}")
 
     def type_of(self):
-        return StringValue("Item")
+        return StringValue(self.TYPE_NAME)
 
     def __str__(self) -> str:
         return f"({self.key}: {self.value})"
@@ -272,6 +277,8 @@ class Collection(Value, ComplexValue):
 
 @dataclass
 class ListValue(Collection, Additive):
+    TYPE_NAME: ClassVar[str] = "List"
+
     def get(self, index: IntValue) -> Value:
         if index.value < 0 or index.value >= self.length().value:
             raise IndexError(f"Index {index.value} out of range")
@@ -300,7 +307,7 @@ class ListValue(Collection, Additive):
         return ListValue(self.elements + other.elements)
 
     def type_of(self) -> "StringValue":
-        return StringValue("List")
+        return StringValue(self.TYPE_NAME)
 
     def __str__(self) -> str:
         return f"List({self.length().value})"
@@ -322,6 +329,7 @@ class ReturnSignal(Exception):
 @dataclass
 class DictValue(Collection):
     order_func: "FuncValue" = field(default=None)
+    TYPE_NAME: ClassVar[str] = "Dict"
 
     def get(self, key: Value) -> Value:
         for item in self.elements:
@@ -349,7 +357,7 @@ class DictValue(Collection):
         return StringValue(self.str_long())
 
     def type_of(self) -> "StringValue":
-        return StringValue("Dict")
+        return StringValue(self.TYPE_NAME)
 
     def __str__(self) -> str:
         return f"Dict({self.length().value})"

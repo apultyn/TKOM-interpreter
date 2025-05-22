@@ -44,6 +44,7 @@ def method(
     of: type[Value],
     name: str | None = None,
     arity: int = 0,
+    types: list[type[Value]] = [],
     needs_inter: bool = False,
 ):
     def decorator(fn):
@@ -51,6 +52,9 @@ def method(
 
         @wraps(fn)
         def wrapper(owner, env, *args):
+            if len(types) != arity:
+                raise NotImplementedError("Wrong builtin func definition")
+
             if not isinstance(owner, of):
                 raise RuntimeException(
                     f"Type '{owner.type_of()}' has no '{public_name}' function",
@@ -65,6 +69,12 @@ def method(
                     f"Function '{public_name}' requires {arity} {word}, got {len(args)}",
                     env,
                 )
+
+            for i, (arg, type) in enumerate(zip(args, types)):
+                if not isinstance(arg, type):
+                    raise RuntimeException(
+                        f"Param {i+1} of function'{owner.type_of()}.{public_name}' should be '{type.TYPE_NAME}', got '{arg.type_of()}'"
+                    )
             return fn(owner, env, *args)
 
         wrapper.__builtin_key__ = f"{of.__name__}.{public_name}"
