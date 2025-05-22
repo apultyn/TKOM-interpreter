@@ -12,8 +12,8 @@ class Cell:
 class Env:
     def __init__(
         self,
+        context: po.ParserObject | str,
         parent: "Env | None" = None,
-        context: po.ParserObject | str = None,
         symbols: dict[str, Cell] | None = None,
     ):
         self.context = context
@@ -37,12 +37,16 @@ class Env:
         self.symbols[name] = Cell(val)
 
     def __str__(self) -> str:
-        msg_suff = (
-            f"'{self.context.__class__.__qualname__}' at row: {self.context.pos[0]}, col: {self.context.pos[1]}"
-            if isinstance(self.context, po.ParserObject)
-            else self.context
-        )
-        return f"Env with context: {msg_suff}"
+        parts = []
+        env = self
+        while env is not None:
+            if isinstance(env.context, po.ParserObject):
+                msg = f"'{env.context.__class__.__qualname__}' at row: {env.context.pos[0]}, col: {env.context.pos[1]}"
+            else:
+                msg = str(env.context)
+            parts.append(msg)
+            env = env.parent
+        return "\n".join(reversed(parts))
 
 
 class Value(ABC):

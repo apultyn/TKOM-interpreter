@@ -46,14 +46,15 @@ class Interpreter:
         self.global_env = env
 
     def ensure_same_type(
-        self, l_value: Value, r_value: Value, operation: str, node: po.ParserObject
+        self, l_value: Value, r_value: Value, operation: str, node: po.ParserObject, env: Env
     ) -> None:
         try:
             Value.typecheck(l_value, r_value, operation)
         except TypeError as exc:
             self._error_handler.handle_error(
                 RuntimeException(
-                    msg=exc.args[0],
+                    exc.args[0],
+                    env,
                     pos=node.pos,
                 )
             )
@@ -72,10 +73,13 @@ class Interpreter:
     # Block
     def visit_Block(self, node: po.Block, env: Env | None = None) -> None:
         for stmt in node.statements:
-            self.eval(stmt, env)
+            try:
+                self.eval(stmt, env)
+            except ValueError as exc:
+                self._error_handler.handle_error(RuntimeException(exc.args[0], env, stmt.pos))
 
     # Program
-    def visit_Program(self, node: po.Program, _: Env | None = None) -> None:
+    def visit_Program(self, node: po.Program, env: Env | None = None) -> None:
         print("=" * 29 + " Running script... " + "=" * 29)
         try:
             for stmt in node.statements:
@@ -83,7 +87,8 @@ class Interpreter:
         except ReturnSignal as ret:
             self._error_handler.handle_error(
                 RuntimeException(
-                    msg=f"Return statement not allowed outside function",
+                    f"Return statement not allowed outside function",
+                    env,
                     pos=ret.return_statement.pos,
                 )
             )
@@ -105,7 +110,7 @@ class Interpreter:
     # While Statement
     def visit_WhileStmt(self, node: po.WhileStmt, env: Env | None = None) -> None:
         while self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(env, node))
+            self.eval(node.body, Env(node, env))
 
     # For Statement
     def visit_ForStmt(self, node: po.ForStmt, env: Env | None = None) -> None:
@@ -115,11 +120,12 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Source should be a collection, got '{source.type_of()}'",
+                    env,
                     pos=node.source.pos,
                 )
             )
 
-        new_env = Env(env, node)
+        new_env = Env(node, env)
         new_env.define(node.var.value, None)
         for element in source.elements:
             new_env.set(node.var.value, element)
@@ -152,11 +158,12 @@ class Interpreter:
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
-            self.ensure_same_type(l_value, r_value, "+=", node)
+            self.ensure_same_type(l_value, r_value, "+=", node, env)
 
             if not isinstance(l_value, Additive):
                 raise RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "+="),
+                    env,
                     pos=node.pos,
                 )
 
@@ -167,6 +174,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     exc.args[0],
+                    env,
                     pos=node.pos,
                 )
             )
@@ -179,11 +187,12 @@ class Interpreter:
         try:
             l_value = env.get(name)
             r_value = self.eval(node.r_value, env)
-            self.ensure_same_type(l_value, r_value, "-=", node)
+            self.ensure_same_type(l_value, r_value, "-=", node, env)
 
             if not isinstance(l_value, Subtractive):
                 raise RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "-="),
+                    env,
                     pos=node.pos,
                 )
 
@@ -194,6 +203,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     exc.args[0],
+                    env,
                     pos=node.pos,
                 )
             )
@@ -237,7 +247,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, ">", node)
+        self.ensure_same_type(l_value, r_value, ">", node, env)
 
         try:
             return BoolValue(l_value > r_value)
@@ -245,6 +255,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, ">"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -254,7 +265,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, ">=", node)
+        self.ensure_same_type(l_value, r_value, ">=", node, env)
 
         try:
             return BoolValue(l_value >= r_value)
@@ -262,6 +273,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, ">="),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -271,7 +283,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "<", node)
+        self.ensure_same_type(l_value, r_value, "<", node, env)
 
         try:
             return BoolValue(l_value < r_value)
@@ -279,6 +291,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "<"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -288,7 +301,7 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "<=", node)
+        self.ensure_same_type(l_value, r_value, "<=", node, env)
 
         try:
             return BoolValue(l_value <= r_value)
@@ -296,6 +309,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "<="),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -305,12 +319,13 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "+", node)
+        self.ensure_same_type(l_value, r_value, "+", node, env)
 
         if not isinstance(l_value, Additive):
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "+"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -322,12 +337,13 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "-", node)
+        self.ensure_same_type(l_value, r_value, "-", node, env)
 
         if not isinstance(l_value, Subtractive):
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "-"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -339,12 +355,13 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "*", node)
+        self.ensure_same_type(l_value, r_value, "*", node, env)
 
         if not isinstance(l_value, Multiplicative):
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(l_value, "*"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -358,14 +375,14 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
-        self.ensure_same_type(l_value, r_value, "/", node)
+        self.ensure_same_type(l_value, r_value, "/", node, env)
 
         if isinstance(l_value, IntValue):
             try:
                 return l_value // r_value
             except ZeroDivisionError:
                 self._error_handler.handle_error(
-                    RuntimeException("Division by zero is not allowed", pos=node.pos)
+                    RuntimeException("Division by zero is not allowed", env, pos=node.pos)
                 )
 
         if isinstance(l_value, FloatValue):
@@ -373,12 +390,13 @@ class Interpreter:
                 return l_value / r_value
             except ZeroDivisionError:
                 self._error_handler.handle_error(
-                    RuntimeException("Division by zero is not allowed", pos=node.pos)
+                    RuntimeException("Division by zero is not allowed", env, pos=node.pos)
                 )
 
         self._error_handler.handle_error(
             RuntimeException(
                 get_operation_unsupported_type_msg(l_value, "/"),
+                env,
                 pos=node.pos,
             )
         )
@@ -392,6 +410,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     get_operation_unsupported_type_msg(value, "!"),
+                    env,
                     pos=node.pos,
                 )
             )
@@ -412,6 +431,7 @@ class Interpreter:
         self._error_handler.handle_error(
             RuntimeException(
                 get_operation_unsupported_type_msg(value, "-"),
+                env,
                 pos=node.pos,
             )
         )
@@ -430,6 +450,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Object of type '{src.type_of()}' has no '{field}' member",
+                    env,
                     pos=node.pos,
                 )
             )
@@ -454,6 +475,7 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Object '{function.type_of()}' is not a function",
+                    env,
                     pos=call_pos,
                 )
             )
@@ -463,7 +485,7 @@ class Interpreter:
 
         try:
             if isinstance(function, UserFuncValue):
-                func_env = Env(env, function.expression)
+                func_env = Env(function.expression, env)
 
                 for name, arg in zip(function.params, arg_objects):
                     func_env.define(
@@ -482,7 +504,7 @@ class Interpreter:
             if function.needs_inter:
                 return function.body(
                     self.call_function,
-                    Env(env, "Internal call"),
+                    Env("Internal function call", env),
                     function.owner,
                     *arg_objects,
                 )
@@ -491,11 +513,14 @@ class Interpreter:
 
         except RuntimeException as exc:
             exc.pos = call_pos
+            if not exc.env:
+                exc.env = env
             self._error_handler.handle_error(exc)
         except KeyError as exc:
             self._error_handler.handle_error(
                 RuntimeException(
                     exc.args[0],
+                    env,
                     pos=call_pos,
                 )
             )
@@ -549,6 +574,7 @@ class Interpreter:
                 self._error_handler.handle_error(
                     RuntimeException(
                         f"Item with key '{interpreter_item.get_key()}' already exists in dictionary",
+                        env,
                         pos=parser_item.key.pos,
                     )
                 )
@@ -565,7 +591,7 @@ class Interpreter:
             if ident.value in param_names:
                 self._error_handler.handle_error(
                     RuntimeException(
-                        f"Param '{ident.value}' already defined", pos=ident.pos
+                        f"Param '{ident.value}' already defined", env, pos=ident.pos
                     )
                 )
             param_names.append(ident.value)
@@ -580,11 +606,12 @@ class Interpreter:
             self._error_handler.handle_error(
                 RuntimeException(
                     f"Source should be a collection, got '{source.type_of()}'",
+                    env,
                     pos=node.source.pos,
                 )
             )
 
-        new_env = Env(env, node)
+        new_env = Env(node, env)
         new_env.define(var.value, None)
 
         return_list = []
@@ -600,6 +627,7 @@ class Interpreter:
                     self._error_handler.handle_error(
                         RuntimeException(
                             f"'where' condition should be a Bool, got '{condition.type_of()}'",
+                            env,
                             pos=node.where.pos,
                         )
                     )

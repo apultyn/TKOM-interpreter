@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from src.util.token_type import TokenType
+from src.interpreter.interpreter_objects import Env
 
 
 @dataclass(kw_only=True)
@@ -46,5 +47,12 @@ class SyntaxException(PyscriptException):
 
 
 class RuntimeException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int] = None):
+    def __init__(self, msg: str, env: Env = None, pos: tuple[int, int] = None):
+        self.env = env
         super().__init__(error_type="RUNTIME", msg=msg, pos=pos)
+
+    def __str__(self):
+        return super().__str__()
+
+    def context(self):
+        return str(self.env)

@@ -24,7 +24,8 @@ def check_args_length(args, expected_length: int, func_name: str):
     if len(args) != expected_length:
         word = "argument" if len(args) == 1 else "arguments"
         raise RuntimeException(
-            f"Function '{func_name}' requires {expected_length} {word}, got {len(args)}"
+            f"Function '{func_name}' requires {expected_length} {word}, got {len(args)}",
+            f"'{func_name}' builtin method"
         )
 
 
@@ -40,7 +41,8 @@ def get_no_arg_func(object: Value, func_name: str, args):
     func = getattr(object, snake_case, None)
     if func is None:
         raise RuntimeException(
-            f"Object of type '{object.__class__.__qualname__} has no {snake_case} method"
+            f"Object of type '{object.__class__.__qualname__} has no {snake_case} method",
+            f"'{func_name}' builtin method"
         )
 
     return func()
@@ -49,7 +51,8 @@ def get_no_arg_func(object: Value, func_name: str, args):
 def get_dict(args):
     if len(args) not in [0, 1]:
         raise RuntimeException(
-            f"Function 'Dict' requires 0 or 1 argument, got {len(args)}"
+            f"Function 'Dict' requires 0 or 1 argument, got {len(args)}",
+            "'Dict' builtin method"
         )
     func = DEFAULT_SORT
     if len(args) == 1:
@@ -57,6 +60,7 @@ def get_dict(args):
         if not isinstance(func, FuncValue):
             raise RuntimeException(
                 f"Dict constructor requires 'Function' type argument, got '{func.type_of()}'"
+                "'Dict' builtin method"
             )
     return DictValue(order_func=func)
 
@@ -74,7 +78,8 @@ def add_item_to_dict(call_method, env: Env, dict_value: DictValue, args):
     item = args[0]
     if not isinstance(item, ItemValue):
         raise RuntimeException(
-            f"Function 'add' requires 'Item' type argument, got {item.type_of()}"
+            f"Function 'add' requires 'Item' type argument, got '{item.type_of()}'",
+            "'add' builtin method"
         )
     add_to_dict(call_method, env, dict_value, args[0])
 
@@ -83,14 +88,14 @@ def add_to_dict(call_method, env: Env, dict_value: DictValue, new_item: ItemValu
     try:
         dict_value.check_add(new_item)
     except KeyError as exc:
-        raise RuntimeException(exc.args[0])
+        raise RuntimeException(exc.args[0], "'add' builtin method")
 
     for i, existing_item in enumerate(dict_value.elements):
         soring_val = call_method(dict_value.order_func, [new_item, existing_item], env)
 
         if not isinstance(soring_val, IntValue):
             raise RuntimeException(
-                f"Sorting function should return 'Int', got {soring_val.type_of()}"
+                f"Sorting function should return 'Int', got '{soring_val.type_of()}'",
             )
 
         if soring_val < IntValue(0):
@@ -105,7 +110,7 @@ def list_get(list: ListValue, args):
     idx = args[0]
     if not isinstance(idx, IntValue):
         raise RuntimeException(
-            f"Function 'get' requires 'Int' type argument, got {idx.type_of()}"
+            f"Function 'get' requires 'Int' type argument, got '{idx.type_of()}'"
         )
 
     return list.get(idx)
@@ -123,7 +128,7 @@ def list_set(list: ListValue, args):
 
     idx, val = args
     if not isinstance(idx, IntValue):
-        raise RuntimeException(f"Index param should be an 'Int', got {idx.type_of()}")
+        raise RuntimeException(f"Index param should be an 'Int', got '{idx.type_of()}'")
 
     list.set(idx, val)
 
@@ -139,7 +144,7 @@ def list_remove(list: ListValue, args):
 
     idx = args[0]
     if not isinstance(idx, IntValue):
-        raise RuntimeException(f"Index param should be an 'Int', got {idx.type_of()}")
+        raise RuntimeException(f"Index param should be an 'Int', got '{idx.type_of()}'")
 
     list.remove(idx)
 
@@ -168,8 +173,8 @@ def print_args(args):
 
 
 GLOBAL_ENV = Env(
+    "Main",
     None,
-    "main",
     {
         "print": Cell(
             BuiltInFuncValue(
