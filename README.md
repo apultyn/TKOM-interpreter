@@ -2,29 +2,26 @@
 
 ## Autor
 
-- Andrzej Pultyn
-- 325213
-- andrzej.pultyn.stud@pw.edu.pl
+-   Andrzej Pultyn
+-   325213
+-   andrzej.pultyn.stud@pw.edu.pl
 
 ## Useful commands
 
-- run parser with example input and output files:
-```bash
-python -m src.parser.main -i src/parser/input/file -o src/parser/output/file.json
-```
-- run pytest with coverage:
-```bash
-pytest --cov-report term-missing --cov
-```
-- run specific unit test with debug:
-```bash
-pytest <plik>::<nazwa_funkcji> --trace
-```
-- install `psc` command:
+-   install `psc` command:
+
 ```bash
 pip install -e .
 ```
-- uninstall `psc` command:
+
+-   running interpreter (from file):
+
 ```bash
-pip uninstall pyscript-compiler -y
+psc -i <file> -c <config-file>
+```
+
+-   running interpreter (input piped in):
+
+```bash
+echo "code" | psc
 ```

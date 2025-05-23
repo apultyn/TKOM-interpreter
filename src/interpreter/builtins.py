@@ -24,9 +24,10 @@ def builtin(name: str, *, arity: int | None = None):
         def wrapper(env, *args):
             env.context = f"'{public_name}' builtin function"
             if arity is not None and len(args) != arity:
+                number = "no" if arity == 0 else arity
                 word = "argument" if arity == 1 else "arguments"
                 raise RuntimeException(
-                    f"Function '{public_name}' requires {arity} {word}, got {len(args)}",
+                    f"Function '{public_name}' requires {number} {word}, got {len(args)}",
                     env,
                 )
             return fn(env, *args)
@@ -69,8 +70,9 @@ def method(
 
             if len(args) != arity:
                 word = "argument" if arity == 1 else "arguments"
+                number = "no" if arity == 0 else arity
                 raise RuntimeException(
-                    f"Function '{public_name}' requires {arity} {word}, got {len(args)}",
+                    f"Function '{public_name}' requires {number} {word}, got {len(args)}",
                     env,
                 )
 
