@@ -156,6 +156,11 @@ def string_to_float(owner, env):
         raise RuntimeException(exc.args[0], env)
 
 
+@method(of=ItemValue, name="copy")
+def item_copy(owner, env):
+    return owner.copy()
+
+
 @method(of=ItemValue, name="key")
 def item_key(owner, env):
     return owner.get_key()

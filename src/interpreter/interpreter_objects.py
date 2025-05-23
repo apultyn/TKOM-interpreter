@@ -262,6 +262,9 @@ class ItemValue(Value):
     def to_string(self) -> StringValue:
         return StringValue(f"{self.key}: {self.value}")
 
+    def copy(self):
+        return ItemValue(self.get_key(), self.get_value())
+
     def type_of(self):
         return StringValue(self.TYPE_NAME)
 

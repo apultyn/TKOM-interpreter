@@ -18,7 +18,6 @@ def get_operation_unsupported_type_msg(value: Value, operation: str):
 
 def gather_builtins():
     symbols = {}
-    print(_builtins_mod)
     for _, obj in getmembers(_builtins_mod):
         if hasattr(obj, "__builtin_key__"):
             symbols[obj.__builtin_key__] = Cell(obj)

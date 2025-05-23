@@ -527,11 +527,7 @@ class Interpreter:
             self._error_handler.handle_error(exc)
         except RecursionError:
             self._error_handler.handle_error(
-                RuntimeException(
-                    f"Maximum recursion depth achieved",
-                    env,
-                    pos=call_pos
-                )
+                RuntimeException(f"Maximum recursion depth achieved", env, pos=call_pos)
             )
 
     # Int Expr

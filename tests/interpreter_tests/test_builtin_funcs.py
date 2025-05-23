@@ -314,3 +314,40 @@ def test_copying_values(make_interpreter):
         ],
         DEFAULT_SORT,
     )
+
+
+def test_copy_with_complex_value(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("list", ListValue([IntValue(1), IntValue(2), ListValue([])]))]
+    )
+
+    interpreter.eval(
+        Program(
+            [
+                NormalAssignmentStmt(
+                    Identifier("list2"),
+                    CallExpr(AccessExpr(Identifier("list"), Identifier("copy")), []),
+                ),
+                CallExpr(
+                    AccessExpr(Identifier("list2"), Identifier("add")), [IntExpr(4)]
+                ),
+                CallExpr(
+                    AccessExpr(
+                        CallExpr(
+                            AccessExpr(Identifier("list2"), Identifier("get")),
+                            [IntExpr(2)],
+                        ),
+                        Identifier("add"),
+                    ),
+                    [IntExpr(3)],
+                ),
+            ]
+        )
+    ),
+
+    assert get(interpreter, "list") == ListValue(
+        [IntValue(1), IntValue(2), ListValue([IntValue(3)])]
+    )
+    assert get(interpreter, "list2") == ListValue(
+        [IntValue(1), IntValue(2), ListValue([IntValue(3)]), IntValue(4)]
+    )
