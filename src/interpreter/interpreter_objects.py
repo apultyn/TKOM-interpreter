@@ -62,10 +62,7 @@ class Value(ABC):
 
     @staticmethod
     def typecheck(lhs: "Value", rhs: "Value", operation: str):
-        if lhs.__class__ is not rhs.__class__:
-            raise TypeError(
-                f"Type missmatch in '{operation}' operation - got '{lhs.type_of()}' and '{rhs.type_of()}'"
-            )
+        return lhs.__class__ is rhs.__class__
 
 
 class SimpleValue(Value, ABC):
@@ -326,13 +323,12 @@ class ListValue(Collection, Additive):
         return "[" + elements + "]"
 
 
-class ReturnSignal(Exception):
+class ReturnSignal:
     def __init__(
         self, return_value: Value | None = None, statement: po.ReturnStmt | None = None
     ):
         self.return_value = return_value
         self.return_statement = statement
-        super().__init__(f"Return signal with {self.return_value}")
 
 
 @dataclass
