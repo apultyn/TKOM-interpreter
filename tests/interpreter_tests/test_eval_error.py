@@ -204,6 +204,33 @@ def test_minus_assignment_undefined_variable(make_interpreter, mocked_error_hand
         msg="'x' is not defined in this scope",
     )
 
+def test_eq_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(po.EqExpr(po.IntExpr(5), po.StringExpr("5"), pos=(1, 1)))
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '==' operation - got 'Int' and 'String'",
+    )
+
+
+def test_neq_expr_type_missmatch(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter()
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(po.NeqExpr(po.IntExpr(5), po.StringExpr("5"), pos=(1, 1)))
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (1, 1),
+        msg="Type missmatch in '!=' operation - got 'Int' and 'String'",
+    )
+
 
 def test_gt_expr_type_missmatch(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
@@ -508,7 +535,7 @@ def test_div_expr_zero_division_int(make_interpreter, mocked_error_handler):
         interpreter.eval(
             po.DivExpr(
                 po.IntExpr(5),
-                po.IntExpr(0),
+                po.SubExpr(po.IntExpr(5), po.IntExpr(5)),
                 pos=(1, 1),
             )
         )

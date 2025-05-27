@@ -117,7 +117,7 @@ class Interpreter:
     # While Statement
     def visit_WhileStmt(self, node: po.WhileStmt, env: Env | None = None) -> None:
         while self.eval(node.condition, env).truthy():
-            self.eval(node.body, Env(node, env))
+            self.eval(node.body, env)
 
     # For Statement
     def visit_ForStmt(self, node: po.ForStmt, env: Env | None = None) -> None:
@@ -132,11 +132,10 @@ class Interpreter:
                 )
             )
 
-        new_env = Env(node, env)
-        new_env.define(node.var.value, None)
+        env.define(node.var.value, None)
         for element in source.elements:
-            new_env.set(node.var.value, element)
-            self.eval(node.body, new_env)
+            env.set(node.var.value, element)
+            self.eval(node.body, env)
 
     # Return Statement
     def visit_ReturnStmt(self, node: po.ReturnStmt, env: Env | None = None) -> None:
@@ -240,12 +239,16 @@ class Interpreter:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
 
+        self.ensure_same_type(l_value, r_value, "==", node, env)
+
         return BoolValue(l_value == r_value)
 
     # Neq Expr
     def visit_NeqExpr(self, node: po.NeqExpr, env: Env | None = None) -> BoolValue:
         l_value = self.eval(node.l_value, env)
         r_value = self.eval(node.r_value, env)
+
+        self.ensure_same_type(l_value, r_value, "!=", node, env)
 
         return BoolValue(l_value != r_value)
 
@@ -385,24 +388,24 @@ class Interpreter:
         self.ensure_same_type(l_value, r_value, "/", node, env)
 
         if isinstance(l_value, IntValue):
-            try:
-                return l_value // r_value
-            except ZeroDivisionError:
+            if r_value == IntValue(0):
                 self._error_handler.handle_error(
                     RuntimeException(
                         "Division by zero is not allowed", env, pos=node.pos
                     )
                 )
+            return l_value // r_value
+
 
         if isinstance(l_value, FloatValue):
-            try:
-                return l_value / r_value
-            except ZeroDivisionError:
+            if r_value == FloatValue(0.0):
                 self._error_handler.handle_error(
                     RuntimeException(
                         "Division by zero is not allowed", env, pos=node.pos
                     )
                 )
+            return l_value / r_value
+
 
         self._error_handler.handle_error(
             RuntimeException(
@@ -637,35 +640,33 @@ class Interpreter:
                         )
                     )
 
-                if not condition.value:
-                    continue
+                if condition.value:
+                    # selects
+                    selects = ListValue([self.eval(sel, new_env) for sel in node.selects])
 
-            # selects
-            selects = ListValue([self.eval(sel, new_env) for sel in node.selects])
+                    # order by
+                    order_key = None
+                    if node.order_by:
+                        order_key = self.eval(node.order_by, new_env)
 
-            # order by
-            order_key = None
-            if node.order_by:
-                order_key = self.eval(node.order_by, new_env)
-
-                inserted = False
-                # descending
-                if node.descending:
-                    for i, item in enumerate(return_list):
-                        if order_key > item[1]:
-                            return_list.insert(i, (selects, order_key))
-                            inserted = True
-                            break
-                else:
-                    for i, item in enumerate(return_list):
-                        if order_key < item[i]:
-                            return_list.insert(i, (selects, order_key))
-                            inserted = True
-                            break
-                if not inserted:
-                    return_list.append((selects, order_key))
-            else:
-                return_list.append((selects, order_key))
+                        inserted = False
+                        # descending
+                        if node.descending:
+                            for i, item in enumerate(return_list):
+                                if order_key > item[1]:
+                                    return_list.insert(i, (selects, order_key))
+                                    inserted = True
+                                    break
+                        else:
+                            for i, item in enumerate(return_list):
+                                if order_key < item[i]:
+                                    return_list.insert(i, (selects, order_key))
+                                    inserted = True
+                                    break
+                        if not inserted:
+                            return_list.append((selects, order_key))
+                    else:
+                        return_list.append((selects, order_key))
 
         return ListValue([item[0] for item in return_list])
 

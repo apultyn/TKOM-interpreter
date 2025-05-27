@@ -558,7 +558,6 @@ def test_eq_expr(make_interpreter):
 
     assert interpreter.eval(EqExpr(IntExpr(5), IntExpr(5))) == BoolValue(True)
     assert interpreter.eval(EqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(False)
-    assert interpreter.eval(EqExpr(IntExpr(5), ListExpr([]))) == BoolValue(False)
 
 
 def test_neq_expr(make_interpreter):
@@ -566,7 +565,6 @@ def test_neq_expr(make_interpreter):
 
     assert interpreter.eval(NeqExpr(IntExpr(5), IntExpr(5))) == BoolValue(False)
     assert interpreter.eval(NeqExpr(IntExpr(5), IntExpr(-5))) == BoolValue(True)
-    assert interpreter.eval(NeqExpr(IntExpr(5), ListExpr([]))) == BoolValue(True)
 
 
 def test_gt_expr(make_interpreter):
