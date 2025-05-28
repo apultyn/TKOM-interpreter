@@ -71,7 +71,7 @@ class Interpreter:
         if value is None:
             self._error_handler.handle_error(
                 RuntimeException(
-                    f"{text} was evaluated to None, value expected", node, node.pos
+                    f"{text} was evaluated to None, value expected", env, node.pos
                 )
             )
 
@@ -430,7 +430,7 @@ class Interpreter:
     def visit_LogicNegExpr(
         self, node: po.LogicNegExpr, env: Env | None = None
     ) -> BoolValue:
-        value = self.eval_not_none(node.value, "Negated value", env)
+        value = self.eval_not_none(node.value, "Value to negate", env)
         if not isinstance(value, BoolValue):
             self._error_handler.handle_error(
                 RuntimeException(
@@ -445,7 +445,7 @@ class Interpreter:
     def visit_ArithNegExpr(
         self, node: po.ArithNegExpr, env: Env | None = None
     ) -> "IntValue | FloatValue":
-        value = self.eval_not_none(node.value, "Negated value", env)
+        value = self.eval_not_none(node.value, "Value to negate", env)
 
         if isinstance(value, IntValue):
             return IntValue(-value.value)
@@ -484,7 +484,7 @@ class Interpreter:
 
     # Call Expr
     def visit_CallExpr(self, node: po.CallExpr, env: Env | None = None) -> Value | None:
-        function: FuncValue = self.eval_not_none(node.callee, "function", env)
+        function: FuncValue = self.eval_not_none(node.callee, "Function", env)
         arg_objects = [self.eval(arg, env) for arg in node.args]
 
         return self.call_function(function, arg_objects, env, node.pos)

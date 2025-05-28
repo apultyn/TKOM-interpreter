@@ -242,8 +242,11 @@ def test_plus_assignment_undefined_variable(make_interpreter, mocked_error_handl
         msg="'x' is not defined in this scope",
     )
 
+
 def test_plus_assignment_empty_r_value(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter(env=[("x", io.IntValue(1)),("func", io.BuiltInFuncValue(lambda _: None))])
+    interpreter = make_interpreter(
+        env=[("x", io.IntValue(1)), ("func", io.BuiltInFuncValue(lambda _: None))]
+    )
 
     with pytest.raises(AbortExecution):
         interpreter.eval(
@@ -331,8 +334,11 @@ def test_minus_assignment_undefined_variable(make_interpreter, mocked_error_hand
         msg="'x' is not defined in this scope",
     )
 
+
 def test_minus_assignment_empty_r_value(make_interpreter, mocked_error_handler):
-    interpreter = make_interpreter(env=[("x", io.IntValue(1)),("func", io.BuiltInFuncValue(lambda _: None))])
+    interpreter = make_interpreter(
+        env=[("x", io.IntValue(1)), ("func", io.BuiltInFuncValue(lambda _: None))]
+    )
 
     with pytest.raises(AbortExecution):
         interpreter.eval(
@@ -349,6 +355,7 @@ def test_minus_assignment_empty_r_value(make_interpreter, mocked_error_handler):
         (2, 3),
         msg="r_value was evaluated to None, value expected",
     )
+
 
 def test_or_expr_empty_l_value(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
@@ -368,6 +375,7 @@ def test_or_expr_empty_l_value(make_interpreter, mocked_error_handler):
         (2, 3),
         msg="l_value was evaluated to None, value expected",
     )
+
 
 def test_or_expr_empty_r_value(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
@@ -408,6 +416,7 @@ def test_and_expr_empty_l_value(make_interpreter, mocked_error_handler):
         msg="l_value was evaluated to None, value expected",
     )
 
+
 def test_and_expr_empty_r_value(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
 
@@ -427,18 +436,22 @@ def test_and_expr_empty_r_value(make_interpreter, mocked_error_handler):
         msg="r_value was evaluated to None, value expected",
     )
 
-@pytest.mark.parametrize("expression", [
-    po.EqExpr,
-    po.NeqExpr,
-    po.GtExpr,
-    po.GeqExpr,
-    po.LtExpr,
-    po.LeqExpr,
-    po.AddExpr,
-    po.SubExpr,
-    po.MulExpr,
-    po.DivExpr
-])
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        po.EqExpr,
+        po.NeqExpr,
+        po.GtExpr,
+        po.GeqExpr,
+        po.LtExpr,
+        po.LeqExpr,
+        po.AddExpr,
+        po.SubExpr,
+        po.MulExpr,
+        po.DivExpr,
+    ],
+)
 def test_expr_empty_r_value(expression, make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
 
@@ -458,18 +471,22 @@ def test_expr_empty_r_value(expression, make_interpreter, mocked_error_handler):
         msg="r_value was evaluated to None, value expected",
     )
 
-@pytest.mark.parametrize("expression", [
-    po.EqExpr,
-    po.NeqExpr,
-    po.GtExpr,
-    po.GeqExpr,
-    po.LtExpr,
-    po.LeqExpr,
-    po.AddExpr,
-    po.SubExpr,
-    po.MulExpr,
-    po.DivExpr
-])
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        po.EqExpr,
+        po.NeqExpr,
+        po.GtExpr,
+        po.GeqExpr,
+        po.LtExpr,
+        po.LeqExpr,
+        po.AddExpr,
+        po.SubExpr,
+        po.MulExpr,
+        po.DivExpr,
+    ],
+)
 def test_expr_empty_l_value(expression, make_interpreter, mocked_error_handler):
     interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
 
@@ -868,6 +885,25 @@ def test_logic_neg_not_bool(make_interpreter, mocked_error_handler):
     )
 
 
+def test_logic_neg_none_value(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LogicNegExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Value to negate was evaluated to None, value expected",
+    )
+
+
 def test_arith_neg_not_bool(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
@@ -879,6 +915,25 @@ def test_arith_neg_not_bool(make_interpreter, mocked_error_handler):
         RuntimeException,
         (4, 7),
         msg="Operation '-' not supported for type 'Dict'",
+    )
+
+
+def test_arith_neg_none_value(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.ArithNegExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Value to negate was evaluated to None, value expected",
     )
 
 
@@ -900,6 +955,26 @@ def test_access_expr_not_existing(make_interpreter, mocked_error_handler):
     )
 
 
+def test_access_expr_none_source(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.AccessExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                po.Identifier("Hi"),
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Access owner was evaluated to None, value expected",
+    )
+
+
 def test_call_function_not_func(make_interpreter, mocked_error_handler):
     interpreter = make_interpreter()
 
@@ -911,6 +986,26 @@ def test_call_function_not_func(make_interpreter, mocked_error_handler):
         RuntimeException,
         (5, 2),
         msg="Object 'Int' is not a function",
+    )
+
+
+def test_call_expr_none_func(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.CallExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                [],
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Function was evaluated to None, value expected",
     )
 
 
@@ -955,6 +1050,172 @@ def test_func_expr_duplicated_params(make_interpreter, mocked_error_handler):
         RuntimeException,
         (6, 8),
         msg="Param 'arg1' already defined",
+    )
+
+
+def test_list_expr_none_value(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.ListExpr(
+                [
+                    po.IntExpr(1),
+                    po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                ]
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="List element was evaluated to None, value expected",
+    )
+
+
+def test_item_expr_none_key(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.ItemExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                po.IntExpr(1),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Item key was evaluated to None, value expected",
+    )
+
+
+def test_item_expr_none_value(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.ItemExpr(
+                po.IntExpr(1),
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Item value was evaluated to None, value expected",
+    )
+
+
+def test_dict_expr_none_item(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.DictExpr(
+                [
+                    po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                ]
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Item was evaluated to None, value expected",
+    )
+
+
+def test_linq_expr_none_source(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                po.Identifier("hello"),
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                [],
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Source was evaluated to None, value expected",
+    )
+
+
+def test_linq_expr_none_condition(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                po.Identifier("hello"),
+                po.ListExpr([po.IntExpr(1)]),
+                [],
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Condition was evaluated to None, value expected",
+    )
+
+
+def test_linq_expr_none_select(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                po.Identifier("hello"),
+                po.ListExpr([po.IntExpr(1)]),
+                [
+                    po.IntExpr(1),
+                    po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                ],
+                po.BoolExpr(True),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Selected value was evaluated to None, value expected",
+    )
+
+
+def test_linq_expr_none_order_by(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.LinqExpr(
+                po.Identifier("hello"),
+                po.ListExpr([po.IntExpr(1)]),
+                [po.IntExpr(1)],
+                po.BoolExpr(True),
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Order key was evaluated to None, value expected",
     )
 
 
@@ -1017,4 +1278,23 @@ def test_linq_expr_where_comparing_error(make_interpreter, mocked_error_handler)
         RuntimeException,
         (4, 8),
         msg="Operation '<' not supported for type 'List'",
+    )
+
+
+def test_brackets_expr_none_value(make_interpreter, mocked_error_handler):
+    interpreter = make_interpreter(env=[("func", io.BuiltInFuncValue(lambda _: None))])
+
+    with pytest.raises(AbortExecution):
+        interpreter.eval(
+            po.BracketsExpr(
+                po.CallExpr(po.Identifier("func"), args=[], pos=(2, 3)),
+                pos=(1, 5),
+            )
+        )
+
+    check_error(
+        mocked_error_handler,
+        RuntimeException,
+        (2, 3),
+        msg="Value in brackets was evaluated to None, value expected",
     )
