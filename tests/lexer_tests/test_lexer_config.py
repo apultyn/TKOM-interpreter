@@ -1,6 +1,6 @@
 import pytest
 
-from src.lexer.lexer_config import LexerConfig
+from src.util.configs import LexerConfig
 
 
 def test_default():

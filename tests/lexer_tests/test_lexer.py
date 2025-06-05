@@ -2,7 +2,7 @@ import pytest
 
 from tests.util import get_token_list, AbortExecution, check_error
 
-from src.lexer.lexer_config import LexerConfig
+from src.util.configs import LexerConfig
 from src.util.my_token import Token
 from src.util.token_type import TokenType
 from src.util.pyscript_exceptions import (
@@ -88,6 +88,21 @@ def test_too_long_line_comments(make_lexer, mocked_error_handler):
         lexer.get_next_token()
 
     check_error(mocked_error_handler, LengthException, (3, 8))
+
+
+def test_line_comment_from_interpreter(make_lexer):
+    lexer = make_lexer(
+        """// Kopiowanie listy
+// backup_list = small_cities.copy();
+// print("Backup: ", backup_list);")"""
+    )
+
+    assert get_token_list(lexer) == [
+        Token(TokenType.LINE_COMMENT, pos=(1, 1)),
+        Token(TokenType.LINE_COMMENT, pos=(2, 1)),
+        Token(TokenType.LINE_COMMENT, pos=(3, 1)),
+        Token(TokenType.EOF, pos=(3, 37)),
+    ]
 
 
 def test_block_comment_not_closed(make_lexer, mocked_error_handler):

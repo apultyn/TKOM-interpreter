@@ -1,0 +1,378 @@
+from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
+from typing import Protocol, runtime_checkable, Self, Callable, ClassVar
+import src.parser.parser_objects as po
+
+
+@dataclass
+class Cell:
+    value: "Value"
+
+
+class Env:
+    def __init__(
+        self,
+        context: po.ParserObject | str,
+        parent: "Env | None" = None,
+        symbols: dict[str, Cell] | None = None,
+    ):
+        self.context = context
+        self.parent = parent
+        self.symbols = symbols if symbols is not None else {}
+
+    def lookup_cell(self, name: str) -> Cell:
+        if name in self.symbols:
+            return self.symbols[name]
+        if self.parent:
+            return self.parent.lookup_cell(name)
+        raise ValueError(f"'{name}' is not defined in this scope")
+
+    def get(self, name: str) -> "Value":
+        return self.lookup_cell(name).value
+
+    def set(self, name: str, val: "Value"):
+        self.lookup_cell(name).value = val
+
+    def define(self, name: str, val: "Value"):
+        self.symbols[name] = Cell(val)
+
+    def __str__(self) -> str:
+        parts = []
+        env = self
+        while env is not None:
+            if isinstance(env.context, po.ParserObject):
+                msg = f"'{env.context.__class__.__qualname__}' at row: {env.context.pos[0]}, col: {env.context.pos[1]}"
+            else:
+                msg = str(env.context)
+            parts.append(msg)
+            env = env.parent
+        return "\n".join(reversed(parts))
+
+
+@dataclass
+class Value(ABC):
+    TYPE_NAME: ClassVar[str] = "Value"
+
+    def truthy(self) -> bool:
+        return True
+
+    @abstractmethod
+    def type_of(self) -> "StringValue":
+        pass
+
+    @staticmethod
+    def typecheck(lhs: "Value", rhs: "Value", operation: str):
+        return lhs.__class__ is rhs.__class__
+
+
+class SimpleValue(Value, ABC):
+    pass
+
+
+@runtime_checkable
+class ComplexValue(Protocol):
+    @abstractmethod
+    def copy(self: Self) -> Self:
+        pass
+
+
+@runtime_checkable
+class Additive(Protocol):
+    @abstractmethod
+    def __add__(self: Self, other: Self) -> Self:
+        pass
+
+
+@runtime_checkable
+class Subtractive(Protocol):
+    @abstractmethod
+    def __sub__(self: Self, other: Self) -> Self:
+        pass
+
+
+@runtime_checkable
+class Multiplicative(Protocol):
+    @abstractmethod
+    def __mul__(self: Self, other: Self) -> Self:
+        pass
+
+
+@dataclass
+class FuncValue(Value):
+    TYPE_NAME: ClassVar[str] = "Function"
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+
+@dataclass
+class UserFuncValue(FuncValue):
+    params: list[str]
+    expression: po.FunctionExpr
+
+    def __str__(self) -> str:
+        return "UserFunc"
+
+
+@dataclass
+class BuiltInFuncValue(FuncValue):
+    body: Callable[..., Value | None]
+
+
+@dataclass
+class AccessedFuncValue(FuncValue):
+    body: Callable[..., Value | None]
+    needs_inter: bool = False
+    owner: "Value | None" = None
+
+
+@dataclass(order=True)
+class IntValue(SimpleValue, Additive, Subtractive, Multiplicative):
+    value: int
+    TYPE_NAME: ClassVar[str] = "Int"
+
+    def to_string(self) -> "StringValue":
+        return StringValue(str(self.value))
+
+    def to_float(self) -> "FloatValue":
+        return FloatValue(float(self.value))
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __add__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value + other.value)
+
+    def __sub__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value - other.value)
+
+    def __mul__(self, other: "IntValue") -> "IntValue":
+        return IntValue(self.value * other.value)
+
+    def __floordiv__(self, other: "IntValue") -> "IntValue":
+        if other.value == 0:
+            raise ZeroDivisionError
+        return IntValue(self.value // other.value)
+
+    def __str__(self) -> str:
+        return f"{self.value}"
+
+    def truthy(self) -> bool:
+        return self.value != 0
+
+
+@dataclass(order=True)
+class FloatValue(SimpleValue, Additive, Subtractive, Multiplicative):
+    value: float
+    TYPE_NAME: ClassVar[str] = "Float"
+
+    def to_string(self) -> "StringValue":
+        return StringValue(str(self.value))
+
+    def to_int(self) -> "IntValue":
+        return IntValue(int(self.value))
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __add__(self, other: "FloatValue") -> "FloatValue":
+        return FloatValue(self.value + other.value)
+
+    def __sub__(self, other: "FloatValue") -> "FloatValue":
+        return FloatValue(self.value - other.value)
+
+    def __mul__(self, other: "FloatValue") -> "FloatValue":
+        return FloatValue(self.value * other.value)
+
+    def __truediv__(self, other: "FloatValue") -> "FloatValue":
+        if other.value == 0.0:
+            raise ZeroDivisionError
+        return FloatValue(self.value / other.value)
+
+    def __str__(self) -> str:
+        return f"{self.value}"
+
+    def truthy(self):
+        return self.value != 0.0
+
+
+@dataclass(order=True)
+class StringValue(SimpleValue, Additive):
+    value: str
+    TYPE_NAME: ClassVar[str] = "String"
+
+    def length(self):
+        return IntValue(len(self.value))
+
+    def to_int(self) -> "IntValue":
+        try:
+            return IntValue(int(self.value))
+        except ValueError:
+            raise ValueError(f"Cannot cast '{self.value}' to Int")
+
+    def to_float(self) -> "FloatValue":
+        try:
+            return FloatValue(float(self.value))
+        except ValueError:
+            raise ValueError(f"Cannot cast '{self.value}' to Float")
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __add__(self, other: "StringValue"):
+        return StringValue(self.value + other.value)
+
+    def __str__(self) -> str:
+        return f"{self.value}"
+
+    def truthy(self):
+        return self.value != ""
+
+
+@dataclass
+class BoolValue(SimpleValue):
+    value: bool
+    TYPE_NAME: ClassVar[str] = "Bool"
+
+    def truthy(self):
+        return self.value
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __str__(self) -> str:
+        return f"{self.value}"
+
+
+@dataclass
+class ItemValue(Value):
+    key: Value
+    value: Value
+    TYPE_NAME: ClassVar[str] = "Item"
+
+    def get_key(self) -> Value:
+        return self.key
+
+    def get_value(self) -> Value:
+        return self.value
+
+    def to_string(self) -> StringValue:
+        return StringValue(f"{self.key}: {self.value}")
+
+    def copy(self):
+        return ItemValue(self.get_key(), self.get_value())
+
+    def type_of(self):
+        return StringValue(self.TYPE_NAME)
+
+    def __str__(self) -> str:
+        return f"({self.key}: {self.value})"
+
+
+@dataclass(order=False)
+class Collection(Value, ComplexValue):
+    elements: list[Value] = field(default_factory=list)
+    TYPE_NAME: ClassVar[str] = "Collection"
+
+    def truthy(self):
+        return len(self.elements) > 0
+
+    def length(self) -> IntValue:
+        return IntValue(len(self.elements))
+
+
+@dataclass
+class ListValue(Collection, Additive):
+    TYPE_NAME: ClassVar[str] = "List"
+
+    def get(self, index: IntValue) -> Value:
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        return self.elements[index.value]
+
+    def add(self, value: Value):
+        self.elements.append(value)
+
+    def set(self, index: IntValue, value: Value):
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        self.elements[index.value] = value
+
+    def remove(self, index: IntValue):
+        if index.value < 0 or index.value >= self.length().value:
+            raise IndexError(f"Index {index.value} out of range")
+        self.elements.pop(index.value)
+
+    def copy(self) -> "ListValue":
+        return ListValue(self.elements.copy())
+
+    def to_string(self) -> StringValue:
+        return StringValue(self.str_long())
+
+    def __add__(self, other: "ListValue"):
+        return ListValue(self.elements + other.elements)
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __str__(self) -> str:
+        return f"List({self.length().value})"
+
+    def str_long(self) -> str:
+        elements = ", ".join([str(item) for item in self.elements])
+        return "[" + elements + "]"
+
+
+class ReturnSignal:
+    def __init__(
+        self, return_value: Value | None = None, statement: po.ReturnStmt | None = None
+    ):
+        self.return_value = return_value
+        self.return_statement = statement
+
+
+@dataclass
+class DictValue(Collection):
+    order_func: "FuncValue" = field(default=None)
+    TYPE_NAME: ClassVar[str] = "Dict"
+
+    def get(self, key: Value) -> Value:
+        for item in self.elements:
+            if item.get_key() == key:
+                return item
+        raise KeyError(f"Key {key} not found in the dictionary")
+
+    def remove(self, key: Value):
+        for i, item in enumerate(self.elements):
+            if item.get_key() == key:
+                self.elements.pop(i)
+                return
+        raise KeyError(f"Key {key} not found in the dictionary")
+
+    def contains(self, key: Value) -> BoolValue:
+        for item in self.elements:
+            if item.get_key() == key:
+                return BoolValue(True)
+        return BoolValue(False)
+
+    def copy(self) -> "DictValue":
+        return DictValue(self.elements.copy(), self.order_func)
+
+    def to_string(self) -> StringValue:
+        return StringValue(self.str_long())
+
+    def type_of(self) -> "StringValue":
+        return StringValue(self.TYPE_NAME)
+
+    def __str__(self) -> str:
+        return f"Dict({self.length().value})"
+
+    def str_long(self) -> str:
+        elements = ", ".join([str(item) for item in self.elements])
+        return "{" + elements + "}"
+
+    def check_add(self, item: ItemValue):
+        if self.contains(item.key).value:
+            raise KeyError(f"Key {item.key} already exists in the dictionary")
+        if not isinstance(item.key, SimpleValue):
+            raise KeyError(f"'{item.key.type_of}' can't be an item key")

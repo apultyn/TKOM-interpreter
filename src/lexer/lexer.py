@@ -9,7 +9,7 @@ from src.util.pyscript_exceptions import (
     TokenException,
 )
 
-from .lexer_config import LexerConfig
+from src.util.configs import LexerConfig
 
 KEYWORDS = {
     "if": TokenType.IF_KEYWORD,
@@ -162,7 +162,7 @@ class Lexer:
     def build_line_comment(self):
         i = 0
         while i <= self.config.max_comment_length:
-            if self.get_next_char() == "\n":
+            if self.get_next_char() in ["\n", "EOF"]:
                 return TokenType.LINE_COMMENT
             i += 1
         else:

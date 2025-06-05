@@ -1,14 +1,20 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from typing import List, Any, Optional
+from abc import ABC
 
 
 @dataclass(kw_only=True)
 class ParserObject:
     _name: str = field(init=False, repr=False)
-    pos: tuple[int, int]
+    pos: tuple[int, int] | None = None
 
     def __post_init__(self):
         self._name = self.__class__.__name__
+
+    def accept(self, visitor, *args, **kwargs):
+        method_name = f"visit_{self._name}"
+        visit = getattr(visitor, method_name, visitor.visit_default)
+        return visit(self, *args, **kwargs)
 
 
 class Statement(ParserObject):
@@ -33,8 +39,8 @@ class Program(ParserObject):
 class IfStmt(Statement):
     condition: Expression
     body: Block
-    elif_statements: List["ElifStmt"]
-    else_body: Block
+    elif_statements: List["ElifStmt"] = field(default_factory=list)
+    else_body: Block | None = None
 
 
 @dataclass
