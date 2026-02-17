@@ -3,7 +3,11 @@ from collections.abc import Callable
 from src.lexer.lexer import Lexer
 from src.util.token_type import TokenType
 from src.util.error_handler import ErrorHandler
-from src.util.pyscript_exceptions import SyntaxException
+from src.util.pyscript_exceptions import (
+    UnexpectedTokenException,
+    MissingParserObjectException,
+    MissingSeparatorException,
+)
 
 import src.parser.parser_objects as po
 import src.parser.parser_util as pu
@@ -30,11 +34,11 @@ class Parser:
         token = self.current_token
         if token.type != token_type:
             self.error_handler.handle_error(
-                SyntaxException(
+                UnexpectedTokenException(
                     msg=msg,
-                    pos=self.current_token.pos,
                     token_expected=token_type,
                     token_got=token.type,
+                    pos=self.current_token.pos,
                 )
             )
         self.get_next_token()
@@ -43,7 +47,10 @@ class Parser:
     def must_be_created(self, parser_object, msg):
         if not parser_object:
             self.error_handler.handle_error(
-                SyntaxException(msg=msg, pos=self.current_token.pos)
+                MissingParserObjectException(
+                    object_expected=msg,
+                    pos=self.current_token.pos,
+                )
             )
         return parser_object
 
@@ -98,7 +105,7 @@ class Parser:
             error_pos = self.current_token.pos
             if element_function() is not None:
                 self.error_handler.handle_error(
-                    SyntaxException(f"'{separator_name}' expected", error_pos)
+                    MissingSeparatorException(separator_name, error_pos)
                 )
 
         second_expected = element_name if len(items) == 0 else f"'{separator_name}'"
@@ -453,7 +460,7 @@ class Parser:
             error_pos = self.current_token.pos
             if self.might_be(TokenType.IDENTIFIER):
                 self.error_handler.handle_error(
-                    SyntaxException("',' expected", error_pos)
+                    MissingSeparatorException(",", error_pos)
                 )
 
         error_msg = None
@@ -490,7 +497,7 @@ class Parser:
 
         error_pos = self.current_token.pos
         if self.parse_expression():
-            self.error_handler.handle_error(SyntaxException("',' expected", error_pos))
+            self.error_handler.handle_error(MissingSeparatorException(",", error_pos))
 
         where = None
         if self.might_be(TokenType.WHERE_KEYWORD):

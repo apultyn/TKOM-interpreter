@@ -58,6 +58,15 @@ class TokenException(PyscriptException):
 
 
 class SyntaxException(PyscriptException):
+    """Abstract base for all parser syntax errors. Do not instantiate directly."""
+
+    def __new__(cls, *_args, **_kwargs):
+        if cls is SyntaxException:
+            raise TypeError(
+                "SyntaxException is abstract and cannot be instantiated directly; use a subclass"
+            )
+        return super().__new__(cls)
+
     def __init__(
         self,
         msg: str,
@@ -70,6 +79,44 @@ class SyntaxException(PyscriptException):
         if token_got:
             msg = f"{msg}, got '{token_got}'"
         super().__init__(error_type="SYNTAX", msg=msg, pos=pos)
+
+
+class UnexpectedTokenException(SyntaxException):
+    """Raised when the parser encounters a token different from what was expected."""
+
+    def __init__(
+        self,
+        msg: str,
+        token_expected: TokenType,
+        token_got: TokenType,
+        pos: tuple[int, int],
+    ):
+        super().__init__(
+            msg=msg,
+            pos=pos,
+            token_expected=token_expected,
+            token_got=token_got,
+        )
+
+
+class MissingParserObjectException(SyntaxException):
+    """Raised when a required parser object (statement, expression, etc.) was not produced."""
+
+    def __init__(
+        self,
+        object_expected: str,
+        pos: tuple[int, int],
+    ):
+        self.object_expected = object_expected
+        super().__init__(msg=object_expected, pos=pos)
+
+
+class MissingSeparatorException(SyntaxException):
+    """Raised when an element appears without a required separator (e.g. ',') before it."""
+
+    def __init__(self, separator: str, pos: tuple[int, int]):
+        self.separator = separator
+        super().__init__(msg=f"'{separator}' expected", pos=pos)
 
 
 class RuntimeException(PyscriptException):
