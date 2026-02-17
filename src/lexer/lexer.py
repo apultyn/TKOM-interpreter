@@ -213,7 +213,6 @@ class Lexer:
 
         start_pos = self.get_pos()
         char = self.get_next_char()
-        prev_char = ""
         i = 0
         string_value = []
 
@@ -226,7 +225,7 @@ class Lexer:
                     string_value.append(next_char)
                 char = self.get_next_char()
                 i += 1
-            elif char == '"' and prev_char != "\\":
+            elif char == '"':
                 self.get_next_char()
                 break
             elif char == "EOF":
@@ -235,7 +234,6 @@ class Lexer:
                 )
             else:
                 string_value.append(char)
-                prev_char = char
                 char = self.get_next_char()
                 i += 1
         else:

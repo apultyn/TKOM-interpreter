@@ -132,6 +132,9 @@ class Interpreter:
         while self.eval_not_none(node.condition, "Condition", env).truthy():
             self.eval(node.body, env)
 
+            if self.return_signal is not None:
+                break
+
     # For Statement
     def visit_ForStmt(self, node: po.ForStmt, env: Env | None = None) -> None:
         source = self.eval_not_none(node.source, "Source", env)
@@ -150,6 +153,9 @@ class Interpreter:
             env.set(node.var.value, element)
             self.eval(node.body, env)
 
+            if self.return_signal is not None:
+                break
+
     # Return Statement
     def visit_ReturnStmt(self, node: po.ReturnStmt, env: Env | None = None) -> None:
         value = None
@@ -164,9 +170,9 @@ class Interpreter:
         value = self.eval_not_none(node.r_value, "r_value", env)
         ident = node.l_value
 
-        if ident.value in env.symbols:
+        try:
             env.set(ident.value, value)
-        else:
+        except ValueError:
             env.define(ident.value, value)
 
     # Plus Assignment
@@ -653,40 +659,42 @@ class Interpreter:
                         )
                     )
 
-                if condition.value:
-                    # selects
-                    selects = ListValue(
-                        [
-                            self.eval_not_none(sel, "Selected value", new_env)
-                            for sel in node.selects
-                        ]
-                    )
+                if not condition.value:
+                    continue
 
-                    # order by
-                    order_key = None
-                    if node.order_by:
-                        order_key = self.eval_not_none(
-                            node.order_by, "Order key", new_env
-                        )
+            # selects
+            selects = ListValue(
+                [
+                    self.eval_not_none(sel, "Selected value", new_env)
+                    for sel in node.selects
+                ]
+            )
 
-                        inserted = False
-                        # descending
-                        if node.descending:
-                            for i, item in enumerate(return_list):
-                                if order_key > item[1]:
-                                    return_list.insert(i, (selects, order_key))
-                                    inserted = True
-                                    break
-                        else:
-                            for i, item in enumerate(return_list):
-                                if order_key < item[i]:
-                                    return_list.insert(i, (selects, order_key))
-                                    inserted = True
-                                    break
-                        if not inserted:
-                            return_list.append((selects, order_key))
-                    else:
-                        return_list.append((selects, order_key))
+            # order by
+            order_key = None
+            if node.order_by:
+                order_key = self.eval_not_none(
+                    node.order_by, "Order key", new_env
+                )
+
+                inserted = False
+                # descending
+                if node.descending:
+                    for i, item in enumerate(return_list):
+                        if order_key > item[1]:
+                            return_list.insert(i, (selects, order_key))
+                            inserted = True
+                            break
+                else:
+                    for i, item in enumerate(return_list):
+                        if order_key < item[1]:
+                            return_list.insert(i, (selects, order_key))
+                            inserted = True
+                            break
+                if not inserted:
+                    return_list.append((selects, order_key))
+            else:
+                return_list.append((selects, order_key))
 
         return ListValue([item[0] for item in return_list])
 

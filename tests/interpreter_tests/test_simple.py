@@ -840,3 +840,92 @@ def test_call_function_access(make_interpreter):
     )
 
     assert interpreter.call_function(func, [FloatValue(-6.25)]) == FloatValue(-0.75)
+
+
+def test_normal_assignment_updates_parent_scope(make_interpreter):
+    interpreter = make_interpreter(env=[("x", IntValue(1))])
+
+    func = UserFuncValue(
+        [],
+        FunctionExpr(
+            [],
+            Block([NormalAssignmentStmt(Identifier("x"), IntExpr(99))]),
+        ),
+    )
+
+    interpreter.call_function(func, [], interpreter.global_env)
+
+    assert interpreter.global_env.get("x") == IntValue(99)
+
+
+def test_normal_assignment_defines_new_var_in_current_scope(make_interpreter):
+    interpreter = make_interpreter()
+
+    func = UserFuncValue(
+        [],
+        FunctionExpr(
+            [],
+            Block([NormalAssignmentStmt(Identifier("y"), IntExpr(42))]),
+        ),
+    )
+
+    interpreter.call_function(func, [], interpreter.global_env)
+
+    # y was defined inside the function scope and should not leak to global
+    try:
+        interpreter.global_env.get("y")
+        assert False, "y should not exist in global scope"
+    except ValueError:
+        pass
+
+
+def test_linq_no_where(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("source", ListValue([IntValue(3), IntValue(1), IntValue(2)]))]
+    )
+
+    assert interpreter.eval(
+        LinqExpr(
+            var=Identifier("x"),
+            source=Identifier("source"),
+            selects=[Identifier("x")],
+        )
+    ) == ListValue(
+        [ListValue([IntValue(3)]), ListValue([IntValue(1)]), ListValue([IntValue(2)])]
+    )
+
+
+def test_linq_no_where_order_ascending(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("source", ListValue([IntValue(3), IntValue(1), IntValue(2)]))]
+    )
+
+    assert interpreter.eval(
+        LinqExpr(
+            var=Identifier("x"),
+            source=Identifier("source"),
+            selects=[Identifier("x")],
+            order_by=Identifier("x"),
+            descending=False,
+        )
+    ) == ListValue(
+        [ListValue([IntValue(1)]), ListValue([IntValue(2)]), ListValue([IntValue(3)])]
+    )
+
+
+def test_linq_no_where_order_descending(make_interpreter):
+    interpreter = make_interpreter(
+        env=[("source", ListValue([IntValue(3), IntValue(1), IntValue(2)]))]
+    )
+
+    assert interpreter.eval(
+        LinqExpr(
+            var=Identifier("x"),
+            source=Identifier("source"),
+            selects=[Identifier("x")],
+            order_by=Identifier("x"),
+            descending=True,
+        )
+    ) == ListValue(
+        [ListValue([IntValue(3)]), ListValue([IntValue(2)]), ListValue([IntValue(1)])]
+    )
