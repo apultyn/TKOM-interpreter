@@ -1,20 +1,23 @@
 from dataclasses import dataclass, field
 from typing import List, Any, Optional
-from abc import ABC
 
 
 @dataclass(kw_only=True)
 class ParserObject:
     _name: str = field(init=False, repr=False)
     pos: tuple[int, int] | None = None
+    class_display_name = None
 
     def __post_init__(self):
         self._name = self.__class__.__name__
 
     def accept(self, visitor, *args, **kwargs):
-        method_name = f"visit_{self._name}"
+        method_name = f"visit_{self.__class__.__name__}"
         visit = getattr(visitor, method_name, visitor.visit_default)
         return visit(self, *args, **kwargs)
+
+    def __str__(self):
+        return self._name
 
 
 class Statement(ParserObject):
@@ -71,6 +74,8 @@ class ReturnStmt(Statement):
 class AssignmentStmt(Statement):
     l_value: "Identifier"
     r_value: Expression
+
+    class_display_name = "assignment"
 
 
 class NormalAssignmentStmt(AssignmentStmt):
@@ -162,6 +167,8 @@ class AccessExpr(Expression):
 class CallExpr(Expression):
     callee: Expression
     args: List[Expression]
+
+    class_display_name = "function call"
 
 
 @dataclass
