@@ -31,7 +31,10 @@ class Parser:
         if token.type != token_type:
             self.error_handler.handle_error(
                 SyntaxException(
-                    msg=msg, pos=self.current_token.pos, token_got=token.type
+                    msg=msg,
+                    pos=self.current_token.pos,
+                    token_expected=token_type,
+                    token_got=token.type,
                 )
             )
         self.get_next_token()

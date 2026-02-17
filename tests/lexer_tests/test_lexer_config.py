@@ -20,8 +20,3 @@ def test_some_custom():
 def test_too_short_identifier():
     with pytest.raises(ValueError):
         LexerConfig(max_identifier_length=9)
-
-
-def test_too_short_identifier():
-    with pytest.raises(ValueError):
-        LexerConfig(max_identifier_length=9)

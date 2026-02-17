@@ -15,13 +15,24 @@ class PyscriptException(Exception):
 
 
 class LengthException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
-        super().__init__(error_type="LENGTH", msg=msg, pos=pos)
+    def __init__(self, kind: str, max_length: int, pos: tuple[int, int]):
+        self.kind = kind
+        self.max_length = max_length
+        super().__init__(
+            error_type="LENGTH",
+            msg=f"Maximum {kind} length ({max_length}) exceeded",
+            pos=pos,
+        )
 
 
 class UnclosedException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
-        super().__init__(error_type="UNCLOSED", msg=msg, pos=pos)
+    def __init__(self, construct: str, pos: tuple[int, int]):
+        self.construct = construct
+        super().__init__(
+            error_type="UNCLOSED",
+            msg=f"{construct} not closed",
+            pos=pos,
+        )
 
 
 class InvalidValueException(PyscriptException):
@@ -30,17 +41,32 @@ class InvalidValueException(PyscriptException):
 
 
 class NewLineException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
-        super().__init__(error_type="NEWLINE", msg=msg, pos=pos)
+    def __init__(self, found_type: str, expected_type: str, pos: tuple[int, int]):
+        self.found_type = found_type
+        self.expected_type = expected_type
+        super().__init__(
+            error_type="NEWLINE",
+            msg=f"Mixed newline types: expected {expected_type}, found {found_type}",
+            pos=pos,
+        )
 
 
 class TokenException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int]):
-        super().__init__(error_type="TOKEN", msg=msg, pos=pos)
+    def __init__(self, char: str, pos: tuple[int, int]):
+        self.char = char
+        super().__init__(error_type="TOKEN", msg=f"Unknown token '{char}'", pos=pos)
 
 
 class SyntaxException(PyscriptException):
-    def __init__(self, msg: str, pos: tuple[int, int], token_got: TokenType = None):
+    def __init__(
+        self,
+        msg: str,
+        pos: tuple[int, int],
+        token_expected: TokenType = None,
+        token_got: TokenType = None,
+    ):
+        self.token_expected = token_expected
+        self.token_got = token_got
         if token_got:
             msg = f"{msg}, got '{token_got}'"
         super().__init__(error_type="SYNTAX", msg=msg, pos=pos)

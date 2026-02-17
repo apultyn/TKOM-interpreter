@@ -1,6 +1,6 @@
 from src.util.token_type import TokenType
 
-from src.parser.parser_objects import Identifier, SimpleExpr, IntExpr
+from src.parser.parser_objects import Identifier, IntExpr
 
 
 def get_token_list(lexer):

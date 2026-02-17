@@ -33,7 +33,9 @@ class Source:
                 self._new_line_type = "unix"
             elif self._new_line_type != "unix":
                 raise NewLineException(
-                    "Different newline types found", (self._row, self._col)
+                    found_type="unix",
+                    expected_type="windows",
+                    pos=(self._row, self._col),
                 )
             self._new_line_found = True
             self._char = "\n"
@@ -46,7 +48,9 @@ class Source:
                     self._new_line_type = "windows"
                 elif self._new_line_type != "windows":
                     raise NewLineException(
-                        "Different newline types found", (self._row, self._col)
+                        found_type="windows",
+                        expected_type="unix",
+                        pos=(self._row, self._col),
                     )
                 self._new_line_found = True
                 self._char = "\n"

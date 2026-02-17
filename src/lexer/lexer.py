@@ -94,7 +94,7 @@ class Lexer:
 
         if not token:
             self.error_handler.handle_error(
-                TokenException(msg="Unknown token", pos=self.get_pos())
+                TokenException(char=self.get_char(), pos=self.get_pos())
             )
 
         return token
@@ -146,7 +146,7 @@ class Lexer:
                     return TokenType.BLOCK_COMMENT
             elif char == "EOF":
                 self.error_handler.handle_error(
-                    UnclosedException(msg=f"Comment not closed", pos=self.get_pos())
+                    UnclosedException(construct="Block comment", pos=self.get_pos())
                 )
             else:
                 char = self.get_next_char()
@@ -154,7 +154,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    msg=f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    kind="comment",
+                    max_length=self.config.max_comment_length,
                     pos=self.get_prev_pos(),
                 )
             )
@@ -168,7 +169,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    msg=f"Maximum comment length ({self.config.max_comment_length}) exceeded",
+                    kind="comment",
+                    max_length=self.config.max_comment_length,
                     pos=self.get_pos(),
                 )
             )
@@ -189,7 +191,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    msg=f"Maximum identifier length ({self.config.max_identifier_length}) exceeded",
+                    kind="identifier",
+                    max_length=self.config.max_identifier_length,
                     pos=self.get_prev_pos(),
                 )
             )
@@ -228,7 +231,7 @@ class Lexer:
                 break
             elif char == "EOF":
                 self.error_handler.handle_error(
-                    UnclosedException(msg="String literal unclosed", pos=self.get_pos())
+                    UnclosedException(construct="String literal", pos=self.get_pos())
                 )
             else:
                 string_value.append(char)
@@ -238,7 +241,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    msg=f"Maximum string literal length ({self.config.max_string_literal_length}) exceeded",
+                    kind="string literal",
+                    max_length=self.config.max_string_literal_length,
                     pos=self.get_prev_pos(),
                 )
             )
@@ -300,7 +304,8 @@ class Lexer:
         else:
             self.error_handler.handle_error(
                 LengthException(
-                    msg=f"Maximum int literal length ({self.config.max_num_literal_length}) exceeded",
+                    kind="numeric literal",
+                    max_length=self.config.max_num_literal_length,
                     pos=self.get_prev_pos(),
                 )
             )
