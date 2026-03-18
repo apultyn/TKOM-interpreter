@@ -7,5 +7,3 @@ exclude =
     .venv,
     build,
     dist
-per-file-ignores =
-    tests/*:F401,E712

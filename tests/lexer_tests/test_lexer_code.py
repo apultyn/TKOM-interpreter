@@ -1160,32 +1160,34 @@ order by city.key()descending;
 
 def test_all_with_pos(make_lexer):
     lexer = make_lexer(
-        """/*komentarz blokowy*///komentarz liniowy
-
-function myFunc(a,b){
-    while(a!=b){
-        a+=1;
-        b-=1;
-        if(a==b and a<=10 or b>=0){
-            return Dict(("key1":1),("key2":2.5));}elif (typeOf(a)!="Int"){return [a*b/2];}
-            else {
-            return "done";}}
-    for i in myList{i =-i;
-    }
-}
-
-myList = [1,0.07,3,2.01,0.1];
-myList.add(4);
-another=42.0;
-flag=True;
-message="Text with \\"escaping\\"";message2="Another";
-value =(3.14 + 2) * (5 - 1);
-result = -value;
-notFlag = !flag;
-from item in myList
-select item
-where item != 2
-order by item descending;"""
+        (
+            "/*komentarz blokowy*///komentarz liniowy\n"
+            "\n"
+            "function myFunc(a,b){\n"
+            "    while(a!=b){\n"
+            "        a+=1;\n"
+            "        b-=1;\n"
+            "        if(a==b and a<=10 or b>=0){\n"
+            '            return Dict(("key1":1),("key2":2.5));}elif (typeOf(a)!="Int"){return [a*b/2];}\n'
+            "            else {\n"
+            '            return "done";}}\n'
+            "    for i in myList{i =-i;\n"
+            "    }\n"
+            "}\n"
+            "\n"
+            "myList = [1,0.07,3,2.01,0.1];\n"
+            "myList.add(4);\n"
+            "another=42.0;\n"
+            "flag=True;\n"
+            'message="Text with \\"escaping\\"";message2="Another";\n'
+            "value =(3.14 + 2) * (5 - 1);\n"
+            "result = -value;\n"
+            "notFlag = !flag;\n"
+            "from item in myList\n"
+            "select item\n"
+            "where item != 2\n"
+            "order by item descending;"
+        )
     )
 
     tokens = get_token_list(lexer)

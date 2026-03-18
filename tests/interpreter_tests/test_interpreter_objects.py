@@ -241,7 +241,7 @@ def test_nested_prints():
     )
 
     assert str(obj) == "Dict(6)"
-    assert (
-        obj.str_long()
-        == "{(2: two), (hello: there), (general: kenobi), (True: yes), List(3), Dict(3)}"
+    assert obj.str_long() == (
+        "{(2: two), (hello: there), (general: kenobi), "
+        "(True: yes), List(3), Dict(3)}"
     )

@@ -1,12 +1,10 @@
 import pytest
 
-from tests.util import integer, ident
 from src.parser.parser_objects import (
     NormalAssignmentStmt,
     MinusAssignmentStmt,
     PlusAssignmentStmt,
     Identifier,
-    SimpleExpr,
     CallExpr,
     IfStmt,
     Block,

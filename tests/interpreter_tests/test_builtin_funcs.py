@@ -27,8 +27,7 @@ from src.interpreter.interpreter_objects import (
     BoolValue,
 )
 
-from src.interpreter.util import DEFAULT_SORT, global_env
-from src.interpreter.interpreter import Interpreter
+from src.interpreter.util import DEFAULT_SORT
 from tests.interpreter_tests.util import get
 
 

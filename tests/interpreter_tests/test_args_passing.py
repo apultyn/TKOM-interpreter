@@ -1,5 +1,3 @@
-import pytest
-
 from src.interpreter.interpreter_objects import (
     IntValue,
     StringValue,

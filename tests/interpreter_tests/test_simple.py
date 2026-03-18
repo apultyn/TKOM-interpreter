@@ -764,7 +764,7 @@ def test_access_expr(make_interpreter):
     func = interpreter.eval(AccessExpr(source=IntExpr(0), target=Identifier("getFive")))
     assert isinstance(func, AccessedFuncValue)
     assert func.body() == IntValue(5)
-    assert func.needs_inter == False
+    assert func.needs_inter is False
     assert func.owner == IntValue(0)
 
     another_func = interpreter.eval(
