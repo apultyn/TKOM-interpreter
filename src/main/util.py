@@ -1,9 +1,7 @@
-import sys, io
+import sys
 from pathlib import Path
 from typing import Optional
 from contextlib import contextmanager
-
-from src.util.source import Source
 
 
 @contextmanager

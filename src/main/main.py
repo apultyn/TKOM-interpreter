@@ -8,6 +8,7 @@ from src.lexer.lexer import Lexer
 from src.parser.parser import Parser
 from src.interpreter.interpreter import Interpreter
 from src.util.error_handler import ErrorHandler
+from src.util.pyscript_exceptions import PyscriptException
 
 
 def main():
@@ -21,9 +22,12 @@ def main():
 
     err = ErrorHandler()
 
-    with open_source(args.input) as src:
-        lexer = Lexer(source=src, error_handler=err, config=cfg.lexer_config)
-        parser = Parser(lexer=lexer, error_handler=err)
-        interpreter = Interpreter(error_handler=err, config=cfg.interpreter_config)
+    try:
+        with open_source(args.input) as src:
+            lexer = Lexer(source=src, error_handler=err, config=cfg.lexer_config)
+            parser = Parser(lexer=lexer, error_handler=err)
+            interpreter = Interpreter(error_handler=err, config=cfg.interpreter_config)
 
-        interpreter.eval(parser.parse_program())
+            interpreter.eval(parser.parse_program())
+    except PyscriptException:
+        raise SystemExit(1)

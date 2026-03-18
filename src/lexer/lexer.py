@@ -75,12 +75,12 @@ class Lexer:
         self,
         *,
         source: Source,
-        error_handler: ErrorHandler = ErrorHandler(),
-        config: LexerConfig = LexerConfig(),
+        error_handler: ErrorHandler | None = None,
+        config: LexerConfig | None = None,
     ):
         self.source = Source(source)
-        self.config = config
-        self.error_handler = error_handler
+        self.config = config or LexerConfig()
+        self.error_handler = error_handler or ErrorHandler()
 
     def get_next_token(self):
         self.skip_whitespaces()
@@ -142,7 +142,8 @@ class Lexer:
 
         while i <= self.config.max_comment_length:
             if char == "*":
-                if char := self.get_next_char() == "/":
+                char = self.get_next_char()
+                if char == "/":
                     return TokenType.BLOCK_COMMENT
             elif char == "EOF":
                 self.error_handler.handle_error(

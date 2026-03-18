@@ -11,3 +11,10 @@ include = ["src*"]
 
 [project.scripts]
 psc = "src.main.main:main"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+addopts = "-q"

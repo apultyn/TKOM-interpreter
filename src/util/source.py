@@ -5,6 +5,7 @@ class Source:
     def __init__(self, source):
         self._source = source
         self._char = None
+        self._pushback = None
         self._col = 0
         self._row = 1
         self._EOF_found = False
@@ -12,7 +13,11 @@ class Source:
         self._new_line_type = None
 
     def get_next_char(self):
-        char = self._source.read(1)
+        if self._pushback is not None:
+            char = self._pushback
+            self._pushback = None
+        else:
+            char = self._source.read(1)
         self._col += 1
 
         if not char:
@@ -56,7 +61,8 @@ class Source:
                 self._char = "\n"
                 return "\n"
             else:
-                self._source.seek(self._source.tell() - 1)
+                if next_char:
+                    self._pushback = next_char
 
         self._char = char
         return char

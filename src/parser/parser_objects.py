@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from typing import List, Any, Optional
-from abc import ABC
 
 
 @dataclass(kw_only=True)

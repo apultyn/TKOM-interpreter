@@ -1,4 +1,7 @@
-import argparse, json, pathlib, dataclasses
+import argparse
+import dataclasses
+import json
+import pathlib
 
 from enum import Enum
 

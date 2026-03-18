@@ -17,4 +17,4 @@ class ErrorHandler:
         print("=" * 35 + " ERROR " + "=" * 35)
         print(exception)
 
-        quit()
+        raise exception

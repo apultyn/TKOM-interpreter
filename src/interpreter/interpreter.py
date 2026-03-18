@@ -37,13 +37,13 @@ class Interpreter:
     def __init__(
         self,
         *,
-        error_handler: ErrorHandler = ErrorHandler(),
-        config: InterpreterConfig = InterpreterConfig(),
-        env: Env = global_env,
+        error_handler: ErrorHandler | None = None,
+        config: InterpreterConfig | None = None,
+        env: Env | None = None,
     ):
-        self._error_handler = error_handler
-        self._config = config
-        self.global_env = env
+        self._error_handler = error_handler or ErrorHandler()
+        self._config = config or InterpreterConfig()
+        self.global_env = env or global_env
         self.return_signal = None
 
     def ensure_same_type(
@@ -107,7 +107,7 @@ class Interpreter:
             if self.return_signal is not None:
                 self._error_handler.handle_error(
                     RuntimeException(
-                        f"Return statement not allowed outside function",
+                        "Return statement not allowed outside function",
                         env,
                         pos=self.return_signal.return_statement.pos,
                     )
@@ -549,7 +549,7 @@ class Interpreter:
             self._error_handler.handle_error(exc)
         except RecursionError:
             self._error_handler.handle_error(
-                RuntimeException(f"Maximum recursion depth achieved", env, pos=call_pos)
+                RuntimeException("Maximum recursion depth achieved", env, pos=call_pos)
             )
 
     # Int Expr
@@ -673,9 +673,7 @@ class Interpreter:
             # order by
             order_key = None
             if node.order_by:
-                order_key = self.eval_not_none(
-                    node.order_by, "Order key", new_env
-                )
+                order_key = self.eval_not_none(node.order_by, "Order key", new_env)
 
                 inserted = False
                 # descending

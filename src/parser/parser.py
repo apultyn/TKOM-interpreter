@@ -14,10 +14,10 @@ import src.parser.parser_util as pu
 
 
 class Parser:
-    def __init__(self, *, lexer: Lexer, error_handler: ErrorHandler = ErrorHandler()):
+    def __init__(self, *, lexer: Lexer, error_handler: ErrorHandler | None = None):
         self.lexer = lexer
         self.current_token = None
-        self.error_handler = error_handler
+        self.error_handler = error_handler or ErrorHandler()
         self.current_token = self.get_next_token()
 
     def get_next_token(self):
